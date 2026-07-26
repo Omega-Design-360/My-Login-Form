@@ -1,0 +1,80 @@
+/* =============================================================
+   My Login Form — Supabase / Integration Hub Page
+   Supplements the inline styles in supabase.php with brand colors.
+   Color/gradient tokens live in variables.css (loaded first as a
+   dependency — see Hooks::enqueue_admin_assets()).
+   ============================================================= */
+
+/* ── Wrap ── */
+.my-login-integration-hub {
+    max-width: 1400px;
+    margin: 20px 20px 0 0;
+}
+
+/* ── Wizard steps background ── */
+.wizard-steps { background: var(--mlf-surface); }
+
+.wizard-step {
+    background: var(--mlf-bg);
+    border: 1px solid var(--mlf-border-light);
+    border-radius: 10px;
+}
+
+/* ── Tabs ── */
+.integration-tabs {
+    background: var(--mlf-bg);
+    box-shadow: var(--mlf-shadow);
+}
+
+.tab-link {
+    color: var(--mlf-text-muted);
+}
+
+.tab-link:hover {
+    background: var(--mlf-surface-2);
+    color: var(--mlf-text);
+}
+
+/* ── Card structure ── */
+.enterprise-card {
+    box-shadow: var(--mlf-shadow);
+    border: 1px solid var(--mlf-border-light);
+}
+
+.card-header {
+    background: var(--mlf-surface);
+    border-bottom: 1px solid var(--mlf-border);
+}
+
+.card-body { background: var(--mlf-bg); }
+
+/* ── Inputs ── */
+.large-input {
+    background: var(--mlf-bg);
+    color: var(--mlf-text);
+    border-color: var(--mlf-border);
+}
+
+/* ── Platform / option cards ── */
+.platform-card,
+.option-item,
+.detail-item,
+.table-item {
+    background: var(--mlf-surface);
+    border: 1px solid var(--mlf-border-light);
+}
+
+/* ── Status indicators ── */
+.detail-value.status-active { color: var(--mlf-primary); }
+
+/* ── Connection test area ── */
+.connection-test-status {
+    background: var(--mlf-surface);
+    border: 1px solid var(--mlf-border-light);
+}
+
+/* ── Setup wizard card ── */
+.setup-wizard {
+    border: 1px solid var(--mlf-border-light);
+    box-shadow: var(--mlf-shadow);
+}

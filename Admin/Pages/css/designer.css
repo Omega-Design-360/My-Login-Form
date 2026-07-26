@@ -1,0 +1,1025 @@
+﻿/* =============================================================
+   My Login Form — Designer Page
+   Color/gradient tokens live in variables.css (loaded first as a
+   dependency — see Hooks::enqueue_admin_assets()). This file only
+   holds Designer-specific layout and component rules.
+   ============================================================= */
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        .wrap { margin: 20px 20px 0 0; }
+        
+        .designer-header {
+            background: var(--mlf-bg);
+            padding: 16px 22px;
+            margin-bottom: 20px;
+            border-radius: var(--mlf-radius);
+            box-shadow: var(--mlf-shadow);
+            border: 1px solid var(--mlf-border-light);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .designer-header h1 {
+            margin: 0;
+            font-size: 21px;
+            font-weight: 700;
+            color: var(--mlf-heading);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            letter-spacing: -0.01em;
+        }
+
+        .designer-header h1 i {
+            width: 38px;
+            height: 38px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            color: var(--mlf-white);
+            background: var(--mlf-gradient-primary);
+            border-radius: 11px;
+            flex-shrink: 0;
+        }
+
+        .header-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+
+        .designer-form-count {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--mlf-heading);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .designer-columns { display: flex; gap: 20px; }
+
+        /* LEFT COLUMN */
+        .left-column {
+            width: 280px;
+            background: var(--mlf-bg);
+            border-radius: var(--mlf-radius);
+            box-shadow: var(--mlf-shadow);
+            border: 1px solid var(--mlf-border-light);
+            overflow-y: auto;
+            max-height: calc(100vh - 100px);
+        }
+        
+        .form-list-section { padding: 15px; border-bottom: 1px solid var(--mlf-border-light); }
+        .form-list-section h3 { margin-bottom: 10px; font-size: 14px; }
+        .form-list { max-height: 200px; overflow-y: auto; }
+        
+        .form-item {
+            padding: 8px 10px;
+            margin-bottom: 5px;
+            background: var(--mlf-surface);
+            border: 1px solid var(--mlf-border);
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.15s, border-color 0.15s;
+        }
+        .form-item:hover { background: var(--mlf-surface-2); border-color: var(--mlf-border); }
+        .form-item.active, .form-item.selected {
+            background: rgba(31,187,0,0.08);
+            border-color: var(--mlf-primary);
+            border-left: 3px solid var(--mlf-primary);
+            font-weight: 600;
+        }
+        .form-name { font-size: 13px; }
+        .form-actions button { background: none; border: none; cursor: pointer; margin-left: 5px; }
+
+        /* Save indicator */
+        #saveIndicator {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            min-width: 80px;
+            text-align: center;
+            transition: opacity 0.3s;
+        }
+        #saveIndicator.saving { background: var(--mlf-warning-tint); color: var(--mlf-warning-text); }
+        #saveIndicator.saved  { background: var(--mlf-success-tint); color: var(--mlf-success); }
+        #saveIndicator.error  { background: rgba(138,0,0,0.12); color: var(--mlf-danger); }
+
+        /* Current form title */
+        #currentFormTitle { font-weight: 600; font-size: 14px; color: var(--mlf-primary); margin-left: 8px; }
+
+        /* Form loading state */
+        .form-loading { padding: 40px; text-align: center; color: var(--mlf-text-muted); font-size: 16px; }
+        
+        
+        .fields-palette { padding: 15px; }
+        .palette-category { margin-bottom: 20px; }
+        .palette-category h4 { font-size: 12px; margin-bottom: 10px; color: var(--mlf-text-muted); padding-bottom: 5px; border-bottom: 1px solid var(--mlf-border-light); }
+        
+        .draggable-field {
+            padding: 8px 10px;
+            background: var(--mlf-surface);
+            border: 1px solid var(--mlf-border);
+            border-radius: 6px;
+            cursor: grab;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            margin-bottom: 6px;
+            transition: all 0.2s;
+        }
+        .draggable-field:active { cursor: grabbing; }
+        .draggable-field:hover { background: rgba(31,187,0,0.08); border-color: var(--mlf-primary); }
+        
+        .main-draggable, .subdiv-draggable, .socialsection-draggable { color: white; border: none; }
+        
+        /* RIGHT COLUMN */
+        .right-column { flex: 1; display: flex; flex-direction: column; gap: 20px; }
+        
+        .form-builder-area {
+            background: var(--mlf-surface);
+            border-radius: var(--mlf-radius);
+            box-shadow: var(--mlf-shadow);
+            border: 1px solid var(--mlf-border-light);
+            overflow: hidden;
+        }
+
+        .builder-header {
+            padding: 15px 22px;
+            background: var(--mlf-gradient-primary);
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .builder-header h2 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 9px;
+        }
+
+        .placeholder-message {
+            color: var(--mlf-text-light);
+            font-size: 13px;
+            padding: 12px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        #formBuilder { padding: 20px; min-height: 400px; overflow-y: auto; }
+        .builder-placeholder { text-align: center; padding: 60px; color: var(--mlf-text-light); border: 2px dashed var(--mlf-border); border-radius: 8px; background: var(--mlf-white); }
+        
+        /* Main Container */
+        .main-container {
+            background: var(--mlf-white);
+            border: 1.5px solid var(--mlf-border);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            position: relative;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 40px rgba(4,18,0,.08), 0 2px 8px rgba(4,18,0,.06);
+        }
+
+        /* Sub Div - nested support */
+        .sub-div {
+            background: var(--mlf-surface);
+            border: 1px solid var(--mlf-border-light);
+            border-radius: 12px;
+            padding: 15px;
+            margin: 10px 0;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        /* Selected state */
+        .form-field.selected, .sub-div.selected, .social-section.selected, .main-container.selected {
+            outline: 3px solid var(--mlf-danger);
+            outline-offset: 2px;
+            box-shadow: 0 0 0 2px rgba(138,0,0,0.3);
+        }
+        
+        /* Nested Sub Div styling */
+        .sub-div .sub-div {
+            background: #EAF6E2;
+            border-color: var(--mlf-border);
+            margin-left: 20px;
+        }
+
+        .sub-div .sub-div .sub-div {
+            background: #DFF2D4;
+            border-color: var(--mlf-primary);
+            margin-left: 20px;
+        }
+
+        /* Social Section */
+        .social-section {
+            background: var(--mlf-white);
+            border: 1.5px dashed var(--mlf-border);
+            border-radius: 12px;
+            padding: 15px;
+            margin: 10px 0;
+            position: relative;
+        }
+        
+        .section-title {
+            font-size: 12px;
+            color: var(--mlf-text-muted);
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid var(--mlf-border);
+        }
+        
+        .container-controls {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            display: none;
+            gap: 5px;
+            z-index: 10;
+        }
+        
+        .main-container:hover .container-controls,
+        .sub-div:hover .container-controls,
+        .social-section:hover .container-controls {
+            display: flex;
+        }
+        
+        .container-controls button {
+            background: var(--mlf-white);
+            border: 1px solid var(--mlf-border);
+            cursor: pointer;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+        
+        .drop-zone { 
+            min-height: 60px; 
+            transition: all 0.3s;
+        }
+        .container-placeholder {
+            text-align: center;
+            padding: 30px;
+            color: var(--mlf-text-light);
+            border: 2px dashed var(--mlf-border);
+            border-radius: 8px;
+            background: var(--mlf-surface);
+            font-size: 12px;
+        }
+        
+        /* Form Fields */
+        .form-field { 
+            margin-bottom: 12px; 
+            position: relative;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .form-field:hover {
+            background: rgba(31,187,0,0.05);
+        }
+        .form-field label { 
+            display: block; 
+            margin-bottom: 5px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--mlf-text);
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+        .form-field label:hover {
+            background: rgba(31,187,0,0.06);
+        }
+        .form-field label.editing {
+            background: var(--mlf-white);
+            outline: 2px solid var(--mlf-primary);
+            padding: 4px 8px;
+        }
+        .form-field label[contenteditable="true"] {
+            background: var(--mlf-white);
+            outline: 2px solid var(--mlf-primary);
+            cursor: text;
+        }
+        .form-field input, .form-field textarea, .form-field select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--mlf-border);
+            border-radius: 8px;
+            font-size: 14px;
+            background: var(--mlf-white);
+            transition: all 0.3s ease;
+        }
+        .form-field input:focus, .form-field textarea:focus, .form-field select:focus {
+            outline: none;
+            border-color: var(--mlf-primary);
+        }
+        
+        /* Checkbox and Radio */
+        .form-field.checkbox-field, .form-field.radio-field {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .form-field.checkbox-field input, .form-field.radio-field input { width: auto; }
+        .form-field.checkbox-field label, .form-field.radio-field label { display: inline; margin-bottom: 0; }
+        
+        /* Social Buttons */
+        .social-btn {
+            display: inline-block;
+            padding: 8px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 6px;
+            color: white;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: default;
+            transition: all 0.3s ease;
+        }
+        
+        /* Submit Button */
+        .container-submit {
+            margin-top: 20px;
+            text-align: center;
+            padding: 10px;
+        }
+        .container-submit button {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: default;
+            transition: all 0.3s ease;
+        }
+        .container-submit button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        /* Field action buttons */
+        .field-remove, .field-edit, .field-drag {
+            position: absolute;
+            right: 5px;
+            top: 5px;
+            background: var(--mlf-white);
+            border: 1px solid var(--mlf-border);
+            border-radius: 4px;
+            padding: 2px 6px;
+            font-size: 10px;
+            cursor: pointer;
+            display: none;
+            z-index: 10;
+        }
+        .field-edit { right: 45px; }
+        .field-drag { right: 85px; cursor: grab; }
+        .field-drag:active { cursor: grabbing; }
+        .form-field:hover .field-remove, 
+        .form-field:hover .field-edit, 
+        .form-field:hover .field-drag { display: inline-block; }
+        
+        /* Sortable placeholder */
+        .sortable-placeholder { 
+            background: rgba(31,187,0,0.06); 
+            border: 2px dashed var(--mlf-primary); 
+            height: 50px; 
+            margin-bottom: 12px; 
+            border-radius: 8px;
+        }
+        .ui-sortable-helper {
+            opacity: 0.6;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        .drag-over { background: rgba(31,187,0,0.2); border: 2px dashed var(--mlf-primary); }
+        .sub-drag-over { background: rgba(179,91,0,0.2); border: 2px dashed var(--mlf-accent); }
+        .social-drag-over { background: rgba(5,26,0,0.2); border: 2px dashed var(--mlf-secondary); }
+        .droppable-active { background: rgba(31,187,0,0.06); border: 2px dashed var(--mlf-primary); }
+        
+        /* Tabs */
+        .tabs-container { background: var(--mlf-white); border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); overflow: hidden; }
+        .tabs-header { 
+            display: flex; 
+            border-bottom: 1px solid var(--mlf-border); 
+            background: var(--mlf-surface);
+            flex-wrap: wrap;
+        }
+        .tab-btn { 
+            padding: 12px 20px; 
+            background: none; 
+            border: none; 
+            cursor: pointer; 
+            font-size: 13px; 
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .tab-btn:hover {
+            background: var(--mlf-surface-2);
+        }
+        .tab-btn.active { 
+            background: var(--mlf-white); 
+            border-bottom: 2px solid var(--mlf-primary); 
+            color: var(--mlf-primary); 
+        }
+        .tab-content { display: none; padding: 20px; }
+        .tab-content.active { display: block; }
+        .code-editor { width: 100%; min-height: 200px; font-family: monospace; font-size: 12px; padding: 10px; border: 1px solid var(--mlf-border); border-radius: 6px; }
+        
+        /* Settings */
+        .settings-group { margin-bottom: 20px; }
+        .settings-group h4 { 
+            margin-bottom: 10px; 
+            font-size: 14px; 
+            font-weight: 600;
+            padding-bottom: 5px;
+            border-bottom: 1px solid var(--mlf-border-light);
+        }
+        .setting-field { margin-bottom: 12px; }
+        .setting-field label { display: block; margin-bottom: 5px; font-size: 12px; font-weight: 500; color: var(--mlf-text-muted); }
+        .setting-field input[type="color"], 
+        .setting-field input[type="text"], 
+        .setting-field input[type="number"],
+        .setting-field select { 
+            width: 100%; 
+            padding: 8px; 
+            border: 1px solid var(--mlf-border); 
+            border-radius: 6px; 
+        }
+        .setting-field input[type="range"] {
+            width: 70%;
+            margin-right: 10px;
+        }
+        .setting-field .range-value {
+            display: inline-block;
+            width: 50px;
+            text-align: center;
+            background: var(--mlf-surface-2);
+            padding: 4px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        .preset-buttons { display: flex; gap: 8px; flex-wrap: wrap; }
+        .preset-btn { 
+            padding: 6px 12px; 
+            border: 1px solid var(--mlf-border); 
+            background: var(--mlf-white); 
+            border-radius: 6px; 
+            cursor: pointer; 
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+        .preset-btn:hover {
+            background: var(--mlf-primary);
+            color: white;
+            border-color: var(--mlf-primary);
+        }
+        
+        /* Modal */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 100000;
+        }
+        .modal-content { background: var(--mlf-white); border-radius: 12px; width: 400px; max-width: 90%; }
+        .modal-header { padding: 15px 20px; border-bottom: 1px solid var(--mlf-border-light); display: flex; justify-content: space-between; font-weight: 600; }
+        .modal-body { padding: 20px; }
+        .modal-footer { padding: 15px 20px; border-top: 1px solid var(--mlf-border-light); display: flex; justify-content: flex-end; gap: 10px; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-size: 13px; font-weight: 500; }
+        .form-group input { width: 100%; padding: 8px 12px; border: 1px solid var(--mlf-border); border-radius: 6px; }
+        .empty-state { text-align: center; padding: 30px; color: var(--mlf-text-light); }
+        
+        .drag-helper {
+            background: var(--mlf-primary);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            z-index: 10000;
+        }
+        
+        .edit-hint {
+            font-size: 10px;
+            color: var(--mlf-text-light);
+            margin-left: 8px;
+            display: inline-block;
+        }
+        .form-field:hover .edit-hint {
+            color: var(--mlf-primary);
+        }
+        
+        /* Selection info bar */
+        .selection-info {
+            background: var(--mlf-gradient-primary);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 13px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .selection-info .clear-selection {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .selection-info .clear-selection:hover {
+            background: rgba(255,255,255,0.3);
+        }
+/* ── Social palette enhancements ── */
+.palette-warning {
+    display: flex; gap: 10px; align-items: flex-start;
+    background: rgba(222,220,0,0.10); border: 1px solid var(--mlf-warning); border-radius: 8px;
+    padding: 10px 12px; margin-bottom: 10px; font-size: 12px;
+}
+.palette-warning > span { font-size: 18px; flex-shrink: 0; }
+.palette-warning strong { display: block; color: var(--mlf-warning-text); font-size: 12px; }
+.palette-warning p { margin: 3px 0 5px; color: var(--mlf-warning-text); }
+.palette-warning-link { color: var(--mlf-primary); font-weight: 600; text-decoration: none; font-size: 12px; }
+.palette-empty-note { font-size: 12px; color: var(--mlf-text-light); font-style: italic; margin: 6px 0; }
+.provider-badge-enabled { color: var(--mlf-success); font-size: 11px; margin-left: auto; }
+.social-draggable { border-left-width: 3px !important; }
+
+/* ── Element controls in builder ── */
+.element-controls {
+    display: flex; align-items: center; gap: 4px;
+    padding: 3px 5px; background: rgba(0,0,0,.04);
+    border-radius: 4px; font-size: 12px;
+    /* container-level controls (main / sub / social) keep full-width row layout */
+}
+.element-handle { cursor: grab; color: var(--mlf-text-light); font-size: 16px; padding: 0 2px; }
+.element-handle:active { cursor: grabbing; }
+.btn-remove-element, .btn-edit-field {
+    background: none; border: none; cursor: pointer;
+    font-size: 13px; padding: 2px 4px; border-radius: 3px;
+    opacity: 0.6; transition: opacity .15s;
+}
+.btn-remove-element:hover { opacity: 1; color: var(--mlf-danger); }
+.btn-edit-field:hover    { opacity: 1; color: var(--mlf-primary); }
+
+/* ── Form field: controls beside the input, not above it ── */
+.form-field.element-item {
+    display: flex; align-items: center; gap: 6px;
+    margin-bottom: 16px;
+}
+.form-field.element-item > .element-controls {
+    flex-shrink: 0; background: none; padding: 0; border-radius: 0;
+}
+.form-field.element-item > .field-preview { flex: 1; min-width: 0; }
+
+/* ── Field preview ── */
+.field-preview { padding: 4px 6px; }
+.field-preview input, .field-preview select, .field-preview textarea {
+    width: 100%; padding: 10px 14px; border: 1.5px solid var(--mlf-border);
+    border-radius: 8px; font-size: 14px; box-sizing: border-box;
+    background: var(--mlf-white); color: var(--mlf-text); pointer-events: none;
+}
+.field-label-preview { display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px; color: var(--mlf-text); }
+
+/* ── Greeting block in builder ── */
+.greeting-block.element-item {
+    display: flex; align-items: center; gap: 6px;
+    border: 1.5px dashed var(--mlf-border); border-radius: 8px;
+    padding: 8px; margin: 8px 0;
+}
+.greeting-block.element-item > .element-controls {
+    flex-shrink: 0; background: none; padding: 0; border-radius: 0;
+}
+.greeting-block.element-item > .greeting-preview { flex: 1; min-width: 0; }
+.greeting-preview .my-login-greeting-title { margin: 0 0 4px; font-size: 20px; font-weight: 700; color: var(--mlf-text); }
+.greeting-preview .my-login-greeting-subtitle { margin: 0; font-size: 13px; color: var(--mlf-text-muted); }
+
+/* ── Social section in builder ── */
+.social-section { border: 1.5px dashed var(--mlf-border); border-radius: 8px; padding: 10px; margin: 8px 0; }
+.social-divider-text { text-align: center; font-size: 12px; color: var(--mlf-text-muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: .05em; }
+.social-btn-preview { display: inline-flex; align-items: center; gap: 6px; margin: 4px; border-radius: 6px; cursor: default; }
+
+/* ── Drop zones ── */
+.main-drop-zone, .sub-drop-zone, .social-drop-zone {
+    min-height: 60px; border: 2px dashed var(--mlf-border-light);
+    border-radius: 8px; padding: 8px; transition: border-color .2s, background .2s;
+}
+.main-drop-zone.drop-hover, .sub-drop-zone.drop-hover, .social-drop-zone.drop-hover {
+    border-color: var(--mlf-primary); background: var(--mlf-surface);
+}
+.drop-hint { text-align: center; color: var(--mlf-text-light); font-size: 12px; padding: 10px; pointer-events: none; }
+
+/* ── Builder loading/empty ── */
+.builder-loading, .builder-empty {
+    text-align: center; padding: 48px 24px; color: var(--mlf-text-light);
+    font-size: 15px; border: 2px dashed var(--mlf-border-light); border-radius: 12px; margin: 16px;
+}
+.builder-empty strong { color: var(--mlf-text-muted); }
+
+/* ── Sortable placeholder ── */
+.sortable-placeholder {
+    height: 40px; background: rgba(5,26,0,0.06); border: 2px dashed var(--mlf-secondary);
+    border-radius: 6px; margin: 4px 0;
+}
+
+/* ── Sub-div ── */
+.sub-div {
+    border: 1px solid var(--mlf-border-light); border-radius: 8px;
+    padding: 8px; margin: 6px 0;
+}
+
+/* ── Main container ── */
+.main-container {
+    border: 1.5px solid var(--mlf-border); border-radius: 12px;
+    padding: 22px; margin: 12px 0; background: var(--mlf-white);
+}
+.container-submit { margin-top: 12px; text-align: center; }
+.preview-submit-btn {
+    color: var(--mlf-white); padding: 12px 28px; border: none; border-radius: 6px;
+    font-size: 15px; font-weight: 600;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   PROFESSIONAL POLISH  –  designer.css improvements
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Overall layout shadow upgrade ── */
+.left-column,
+.form-builder-area,
+.tabs-container {
+    box-shadow: 0 2px 10px rgba(0,0,0,.08), 0 0 0 1px rgba(0,0,0,.04);
+}
+
+/* ── Designer header upgrade ── */
+.designer-header {
+    background: var(--mlf-gradient-secondary);
+    color: var(--mlf-white);
+    border-radius: var(--mlf-radius);
+    padding: 16px 22px;
+    border-color: transparent;
+    box-shadow: 0 8px 24px rgba(31,187,0,0.22);
+}
+.designer-header h1 { color: var(--mlf-white); font-size: 20px; }
+.designer-header h1 i {
+    background: rgba(255,255,255,0.18);
+    border: 1px solid rgba(255,255,255,0.3);
+    color: var(--mlf-white);
+}
+.designer-form-count { color: rgba(255,255,255,0.85); }
+
+/* ── Save indicator ── */
+#saveIndicator {
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .03em;
+    text-transform: uppercase;
+    padding: 5px 14px;
+}
+#saveIndicator.saving { background: var(--mlf-warning-tint); color: var(--mlf-warning-text); }
+#saveIndicator.saved  { background: var(--mlf-success-tint); color: var(--mlf-success); }
+#saveIndicator.error  { background: rgba(138,0,0,0.12); color: var(--mlf-danger); }
+
+/* ── Left panel ── */
+.left-column { border-radius: var(--mlf-radius); }
+.form-list-section { background: var(--mlf-surface); }
+.form-list-section h3 {
+    font-size: 11px; font-weight: 700; letter-spacing: .08em;
+    text-transform: uppercase; color: var(--mlf-text-muted);
+}
+
+/* ── Form items ── */
+.form-item {
+    border-radius: 6px;
+    transition: all .15s;
+}
+.form-item.active, .form-item.selected {
+    background: var(--mlf-gradient-surface-tint);
+    border-color: var(--mlf-primary);
+    border-left: 3px solid var(--mlf-primary);
+    color: var(--mlf-secondary);
+}
+
+/* ── Field palette categories ── */
+.palette-category h4 {
+    font-size: 10px; font-weight: 800; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--mlf-text-light);
+}
+.draggable-field {
+    border-radius: 7px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.06);
+}
+.draggable-field:hover {
+    transform: translateX(3px);
+    box-shadow: 0 2px 8px rgba(31,187,0,.25);
+}
+.main-draggable       { background: var(--mlf-gradient-primary); }
+.subdiv-draggable     { background: var(--mlf-gradient-surface); }
+.socialsection-draggable { background: var(--mlf-gradient-accent); }
+
+/* ── Builder header ── */
+.builder-header {
+    background: var(--mlf-gradient-secondary);
+    border-radius: 10px 10px 0 0;
+    padding: 12px 18px;
+}
+.builder-header h2 { font-size: 15px; font-weight: 600; letter-spacing: .02em; }
+
+/* ── Main / Sub containers ──
+   Same font, radius and shadow as .my-login-main-container on the live site.
+   Width/min-height are NOT fixed here — they're inline styles driven by the
+   Layout panel's Width/Min Height sliders (see T.mainContainer() in
+   designer.js), so the canvas reflects whatever width the admin configures
+   instead of being pinned to one size. Default is 100% (full width). */
+.main-container {
+    margin: 0 auto 20px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    border: 1.5px solid var(--mlf-border);
+    border-radius: 12px;
+    background: var(--mlf-white);
+    box-shadow: 0 10px 40px rgba(4,18,0,.08), 0 2px 8px rgba(4,18,0,.06);
+    transition: box-shadow .2s;
+}
+.main-container:hover { box-shadow: 0 12px 44px rgba(4,18,0,.11), 0 3px 10px rgba(4,18,0,.08); }
+
+.sub-div {
+    border: 1.5px solid var(--mlf-border-light);
+    border-radius: 9px;
+    background: var(--mlf-surface);
+    padding: 14px;
+}
+
+/* ── Container controls (buttons on hover) ── */
+.container-controls button {
+    border-radius: 6px;
+    font-size: 11px;
+    padding: 3px 8px;
+    background: var(--mlf-surface);
+    border: 1px solid var(--mlf-border-light);
+    color: var(--mlf-text-muted);
+    transition: all .15s;
+}
+.container-controls button:hover { background: var(--mlf-primary); color: var(--mlf-white); border-color: var(--mlf-primary); }
+
+/* ── Form field in builder ── */
+.form-field { border-radius: 7px; }
+.form-field:hover { background: rgba(31,187,0,.04); }
+/* Controls always visible — this is a builder, not a live form */
+.element-item > .element-controls { opacity: 1; }
+.element-controls .btn-edit-element,
+.element-controls .btn-remove-element,
+.element-controls .element-handle {
+    opacity: 0.45;
+    transition: opacity .12s;
+}
+.element-item:hover .btn-edit-element,
+.element-item:hover .btn-remove-element,
+.element-item:hover .element-handle,
+.main-container:hover > .element-controls .btn-edit-element,
+.main-container:hover > .element-controls .btn-remove-element,
+.main-container:hover > .element-controls .element-handle {
+    opacity: 1;
+}
+
+/* ── Field preview inputs ── */
+.field-preview input,
+.field-preview select,
+.field-preview textarea {
+    border: 1.5px solid var(--mlf-border);
+    border-radius: 8px;
+    background: var(--mlf-white);
+    color: var(--mlf-text);
+    font-size: 14px;
+}
+.field-label-preview { color: var(--mlf-text); font-size: 13px; font-weight: 600; }
+
+/* ── Tabs ── */
+.tabs-header { background: var(--mlf-surface); border-radius: 0 0 0 0; gap: 2px; padding: 4px 8px; }
+.tab-btn {
+    border-radius: 7px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--mlf-text-muted);
+    padding: 8px 16px;
+    transition: all .15s;
+}
+.tab-btn:hover { background: var(--mlf-surface-2); color: var(--mlf-text); }
+.tab-btn.active {
+    background: var(--mlf-bg);
+    color: var(--mlf-primary);
+    border-bottom: 2px solid var(--mlf-primary);
+    box-shadow: 0 1px 4px rgba(31,187,0,.12);
+}
+
+/* ── Code editor ── */
+.code-editor {
+    background: var(--mlf-white);
+    color: var(--mlf-text);
+    border: 1.5px solid var(--mlf-border);
+    border-radius: 8px;
+    font-size: 12px;
+    line-height: 1.7;
+    padding: 14px;
+    resize: vertical;
+    min-height: 180px;
+    box-shadow: inset 0 1px 3px rgba(4,18,0,.06);
+}
+.code-editor:focus { outline: 2px solid var(--mlf-primary); }
+
+/* ── WP CodeMirror editor (replaces the plain textarea once JS initializes
+   it) — plain white background, matching the rest of the admin UI ── */
+.CodeMirror {
+    background: var(--mlf-white);
+    color: var(--mlf-text);
+    border: 1.5px solid var(--mlf-border);
+    border-radius: 8px;
+    font-size: 12.5px;
+    line-height: 1.7;
+    height: 320px;
+    box-shadow: inset 0 1px 3px rgba(4,18,0,.06);
+}
+.CodeMirror-focused { outline: 2px solid var(--mlf-primary); outline-offset: -1px; }
+.CodeMirror-gutters { background: #F8FAF7; border-right: 1px solid var(--mlf-border); }
+.CodeMirror-linenumber { color: #94a89c; }
+.CodeMirror-cursor { border-left-color: var(--mlf-text); }
+.CodeMirror-selected { background: rgba(31,187,0,.15) !important; }
+.CodeMirror pre.CodeMirror-line, .CodeMirror pre.CodeMirror-line-like { color: var(--mlf-text); }
+.cm-s-default .cm-comment { color: var(--mlf-text-light); }
+.cm-s-default .cm-string, .cm-s-default .cm-string-2 { color: var(--mlf-primary-dark); }
+.cm-s-default .cm-atom, .cm-s-default .cm-number { color: var(--mlf-accent); }
+.cm-s-default .cm-property, .cm-s-default .cm-attribute { color: var(--mlf-primary-dark); }
+.cm-s-default .cm-keyword { color: #1a6fd4; }
+.cm-s-default .cm-tag { color: #c2185b; }
+
+/* ── Settings panel ── */
+.settings-group h4 {
+    font-size: 11px; font-weight: 700; letter-spacing: .07em;
+    text-transform: uppercase; color: var(--mlf-text-muted);
+    border-bottom-color: var(--mlf-surface-2);
+}
+.setting-field label { color: var(--mlf-text-muted); font-size: 12px; font-weight: 600; }
+.setting-field input[type="text"],
+.setting-field input[type="number"],
+.setting-field select {
+    border: 1.5px solid var(--mlf-border-light);
+    border-radius: 7px;
+    font-size: 13px;
+    color: var(--mlf-text);
+    background: var(--mlf-surface);
+    transition: border-color .15s, box-shadow .15s;
+}
+.setting-field input[type="text"]:focus,
+.setting-field input[type="number"]:focus,
+.setting-field select:focus {
+    border-color: var(--mlf-primary);
+    box-shadow: 0 0 0 3px rgba(31,187,0,.1);
+    outline: none;
+    background: var(--mlf-white);
+}
+.setting-field input[type="color"] {
+    height: 36px;
+    border-radius: 7px;
+    border: 1.5px solid var(--mlf-border-light);
+    padding: 2px;
+    cursor: pointer;
+}
+
+/* ── Preset buttons ── */
+.preset-btn {
+    border-radius: 7px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--mlf-text-muted);
+    transition: all .15s;
+}
+.preset-btn:hover {
+    background: var(--mlf-primary);
+    color: var(--mlf-white);
+    border-color: var(--mlf-primary);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(31,187,0,.3);
+}
+
+/* ── Drag placeholder ── */
+.sortable-placeholder {
+    background: var(--mlf-gradient-surface-tint);
+    border: 2px dashed var(--mlf-primary);
+    border-radius: 8px;
+}
+
+/* ── Drop zone hover state ── */
+.main-drop-zone.drop-hover {
+    background: var(--mlf-surface);
+    border-color: var(--mlf-primary);
+}
+.sub-drop-zone.drop-hover {
+    background: var(--mlf-surface);
+    border-color: var(--mlf-secondary);
+}
+.social-drop-zone.drop-hover {
+    background: #FBF2E9;
+    border-color: var(--mlf-accent);
+}
+
+/* ── Empty builder state ── */
+.builder-empty, .builder-loading {
+    background: var(--mlf-gradient-surface-tint);
+    border-color: var(--mlf-border);
+    color: var(--mlf-text-light);
+    border-radius: 14px;
+}
+
+/* ── Submit button preview ── */
+.container-submit { padding-bottom: 4px; }
+.preview-submit-btn {
+    border-radius: 6px;
+    font-size: 15px;
+    font-weight: 600;
+    padding: 12px 28px;
+    letter-spacing: .01em;
+    transition: filter .15s, transform .15s;
+}
+.preview-submit-btn:hover { filter: brightness(1.04); transform: translateY(-1px); }
+
+/* ── Modal ── */
+.modal-content {
+    border-radius: 14px;
+    box-shadow: 0 24px 60px rgba(0,0,0,.25);
+    border: 1px solid var(--mlf-border);
+}
+.modal-header {
+    background: var(--mlf-gradient-secondary);
+    color: var(--mlf-white);
+    border-radius: 14px 14px 0 0;
+    font-size: 14px;
+}
+.modal-header button { color: rgba(255,255,255,.7); font-size: 20px; line-height: 1; }
+.modal-header button:hover { color: var(--mlf-white); }
+.modal-footer { background: var(--mlf-surface); border-radius: 0 0 14px 14px; }
+.modal-footer button.button-primary {
+    box-shadow: var(--mlf-btn-shadow);
+}
+.modal-footer button.button-primary:hover { opacity: .9; }
+
+/* ── Scrollbar styling (webkit) ── */
+.left-column::-webkit-scrollbar,
+#formBuilder::-webkit-scrollbar,
+.tab-content::-webkit-scrollbar { width: 5px; }
+.left-column::-webkit-scrollbar-track,
+#formBuilder::-webkit-scrollbar-track,
+.tab-content::-webkit-scrollbar-track { background: transparent; }
+.left-column::-webkit-scrollbar-thumb,
+#formBuilder::-webkit-scrollbar-thumb,
+.tab-content::-webkit-scrollbar-thumb {
+    background: var(--mlf-border); border-radius: 99px;
+}
+.left-column::-webkit-scrollbar-thumb:hover,
+#formBuilder::-webkit-scrollbar-thumb:hover,
+.tab-content::-webkit-scrollbar-thumb:hover { background: var(--mlf-text-light); }
+
+/* ── Current form title badge ── */
+#currentFormTitle {
+    background: var(--mlf-gradient-surface);
+    color: var(--mlf-white);
+    padding: 3px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .02em;
+}
+
+/* ── Selection info bar ── */
+.selection-info {
+    background: var(--mlf-gradient-accent-primary);
+    border-radius: 9px;
+    font-size: 12px;
+    font-weight: 600;
+}
+.selection-info .clear-selection {
+    background: rgba(255,255,255,.15);
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+}
+.selection-info .clear-selection:hover { background: rgba(255,255,255,.28); }

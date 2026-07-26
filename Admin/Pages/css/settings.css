@@ -1,0 +1,403 @@
+﻿/* =============================================================
+   My Login Form — Settings Page
+   Color/gradient tokens live in variables.css (loaded first as a
+   dependency — see Hooks::enqueue_admin_assets()). This file only
+   holds Settings-specific layout and component rules.
+   ============================================================= */
+
+/* ── Layout ── */
+.my-login-form-settings {
+    max-width: 1400px;
+    margin: 20px 20px 0 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.settings-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+}
+
+.settings-header h1 {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: var(--mlf-heading);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+}
+
+.settings-header h1 i {
+    width: 36px;
+    height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    color: var(--mlf-white);
+    background: var(--mlf-gradient-primary);
+    border-radius: 10px;
+    flex-shrink: 0;
+}
+
+.settings-layout {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 30px;
+    margin-top: 20px;
+}
+
+/* ── Cards ── */
+.settings-card {
+    background: var(--mlf-bg);
+    border-radius: var(--mlf-radius);
+    box-shadow: var(--mlf-shadow);
+    border: 1px solid var(--mlf-border-light);
+    margin-bottom: 24px;
+    overflow: hidden;
+    transition: box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.settings-card:hover {
+    box-shadow: var(--mlf-shadow-lg);
+    border-color: var(--mlf-border);
+}
+
+.card-header {
+    padding: 18px 22px;
+    border-bottom: 1px solid var(--mlf-border);
+    background: var(--mlf-surface);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.card-header h2,
+.card-header h3 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--mlf-heading);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    letter-spacing: -0.01em;
+}
+
+.card-header h2 i,
+.card-header h3 i {
+    color: var(--mlf-primary);
+    font-size: 13px;
+    width: 26px;
+    height: 26px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--mlf-primary-tint);
+    border-radius: 7px;
+    flex-shrink: 0;
+}
+
+.card-body { padding: 24px; }
+
+/* ── Form Fields ── */
+.form-field { margin-bottom: 24px; }
+
+.form-field label:not(.checkbox-label) {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: var(--mlf-text);
+    font-size: 14px;
+}
+
+.form-field input[type="text"],
+.form-field input[type="password"],
+.form-field input[type="number"],
+.form-field select {
+    width: 100%;
+    max-width: 420px;
+    padding: 10px 14px;
+    border: 1.5px solid var(--mlf-border);
+    border-radius: var(--mlf-radius-sm);
+    font-size: 14px;
+    background: var(--mlf-bg);
+    color: var(--mlf-text);
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-field input[type="text"]:focus,
+.form-field input[type="password"]:focus,
+.form-field input[type="number"]:focus,
+.form-field select:focus {
+    border-color: var(--mlf-primary);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(31,187,0,0.15);
+}
+
+.form-field .small-text { width: 100px; }
+
+.form-field textarea {
+    width: 100%;
+    max-width: 620px;
+    padding: 12px 14px;
+    border: 1.5px solid var(--mlf-border);
+    border-radius: var(--mlf-radius-sm);
+    font-family: monospace;
+    font-size: 13px;
+    resize: vertical;
+    background: var(--mlf-bg);
+    color: var(--mlf-text);
+    transition: border-color 0.2s;
+}
+
+.form-field textarea:focus {
+    border-color: var(--mlf-primary);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(31,187,0,0.15);
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    font-weight: 500;
+    color: var(--mlf-text);
+    font-size: 14px;
+}
+
+.description {
+    margin-top: 7px;
+    color: var(--mlf-text-muted);
+    font-size: 13px;
+}
+
+.description.success { color: var(--mlf-success); }
+.description.warning { color: var(--mlf-warning-text); }
+.description.error   { color: var(--mlf-danger); }
+
+.sub-field {
+    margin-top: 14px;
+    padding-left: 20px;
+    border-left: 3px solid var(--mlf-border);
+}
+
+/* ── System Info Table ── */
+.system-info-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.system-info-table tr {
+    border-bottom: 1px solid var(--mlf-border-light);
+}
+
+.system-info-table td {
+    padding: 10px 4px;
+    font-size: 13px;
+}
+
+.system-info-table td:first-child {
+    color: var(--mlf-text-muted);
+    font-weight: 500;
+    width: 45%;
+}
+
+.system-info-table td:last-child {
+    color: var(--mlf-text);
+    text-align: right;
+}
+
+/* ── Quick Actions ── */
+.quick-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.button-block {
+    justify-content: center;
+    width: 100%;
+    text-align: center;
+    background: var(--mlf-btn-primary-bg);
+    color: var(--mlf-btn-primary-text) !important;
+    border: none;
+    font-weight: var(--mlf-btn-font-weight);
+    cursor: pointer;
+    transition: var(--mlf-btn-transition);
+}
+
+.button-block:hover { opacity: 0.92; transform: translateY(-1px); }
+
+.button-warning {
+    background: var(--mlf-accent-tint) !important;
+    border: 1.5px solid var(--mlf-accent) !important;
+    color: var(--mlf-accent) !important;
+}
+
+.button-warning:hover {
+    background: var(--mlf-accent) !important;
+    color: var(--mlf-btn-primary-text) !important;
+}
+
+/* ── Docs ── */
+.docs-links {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.doc-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    color: var(--mlf-link);
+    text-decoration: none;
+    border-bottom: 1px solid var(--mlf-border-light);
+    font-size: 14px;
+    transition: padding-left 0.2s, color 0.2s;
+}
+
+.doc-link:hover {
+    padding-left: 6px;
+    color: var(--mlf-link-hover);
+}
+
+.docs-card {
+    background: var(--mlf-gradient-surface-tint);
+    border-left: 4px solid var(--mlf-primary);
+}
+
+/* ── Footer ── */
+.settings-footer {
+    text-align: center;
+    margin-top: 30px;
+    padding-top: 30px;
+    border-top: 2px solid var(--mlf-border);
+}
+
+.settings-footer .button-hero {
+    background: var(--mlf-btn-primary-bg);
+    color: var(--mlf-btn-primary-text);
+    border: none;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: var(--mlf-btn-shadow);
+    transition: var(--mlf-btn-transition);
+}
+
+.settings-footer .button-hero:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--mlf-btn-shadow-hover);
+}
+
+/* ── Modern Security Section Styles ── */
+.mlf-toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 0;
+    gap: 16px;
+}
+.mlf-toggle-info { flex: 1; }
+.mlf-toggle-title { display: block; font-weight: 600; font-size: 14px; color: var(--mlf-text); }
+.mlf-toggle-desc  { display: block; font-size: 12px; color: var(--mlf-text-muted); margin-top: 2px; }
+.mlf-switch { position: relative; display: inline-block; width: 44px; height: 24px; flex-shrink: 0; }
+.mlf-switch input { opacity: 0; width: 0; height: 0; }
+.mlf-slider {
+    position: absolute; inset: 0; cursor: pointer;
+    background: var(--mlf-border); border-radius: 24px; transition: .25s;
+}
+.mlf-slider:before {
+    content: ""; position: absolute;
+    width: 18px; height: 18px; left: 3px; bottom: 3px;
+    background: var(--mlf-white); border-radius: 50%; transition: .25s;
+    box-shadow: 0 1px 3px rgba(0,0,0,.2);
+}
+.mlf-switch input:checked + .mlf-slider { background: var(--mlf-primary); }
+.mlf-switch input:checked + .mlf-slider:before { transform: translateX(20px); }
+.mlf-sub-settings {
+    background: var(--mlf-surface); border: 1px solid var(--mlf-border);
+    border-radius: var(--mlf-radius-sm); padding: 14px 16px; margin: 8px 0 4px 0;
+}
+.mlf-divider { border: none; border-top: 1px solid var(--mlf-border); margin: 14px 0; }
+.mlf-section-sub { font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--mlf-text-muted); margin: 0 0 12px; }
+.mlf-number-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px,1fr)); gap: 14px; }
+.mlf-number-card {
+    background: var(--mlf-surface); border: 1px solid var(--mlf-border); border-radius: var(--mlf-radius-sm);
+    padding: 14px 16px; display: flex; flex-direction: column; gap: 6px;
+}
+.mlf-number-card label { font-weight: 600; font-size: 13px; color: var(--mlf-text); }
+.mlf-number-wrap { display: flex; align-items: center; gap: 6px; }
+.mlf-duration-wrap { display: flex; align-items: center; gap: 8px; }
+.mlf-num-btn {
+    width: 28px; height: 28px; border: 1px solid var(--mlf-border); background: var(--mlf-bg);
+    border-radius: 6px; font-size: 16px; line-height: 1; cursor: pointer; color: var(--mlf-secondary);
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+.mlf-num-btn:hover { background: var(--mlf-primary); color: var(--mlf-white); border-color: var(--mlf-primary); }
+.mlf-num-input {
+    width: 54px; text-align: center; border: 1px solid var(--mlf-border);
+    border-radius: 6px; padding: 4px 6px; font-size: 14px;
+    background: var(--mlf-bg); color: var(--mlf-text);
+}
+.mlf-unit { font-size: 12px; color: var(--mlf-text-muted); }
+.mlf-num-hint { font-size: 11px; color: var(--mlf-text-light); }
+.mlf-input-row label { display: block; font-weight: 600; font-size: 13px; margin-bottom: 5px; color: var(--mlf-text); }
+.mlf-text-input, .mlf-select-input {
+    width: 100%; max-width: 420px; padding: 8px 12px;
+    border: 1px solid var(--mlf-border); border-radius: 6px; font-size: 14px;
+    background: var(--mlf-bg); color: var(--mlf-text);
+}
+.mlf-text-input:focus, .mlf-select-input:focus { border-color: var(--mlf-primary); outline: none; box-shadow: 0 0 0 2px rgba(31,187,0,.15); }
+.mlf-badge-optional {
+    display: inline-block; font-size: 10px; font-weight: 500; color: var(--mlf-text-muted);
+    background: var(--mlf-surface); border: 1px solid var(--mlf-border); border-radius: 4px;
+    padding: 1px 6px; margin-left: 6px; vertical-align: middle;
+}
+
+/* ── Responsive ── */
+@media (max-width: 1200px) {
+    .settings-layout { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 768px) {
+    .form-field input[type="text"],
+    .form-field input[type="password"],
+    .form-field select,
+    .form-field textarea {
+        max-width: 100%;
+    }
+}
+
+/* ── Quick Actions loading overlay ── */
+.mlf-loading-overlay {
+    position: fixed;
+    inset: 0;
+    background: var(--mlf-overlay);
+    z-index: 999999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mlf-loading-spinner {
+    width: 44px;
+    height: 44px;
+    border: 4px solid rgba(255,255,255,0.25);
+    border-top-color: var(--mlf-primary);
+    border-radius: 50%;
+    animation: mlf-spin 0.8s linear infinite;
+}
+
+@keyframes mlf-spin {
+    0%   { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
