@@ -109,3 +109,18 @@ function my_login_form_registration_url() {
     }
     return wp_registration_url();
 }
+
+/**
+ * URL for the plugin's own "Login" page — used instead of wp_login_url(),
+ * which sends visitors to wp-login.php (WordPress's bare default form, not
+ * this plugin's Login page/flow). Mirrors my_login_form_registration_url()
+ * and my_login_form_lostpassword_url() above so every form type can link
+ * back to whichever of the other two flows it needs.
+ */
+function my_login_form_login_url() {
+    $page_id = (int) get_option('my_login_form_login_page_id');
+    if ($page_id && get_post_status($page_id) === 'publish') {
+        return get_permalink($page_id);
+    }
+    return wp_login_url();
+}

@@ -1344,6 +1344,17 @@
 
             // Create new form
             $('#createNewFormBtn').on('click', () => $('#createFormModal').show());
+
+            // Template gallery (Create New Form modal) — click a card to
+            // select it (single choice, "Blank" included as the
+            // always-present no-template option). Scoped to the modal so it
+            // never touches the separate gallery in the Templates tab below.
+            $(document).on('click', '#createFormModal .template-card', function() {
+                $('#createFormModal .template-card').removeClass('is-selected');
+                $(this).addClass('is-selected');
+                $('#newFormTemplate').val($(this).data('template-key') || '');
+            });
+
             $('#createFormSubmitBtn').on('click', () => {
                 const name = $('#newFormName').val().trim();
                 if (!name) { alert('Enter a form name'); return; }
@@ -1352,10 +1363,43 @@
                     action: 'my_login_create_form',
                     form_name: name,
                     form_type: $('#newFormType').val(),
+                    template_key: $('#newFormTemplate').val(),
                     nonce: MyLoginDesigner.nonces.create_form
                 }, r => {
                     if (r.success) location.reload();
                     else { alert('Could not create form: ' + (r.data || '')); $btn.prop('disabled', false).text('Create'); }
+                });
+            });
+
+            // Template gallery (Templates tab) — restyle the form currently
+            // loaded in the Designer. Requires an explicit Apply click (no
+            // accidental overwrite of hand-written CSS from a stray click).
+            $(document).on('click', '#tab-templates .template-card', function() {
+                $('#tab-templates .template-card').removeClass('is-selected');
+                $(this).addClass('is-selected');
+                $('#applyFormTemplate').val($(this).data('template-key') || '');
+                $('#applyTemplateBtn').prop('disabled', false);
+            });
+
+            $('#applyTemplateBtn').on('click', () => {
+                if (!this.currentFormId) { alert(MyLoginDesigner.strings.select_form); return; }
+                const key = $('#applyFormTemplate').val();
+                if (!key) return;
+                if (!confirm(MyLoginDesigner.strings.apply_template_confirm)) return;
+                const $btn = $('#applyTemplateBtn').prop('disabled', true);
+                $.post(MyLoginDesigner.ajax_url, {
+                    action: 'my_login_apply_template',
+                    form_id: this.currentFormId,
+                    template_key: key,
+                    nonce: MyLoginDesigner.nonces.apply_template
+                }, r => {
+                    if (r.success) {
+                        alert(MyLoginDesigner.strings.template_applied);
+                        this.loadForm(this.currentFormId);
+                    } else {
+                        alert('Could not apply template: ' + (r.data || ''));
+                        $btn.prop('disabled', false);
+                    }
                 });
             });
 

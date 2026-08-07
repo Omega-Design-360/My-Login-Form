@@ -1070,13 +1070,17 @@ class FormsShortcodes {
 
             <?php if ($form->form_type === 'login'): ?>
             <div class="my-login-extra-links">
-                <a href="<?php echo esc_url(my_login_form_lostpassword_url()); ?>"><?php _e('Lost your password?', 'my-login-form'); ?></a>
+                <a class="my-login-extra-link" href="<?php echo esc_url(my_login_form_lostpassword_url()); ?>"><i class="fas fa-key" aria-hidden="true"></i> <?php _e('Forgot your password?', 'my-login-form'); ?></a>
                 <?php // Same resolution AuthAjax::handle_register() uses — the
                 // plugin's own toggle wins if set, falling back to core WP's
                 // "Anyone can register" only when the plugin has no opinion. ?>
                 <?php if (get_option('my_login_form_allow_registration', get_option('users_can_register'))): ?>
-                    &nbsp;|&nbsp;<a href="<?php echo esc_url(my_login_form_registration_url()); ?>"><?php _e('Register', 'my-login-form'); ?></a>
+                    <a class="my-login-extra-link" href="<?php echo esc_url(my_login_form_registration_url()); ?>"><i class="fas fa-user-plus" aria-hidden="true"></i> <?php _e('Create New Account', 'my-login-form'); ?></a>
                 <?php endif; ?>
+            </div>
+            <?php elseif ($form->form_type === 'register'): ?>
+            <div class="my-login-extra-links">
+                <a class="my-login-extra-link" href="<?php echo esc_url(my_login_form_login_url()); ?>"><i class="fas fa-arrow-right-to-bracket" aria-hidden="true"></i> <?php _e('Already have an account? Log in', 'my-login-form'); ?></a>
             </div>
             <?php endif; ?>
         </div>

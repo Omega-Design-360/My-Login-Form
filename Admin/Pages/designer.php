@@ -17,6 +17,30 @@ $forms_table = $wpdb->prefix . 'my_login_forms';
 $all_forms = $wpdb->get_results("SELECT * FROM $forms_table ORDER BY sort_order ASC, id DESC");
 $forms = $all_forms;
 $total_forms = is_array($forms) ? count($forms) : 0;
+$form_templates = \MyLoginForm\Templates\FormTemplates::get_all();
+
+// Renders a tiny mockup of a template inside its gallery card (a title bar,
+// two input bars, a button pill) instead of just a flat color swatch + emoji
+// — so an admin can actually tell templates apart at a glance instead of
+// guessing from a gradient block. Shared between the "Create New Form" modal
+// gallery and the Templates tab gallery below.
+if (!function_exists('mlf_render_template_preview')) {
+    function mlf_render_template_preview($swatch_bg, $icon, $preview = null) {
+        ob_start();
+        ?>
+        <div class="template-swatch" style="background:<?php echo esc_attr($swatch_bg); ?>;">
+            <span class="template-swatch-icon"><?php echo esc_html($icon); ?></span>
+            <?php if ($preview): ?>
+                <div class="tpl-mini-title" style="background:<?php echo esc_attr($preview['title']); ?>;"></div>
+                <div class="tpl-mini-input" style="background:<?php echo esc_attr($preview['input_bg']); ?>;border-color:<?php echo esc_attr($preview['input_border'] ?? 'transparent'); ?>;"></div>
+                <div class="tpl-mini-input" style="background:<?php echo esc_attr($preview['input_bg']); ?>;border-color:<?php echo esc_attr($preview['input_border'] ?? 'transparent'); ?>;"></div>
+                <div class="tpl-mini-btn" style="background:<?php echo esc_attr($preview['button']); ?>;"></div>
+            <?php endif; ?>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+}
 
 // ============================================
 // 2. DEFINE FORM CONTAINERS
@@ -335,6 +359,7 @@ $save_nonce = wp_create_nonce('my_login_save_form_settings');
 $save_css_nonce = wp_create_nonce('my_login_save_form_css');
 $save_js_nonce = wp_create_nonce('my_login_save_form_js');
 $save_html_nonce = wp_create_nonce('my_login_save_form_html');
+$apply_template_nonce = wp_create_nonce('my_login_apply_template');
 
 // URLs
 $admin_ajax_url = admin_url('admin-ajax.php');
@@ -362,6 +387,7 @@ $designer_data = [
         'save_css' => $save_css_nonce,
         'save_js' => $save_js_nonce,
         'save_html' => $save_html_nonce,
+        'apply_template' => $apply_template_nonce,
     ],
     'current_form_id' => $current_form_id,
     'current_form_key' => $current_form_key,
@@ -383,6 +409,8 @@ $designer_data = [
         'duplicate_confirm' => __('Duplicate this form?', 'my-login-form'),
         'delete_confirm' => __('Delete this form?', 'my-login-form'),
         'clear_confirm' => __('Clear all fields?', 'my-login-form'),
+        'apply_template_confirm' => __('Apply this template? It will replace this form\'s Custom CSS.', 'my-login-form'),
+        'template_applied' => __('Template applied!', 'my-login-form'),
     ]
 ];
 ?>
@@ -525,6 +553,7 @@ $designer_data = [
                 <div class="tabs-header">
                     <button class="tab-btn active" data-tab="layout"><i class="fas fa-ruler-combined"></i> <?php _e('Layout', 'my-login-form'); ?></button>
                     <button class="tab-btn" data-tab="customization"><i class="fas fa-palette"></i> <?php _e('Customization', 'my-login-form'); ?></button>
+                    <button class="tab-btn" data-tab="templates"><i class="fas fa-swatchbook"></i> <?php _e('Templates', 'my-login-form'); ?></button>
                     <button class="tab-btn" data-tab="css"><i class="fas fa-brush"></i> <?php _e('CSS', 'my-login-form'); ?></button>
                     <button class="tab-btn" data-tab="js"><i class="fas fa-bolt"></i> <?php _e('JavaScript', 'my-login-form'); ?></button>
                     <button class="tab-btn" data-tab="settings"><i class="fas fa-gear"></i> <?php _e('Settings', 'my-login-form'); ?></button>
@@ -541,6 +570,27 @@ $designer_data = [
                 <div class="tab-content" id="tab-customization">
                     <div id="customizationContent">
                         <p class="placeholder-message"><i class="fas fa-palette"></i> <?php _e('Click the pencil icon on any element to edit its colors and styles here', 'my-login-form'); ?></p>
+                    </div>
+                </div>
+
+                <!-- TEMPLATES TAB -->
+                <div class="tab-content" id="tab-templates">
+                    <div class="settings-group">
+                        <h4><i class="fas fa-swatchbook"></i> <?php _e('Design Templates', 'my-login-form'); ?></h4>
+                        <p class="placeholder-message" style="margin-bottom:12px;">
+                            <?php _e('Pick a template to restyle the currently selected form. Applying one replaces this form\'s Custom CSS — any hand-written CSS already in the CSS tab will be overwritten.', 'my-login-form'); ?>
+                        </p>
+                        <input type="hidden" id="applyFormTemplate" value="">
+                        <div class="template-gallery">
+                            <?php foreach ($form_templates as $t_key => $t): ?>
+                            <div class="template-card" data-template-key="<?php echo esc_attr($t_key); ?>">
+                                <?php echo mlf_render_template_preview($t['swatch'], $t['icon'], $t['preview'] ?? null); ?>
+                                <div class="template-name"><?php echo esc_html($t['name']); ?></div>
+                                <div class="template-desc"><?php echo esc_html($t['description']); ?></div>
+                            </div>
+                            <?php endforeach; ?>
+                        </div>
+                        <button id="applyTemplateBtn" class="button-primary" style="margin-top:14px;" disabled><i class="fas fa-wand-magic-sparkles"></i> <?php _e('Apply Template to Current Form', 'my-login-form'); ?></button>
                     </div>
                 </div>
 
@@ -687,7 +737,7 @@ $designer_data = [
 </div>
 
 <div id="createFormModal" class="modal">
-    <div class="modal-content">
+    <div class="modal-content modal-content-wide">
         <div class="modal-header">
             <h3><?php _e('Create New Form', 'my-login-form'); ?></h3>
             <button class="close-modal">&times;</button>
@@ -704,6 +754,24 @@ $designer_data = [
                     <option value="login"><?php _e('Login', 'my-login-form'); ?></option>
                     <option value="register"><?php _e('Register', 'my-login-form'); ?></option>
                 </select>
+            </div>
+            <div class="form-group">
+                <label><?php _e('Design Template', 'my-login-form'); ?></label>
+                <input type="hidden" id="newFormTemplate" value="">
+                <div class="template-gallery">
+                    <div class="template-card is-selected" data-template-key="">
+                        <div class="template-swatch template-swatch-blank"><span>—</span></div>
+                        <div class="template-name"><?php _e('Blank', 'my-login-form'); ?></div>
+                        <div class="template-desc"><?php _e('Start plain, style it yourself later.', 'my-login-form'); ?></div>
+                    </div>
+                    <?php foreach ($form_templates as $t_key => $t): ?>
+                    <div class="template-card" data-template-key="<?php echo esc_attr($t_key); ?>">
+                        <?php echo mlf_render_template_preview($t['swatch'], $t['icon'], $t['preview'] ?? null); ?>
+                        <div class="template-name"><?php echo esc_html($t['name']); ?></div>
+                        <div class="template-desc"><?php echo esc_html($t['description']); ?></div>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
             </div>
         </div>
         <div class="modal-footer">

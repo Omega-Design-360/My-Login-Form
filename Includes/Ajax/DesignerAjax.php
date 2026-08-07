@@ -35,6 +35,7 @@ class DesignerAjax {
         add_action('wp_ajax_my_login_get_form', [$this, 'get_form']);
         add_action('wp_ajax_my_login_save_form', [$this, 'save_form']);
         add_action('wp_ajax_my_login_save_form_settings', [$this, 'save_form_settings']);
+        add_action('wp_ajax_my_login_apply_template', [$this, 'apply_template']);
 
         // // HTML file actions
         // add_action('wp_ajax_my_login_create_form_html', array($this, 'create_form_html'));
@@ -106,7 +107,8 @@ class DesignerAjax {
             'save_form' => 'my_login_save_form',
             'submit_form' => 'my_login_submit_form',
             'save_settings' => 'my_login_save_form_settings',
-            
+            'apply_template' => 'my_login_apply_template',
+
 
             // HTML file actions
             'create_html' => 'my_login_create_form_html',
@@ -303,6 +305,19 @@ class DesignerAjax {
                 ];
         }
 
+        // Optional visual template chosen in the "Create New Form" picker —
+        // just pre-fills settings/custom_css through the normal Designer CSS
+        // pipeline below, exactly as if the admin had pasted it into the CSS
+        // tab themselves. No template = old behaviour (plain default look).
+        $template_key = isset($_POST['template_key']) ? sanitize_key($_POST['template_key']) : '';
+        $template     = $template_key ? \MyLoginForm\Templates\FormTemplates::get($template_key) : null;
+        if ($template) {
+            $default_settings['custom_css']   = $template['custom_css'];
+            $default_settings['btn_color']    = $template['accent'];
+            $default_settings['border_color'] = $template['border_color'];
+            $default_settings['template_key'] = $template_key;
+        }
+
         // Generate form key
         $form_key = $this->generate_form_key($form_name);
 
@@ -342,7 +357,7 @@ class DesignerAjax {
             $js_file   = $js_dir   . $form_key . '.js';
 
             // Build complete CSS now that we have the real form ID.
-            file_put_contents($css_file,  $this->build_form_css($new_id, $default_settings, '', $default_containers));
+            file_put_contents($css_file,  $this->build_form_css($new_id, $default_settings, $default_settings['custom_css'] ?? '', $default_containers));
             file_put_contents($html_file, $default_html);
             file_put_contents($js_file,   '');
 
@@ -362,6 +377,73 @@ class DesignerAjax {
             error_log('Database error: ' . $error);
             wp_send_json_error('Database error: ' . $error);
         }
+    }
+
+    /**
+     * Apply one of the built-in visual templates (Includes/Templates/FormTemplates.php)
+     * to an already-existing form — the Templates tab's "later, on an existing
+     * form" counterpart to picking a template at create_form() time. Goes
+     * through the exact same build_form_css() pipeline an admin's own CSS-tab
+     * edits use, so it's just pre-filling settings.custom_css/btn_color/
+     * border_color rather than a separate rendering path.
+     */
+    public function apply_template() {
+        check_ajax_referer('my_login_apply_template', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(__('Unauthorized', 'my-login-form'));
+        }
+
+        $form_id      = isset($_POST['form_id']) ? intval($_POST['form_id']) : 0;
+        $template_key = isset($_POST['template_key']) ? sanitize_key($_POST['template_key']) : '';
+
+        if (!$form_id) {
+            wp_send_json_error(__('Invalid form ID', 'my-login-form'));
+        }
+
+        $template = \MyLoginForm\Templates\FormTemplates::get($template_key);
+        if (!$template) {
+            wp_send_json_error(__('Unknown template', 'my-login-form'));
+        }
+
+        global $wpdb;
+        $table = $wpdb->prefix . 'my_login_forms';
+        $form  = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table WHERE id = %d", $form_id));
+
+        if (!$form) {
+            wp_send_json_error(__('Form not found', 'my-login-form'));
+        }
+
+        $settings   = json_decode($form->settings, true);
+        $settings   = is_array($settings) ? $settings : array();
+        $containers = json_decode($form->form_containers, true);
+        $containers = is_array($containers) ? $containers : array();
+
+        $settings['custom_css']   = $template['custom_css'];
+        $settings['btn_color']    = $template['accent'];
+        $settings['border_color'] = $template['border_color'];
+        $settings['template_key'] = $template_key;
+
+        $css_dir = MY_LOGIN_FORM_DIR . 'Public/Forms/css/';
+        if (!file_exists($css_dir)) {
+            wp_mkdir_p($css_dir);
+        }
+        $css_file = $css_dir . $form->css_file;
+        file_put_contents($css_file, $this->build_form_css($form_id, $settings, $settings['custom_css'], $containers));
+
+        $wpdb->update(
+            $table,
+            array(
+                'settings'   => wp_json_encode($settings),
+                'updated_at' => current_time('mysql'),
+                'updated_by' => get_current_user_id(),
+            ),
+            array('id' => $form_id)
+        );
+
+        wp_send_json_success(array(
+            'message' => __('Template applied!', 'my-login-form'),
+        ));
     }
 
     /**
@@ -636,7 +718,9 @@ class DesignerAjax {
              . '.my-login-field-mismatch input{border-color:#8A0000!important}'
              . '.my-login-fade-in{opacity:0;transform:translateY(8px);transition:opacity .4s ease,transform .4s ease}'
              . '.my-login-fade-in.is-visible{opacity:1;transform:translateY(0)}'
-             . '.my-login-extra-links{text-align:center;margin-top:12px;font-size:13px;color:#6B8064}'
+             . '.my-login-extra-links{text-align:center;margin-top:22px;padding-top:16px;border-top:1px solid rgba(0,0,0,.08);font-size:13px;color:#6B8064;display:flex;flex-direction:column;align-items:center;gap:10px}'
+             . '.my-login-extra-links .my-login-extra-link{display:inline-flex;align-items:center;gap:6px}'
+             . '.my-login-extra-links .my-login-extra-link i{font-size:.95em;opacity:.75}'
              . '.my-login-greeting{margin-bottom:18px;text-align:center}'
              . '.my-login-greeting-title{margin:0 0 4px;font-size:22px;font-weight:700;color:#1A2E05}'
              . '.my-login-greeting-subtitle{margin:0;font-size:13px;color:#6B8064}';
