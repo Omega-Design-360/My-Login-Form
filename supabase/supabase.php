@@ -1991,37 +1991,54 @@ add_action('wp_ajax_nopriv_my_login_track_share', 'my_login_track_share_handler'
 if (!function_exists('my_login_track_share_handler')) {
 function my_login_track_share_handler() {
     check_ajax_referer('my_login_social_nonce', 'nonce');
-    
+
+    // This endpoint is reachable by anyone, logged in or not (share buttons
+    // are public). Cap it well above any real visitor's click rate so a
+    // script can't use it to flood the DB or force a schema check on every
+    // single request.
+    if (!my_login_form_rate_limit('track_share', my_login_form_client_ip(), 20, 5 * MINUTE_IN_SECONDS)) {
+        wp_send_json_error('Rate limit exceeded', 429);
+    }
+
     global $wpdb;
     $table = $wpdb->prefix . 'my_login_social_analytics';
-    
-    // Create table if not exists
-    $charset_collate = $wpdb->get_charset_collate();
-    $sql = "CREATE TABLE IF NOT EXISTS $table (
-        id bigint(20) NOT NULL AUTO_INCREMENT,
-        platform varchar(50) NOT NULL,
-        url text NOT NULL,
-        user_id bigint(20) DEFAULT 0,
-        ip_address varchar(45) DEFAULT NULL,
-        user_agent text,
-        shared_at datetime DEFAULT CURRENT_TIMESTAMP,
-        PRIMARY KEY (id),
-        KEY idx_platform (platform),
-        KEY idx_shared_at (shared_at)
-    ) $charset_collate;";
-    
-    require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
-    dbDelta($sql);
-    
+
+    // dbDelta() parses and diffs the full schema — far too expensive to run
+    // on every request. Verify the table exists at most once a day (cached
+    // in a transient) rather than unconditionally on every share click.
+    if (false === get_transient('mlf_social_analytics_table_ok')) {
+        $charset_collate = $wpdb->get_charset_collate();
+        $sql = "CREATE TABLE IF NOT EXISTS $table (
+            id bigint(20) NOT NULL AUTO_INCREMENT,
+            platform varchar(50) NOT NULL,
+            url text NOT NULL,
+            user_id bigint(20) DEFAULT 0,
+            ip_address varchar(45) DEFAULT NULL,
+            user_agent varchar(255) DEFAULT NULL,
+            shared_at datetime DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            KEY idx_platform (platform),
+            KEY idx_shared_at (shared_at)
+        ) $charset_collate;";
+
+        require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+        dbDelta($sql);
+        set_transient('mlf_social_analytics_table_ok', 1, DAY_IN_SECONDS);
+    }
+
+    if (empty($_POST['platform']) || empty($_POST['url'])) {
+        wp_send_json_error('Missing platform or url');
+    }
+
     $data = [
-        'platform' => sanitize_text_field($_POST['platform']),
-        'url' => esc_url_raw($_POST['url']),
-        'user_id' => get_current_user_id(),
-        'ip_address' => $_SERVER['REMOTE_ADDR'],
-        'user_agent' => $_SERVER['HTTP_USER_AGENT'],
-        'shared_at' => current_time('mysql')
+        'platform'   => substr(sanitize_text_field(wp_unslash($_POST['platform'])), 0, 50),
+        'url'        => substr(esc_url_raw(wp_unslash($_POST['url'])), 0, 2000),
+        'user_id'    => get_current_user_id(),
+        'ip_address' => substr(my_login_form_client_ip(), 0, 45),
+        'user_agent' => isset($_SERVER['HTTP_USER_AGENT']) ? substr(sanitize_text_field(wp_unslash($_SERVER['HTTP_USER_AGENT'])), 0, 255) : '',
+        'shared_at'  => current_time('mysql'),
     ];
-    
+
     $wpdb->insert($table, $data);
     wp_send_json_success();
 }

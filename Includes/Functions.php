@@ -29,6 +29,37 @@ function my_login_form_is_feature_enabled($feature) {
 }
 
 /**
+ * Lightweight transient-based rate limiter — no external dependencies (uses
+ * an object cache automatically if the site has one, wp_options otherwise).
+ * $subject is whatever the limit should be scoped to (an IP, an email, a
+ * combination) — the same $bucket+$subject pair shares one counter.
+ *
+ * Returns true (and counts this call) if still under the limit, false if
+ * $subject has already hit $max_attempts within $window_seconds. Callers
+ * that only want to count failures should call this AFTER confirming
+ * failure, not before attempting the action.
+ */
+function my_login_form_rate_limit(string $bucket, string $subject, int $max_attempts, int $window_seconds): bool {
+    $key   = 'mlf_rl_' . $bucket . '_' . md5($subject);
+    $count = (int) get_transient($key);
+    if ($count >= $max_attempts) {
+        return false;
+    }
+    set_transient($key, $count + 1, $window_seconds);
+    return true;
+}
+
+/**
+ * Client IP for rate-limiting purposes. Deliberately only trusts
+ * REMOTE_ADDR, not X-Forwarded-For/X-Real-IP — those are trivially spoofed
+ * by the client unless the host's proxy is known to overwrite them, which
+ * this plugin can't assume across every deployment.
+ */
+function my_login_form_client_ip(): string {
+    return isset($_SERVER['REMOTE_ADDR']) ? sanitize_text_field(wp_unslash($_SERVER['REMOTE_ADDR'])) : '0.0.0.0';
+}
+
+/**
  * Get template file path
  */
 function my_login_form_locate_template($template_name) {

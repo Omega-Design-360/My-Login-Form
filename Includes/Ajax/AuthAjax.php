@@ -367,7 +367,13 @@ class AuthAjax {
         }
 
         $user = get_user_by('email', $email);
-        if ($user) {
+        // Rate-limited per target email, not per IP — an attacker rotating
+        // IPs must not be able to email-bomb the same inbox. The response
+        // stays identical whether this account doesn't exist, was already
+        // rate-limited, or a code was actually just sent, so none of those
+        // are distinguishable from the outside (keeps the existing
+        // no-enumeration behavior below intact).
+        if ($user && my_login_form_rate_limit('otp_resend', $email, 3, 10 * MINUTE_IN_SECONDS)) {
             $sent = $this->send_supabase_email_otp($email);
             $this->log_otp_event($email, $context, $sent ? 'sent' : 'send_failed');
         }
@@ -442,6 +448,17 @@ class AuthAjax {
             wp_send_json_error(__('Please enter your username/email and password.', 'my-login-form'));
         }
 
+        // Brute-force guard: keyed on IP + the submitted username/email so
+        // one attacker IP can't grind through a single account's password
+        // space, without locking out everyone behind a shared/NAT'd IP for
+        // an unrelated account. Counts every attempt (not just failures) —
+        // 10 per 15 minutes is generous enough that no legitimate user
+        // mistyping a password a few times will ever notice it.
+        $attempt_key = my_login_form_client_ip() . '|' . strtolower($username);
+        if (!my_login_form_rate_limit('login_attempt', $attempt_key, 10, 15 * MINUTE_IN_SECONDS)) {
+            wp_send_json_error(__('Too many login attempts. Please try again in a few minutes.', 'my-login-form'));
+        }
+
         // Allow login with email address
         if (is_email($username)) {
             $user_obj = get_user_by('email', $username);
@@ -471,7 +488,11 @@ class AuthAjax {
         // prove the code before it's re-established in handle_verify_otp().
         if ($this->otp_required()) {
             wp_logout();
-            $sent = $this->send_supabase_email_otp($user->user_email);
+            // Shares the same per-email limit as the explicit "Resend code"
+            // button, so an attacker can't get around one by using the other.
+            $sent = my_login_form_rate_limit('otp_resend', $user->user_email, 3, 10 * MINUTE_IN_SECONDS)
+                ? $this->send_supabase_email_otp($user->user_email)
+                : false;
             $this->log_otp_event($user->user_email, 'login', $sent ? 'sent' : 'send_failed');
             wp_send_json_error([
                 'message'      => __('Enter the verification code we just emailed you to finish logging in.', 'my-login-form'),
@@ -799,6 +820,14 @@ class AuthAjax {
     }
 
     private function handle_custom_form($form): void {
+        // Now that submissions actually email the admin, an unthrottled
+        // endpoint would let anyone script-flood that inbox or burn through
+        // the site's Resend sending quota. Generous enough (10/10min per IP)
+        // that no real visitor filling out a form by hand will ever hit it.
+        if (!my_login_form_rate_limit('custom_form_submit', my_login_form_client_ip(), 10, 10 * MINUTE_IN_SECONDS)) {
+            wp_send_json_error(__('Too many submissions. Please try again in a few minutes.', 'my-login-form'));
+        }
+
         $fields = json_decode($form->fields, true) ?: array();
 
         // Validate required fields
