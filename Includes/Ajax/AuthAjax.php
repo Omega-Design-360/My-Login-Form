@@ -787,6 +787,27 @@ class AuthAjax {
                 $errors[] = sprintf(__('%s is required', 'my-login-form'), $field['label'] ?? $field_name);
             }
         }
+
+        // Reject obviously fake email-type fields: malformed addresses, and
+        // addresses whose domain has no mail server configured at all (typo'd
+        // or made-up domains like "test@test123.com"). This doesn't prove the
+        // visitor owns the inbox — only a clicked confirmation link could —
+        // but it catches the common case with no added friction.
+        foreach ($fields as $field_name => $field) {
+            if (($field['type'] ?? '') !== 'email' || empty($_POST[$field_name])) {
+                continue;
+            }
+            $email = sanitize_text_field(wp_unslash($_POST[$field_name]));
+            if (!is_email($email)) {
+                $errors[] = sprintf(__('%s is not a valid email address', 'my-login-form'), $field['label'] ?? $field_name);
+                continue;
+            }
+            $domain = substr(strrchr($email, '@'), 1);
+            if (function_exists('checkdnsrr') && !checkdnsrr($domain, 'MX') && !checkdnsrr($domain, 'A')) {
+                $errors[] = sprintf(__('%s doesn\'t look like a real email domain', 'my-login-form'), $field['label'] ?? $field_name);
+            }
+        }
+
         if (!empty($errors)) {
             wp_send_json_error(implode('<br>', $errors));
         }
