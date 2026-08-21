@@ -38,6 +38,7 @@ $default_settings = array(
     'custom_css' => '',
     'custom_js' => '',
     'delete_data_on_uninstall' => 0,
+    'restrict_users_rest_api' => 1,
 );
 
 // Merge with existing settings to ensure all keys exist
@@ -212,6 +213,21 @@ if (isset($_GET['settings-updated']) && $_GET['settings-updated'] === 'true') {
                             </div>
                             <label class="mlf-switch">
                                 <input type="checkbox" name="enable_2fa" value="1" <?php checked($settings['enable_2fa'], 1); ?>>
+                                <span class="mlf-slider"></span>
+                            </label>
+                        </div>
+
+                        <div class="mlf-divider"></div>
+
+                        <!-- REST API user data protection -->
+                        <p class="mlf-section-sub"><i class="fas fa-user-shield" style="margin-right:6px;"></i><?php _e('API & Data Privacy', 'my-login-form'); ?></p>
+                        <div class="mlf-toggle-row">
+                            <div class="mlf-toggle-info">
+                                <span class="mlf-toggle-title"><?php _e('Restrict User Data via REST API', 'my-login-form'); ?></span>
+                                <span class="mlf-toggle-desc"><?php _e('Closes off the sensitive "edit" view of WordPress\'s built-in /wp-json/wp/v2/users REST endpoint (email, roles, and any extra fields other plugins attach) so only site administrators can see it, and everyone else can only ever fetch their own record that way. The normal public author info (name, avatar, bio) that WordPress itself already exposes — used by the block editor\'s author picker, embeds, etc. — is left untouched, so this won\'t affect the editor or front-end.', 'my-login-form'); ?></span>
+                            </div>
+                            <label class="mlf-switch">
+                                <input type="checkbox" name="restrict_users_rest_api" value="1" <?php checked($settings['restrict_users_rest_api'], 1); ?>>
                                 <span class="mlf-slider"></span>
                             </label>
                         </div>

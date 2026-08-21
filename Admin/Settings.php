@@ -60,6 +60,7 @@ class Settings {
         'default_role' => 'subscriber',
         'allowed_email_domains' => '',
         'guest_default_name' => 'Sunshine',
+        'restrict_users_rest_api' => 1,
     ];
 
      /**
@@ -205,7 +206,14 @@ class Settings {
         } elseif (!isset($_POST['woocommerce_integration'])) {
             update_option('my_login_form_woocommerce_integration', 0);
         }
-        
+
+        // Same reasoning as woocommerce_integration above — this checkbox
+        // defaults to "on", so an unchecked box (which browsers simply omit
+        // from the POST) would otherwise fall through the generic loop above
+        // and get silently re-saved as its default (1) instead of the
+        // admin's actual opt-out.
+        update_option('my_login_form_restrict_users_rest_api', isset($_POST['restrict_users_rest_api']) ? 1 : 0);
+
         // Log the action
         if ($this->database && $this->database->admin()) {
             $this->database->admin()->log_admin_activity(get_current_user_id(), 'settings', 'updated', [
@@ -249,6 +257,7 @@ class Settings {
                 return in_array($value, $allowed, true) ? $value : 'subscriber';
 
             case 'allow_registration':
+            case 'restrict_users_rest_api':
                 return $value ? 1 : 0;
 
             case 'allowed_email_domains':

@@ -116,6 +116,11 @@ $system_status = array(
         'name' => __('Profile Page', 'my-login-form'),
         'value' => get_permalink(get_option('my_login_profile_page_id', 0)) ? __('Set', 'my-login-form') : __('Not set', 'my-login-form'),
         'status' => get_option('my_login_profile_page_id', 0) ? 'good' : 'warning'
+    ),
+    'rest_api_protection' => array(
+        'name' => __('REST API User Protection', 'my-login-form'),
+        'value' => get_option('my_login_form_restrict_users_rest_api', 1) ? __('Enabled', 'my-login-form') : __('Disabled', 'my-login-form'),
+        'status' => get_option('my_login_form_restrict_users_rest_api', 1) ? 'good' : 'warning'
     )
 );
 
@@ -529,9 +534,15 @@ $default_form_icon = 'fa-file-lines';
                     <h4><?php _e('Integrations', 'my-login-form'); ?></h4>
                     <table class="status-table">
                         <?php foreach ($system_status as $key => $status): ?>
-                            <?php if (in_array($key, ['supabase', 'social_login', 'profile_page'])): ?>
+                            <?php if (in_array($key, ['supabase', 'social_login', 'profile_page', 'rest_api_protection'])): ?>
                             <tr>
-                                <td class="status-label"><?php echo $status['name']; ?>:</td>
+                                <td class="status-label">
+                                    <?php if ($key === 'rest_api_protection'): ?>
+                                        <a href="<?php echo esc_url($settings_page_link); ?>" title="<?php esc_attr_e('Configure in Settings → Security', 'my-login-form'); ?>"><?php echo $status['name']; ?></a>:
+                                    <?php else: ?>
+                                        <?php echo $status['name']; ?>:
+                                    <?php endif; ?>
+                                </td>
                                 <td class="status-value"><?php echo esc_html($status['value']); ?></td>
                                 <td class="status-badge">
                                     <span class="badge badge-<?php echo $status['status']; ?>">
