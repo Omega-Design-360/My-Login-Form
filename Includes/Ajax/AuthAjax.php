@@ -778,6 +778,61 @@ class AuthAjax {
     }
 
     private function handle_custom_form($form): void {
+        $fields = json_decode($form->fields, true) ?: array();
+
+        // Validate required fields
+        $errors = array();
+        foreach ($fields as $field_name => $field) {
+            if (!empty($field['required']) && empty($_POST[$field_name])) {
+                $errors[] = sprintf(__('%s is required', 'my-login-form'), $field['label'] ?? $field_name);
+            }
+        }
+        if (!empty($errors)) {
+            wp_send_json_error(implode('<br>', $errors));
+        }
+
+        // Build an admin notification email out of the submitted field values.
+        $lines = array();
+        $reply_to_email = '';
+        foreach ($fields as $field_name => $field) {
+            if (!isset($_POST[$field_name]) || $_POST[$field_name] === '') {
+                continue;
+            }
+            $label = $field['label'] ?? $field_name;
+            $type  = $field['type'] ?? 'text';
+            $value = $type === 'textarea'
+                ? sanitize_textarea_field(wp_unslash($_POST[$field_name]))
+                : sanitize_text_field(wp_unslash($_POST[$field_name]));
+
+            if ($type === 'email' && is_email($value)) {
+                $reply_to_email = $value;
+            }
+
+            $lines[] = $label . ': ' . $value;
+        }
+
+        $site_name = get_bloginfo('name');
+        $subject   = sprintf(__('[%1$s] New submission: %2$s', 'my-login-form'), $site_name, $form->name);
+        $message   = implode("\n", $lines);
+        $headers   = $reply_to_email !== '' ? array('Reply-To: ' . $reply_to_email) : array();
+        $to        = get_option('admin_email');
+
+        $mail_failure_reason = null;
+        $capture_failure = function ($wp_error) use (&$mail_failure_reason) {
+            $mail_failure_reason = $wp_error->get_error_message();
+        };
+        add_action('wp_mail_failed', $capture_failure);
+        $sent = wp_mail($to, $subject, $message, $headers);
+        remove_action('wp_mail_failed', $capture_failure);
+
+        error_log(sprintf(
+            'My Login Form: contact submission (form #%d) wp_mail() to %s -> %s%s',
+            $form->id,
+            $to,
+            $sent ? 'sent' : 'FAILED',
+            $mail_failure_reason ? ' (' . $mail_failure_reason . ')' : ''
+        ));
+
         wp_send_json_success([
             'message'    => __('Form submitted successfully!', 'my-login-form'),
             'clear_form' => true,

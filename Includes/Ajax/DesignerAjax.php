@@ -58,11 +58,15 @@ class DesignerAjax {
         // Preview AJAX
         add_action('wp_ajax_my_login_preview_form', [$this, 'preview_form']);
         add_action('wp_ajax_my_login_preview_from_local', [$this, 'preview_from_local']);
-        
-        // Form Submission AJAX
-        add_action('wp_ajax_my_login_form_submit', [$this, 'submit_form']);
-        
 
+        // Form Submission AJAX is handled by AuthAjax::handle_form_submit() —
+        // registered for both wp_ajax_ and wp_ajax_nopriv_, so it covers
+        // logged-in and anonymous submitters alike. Do not also register
+        // wp_ajax_my_login_form_submit here: WordPress calls every callback
+        // registered for a hook, so a logged-in submitter would silently hit
+        // whichever of these two ran first, leaving the other completely
+        // dead — exactly the bug that made submit_form() below impossible to
+        // reach in production for months.
     }
 
     
@@ -1587,92 +1591,6 @@ class DesignerAjax {
         }
     }
 
-    
-
-    public function submit_form() {
-        // Verify nonce
-        if (!isset($_POST['my_login_form_nonce']) || 
-            !wp_verify_nonce($_POST['my_login_form_nonce'], 'my_login_form_nonce')) {
-            wp_send_json_error(__('Security check failed', 'my-login-form'));
-        }
-    
-        $form_id = intval($_POST['form_id']);
-    
-        global $wpdb;
-        $table = $wpdb->prefix . 'my_login_forms';
-        $form = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table WHERE id = %d", $form_id));
-    
-        if (!$form) {
-            wp_send_json_error(__('Form not found', 'my-login-form'));
-        }
-    
-        $fields = json_decode($form->fields, true) ?: array();
-    
-        // Validate required fields
-        $errors = array();
-        foreach ($fields as $field_name => $field) {
-            if (isset($field['required']) && $field['required']) {
-                if (empty($_POST[$field_name])) {
-                    $errors[] = sprintf(__('%s is required', 'my-login-form'), $field['label']);
-                }
-            }
-        }
-    
-        if (!empty($errors)) {
-            wp_send_json_error(implode('<br>', $errors));
-        }
-    
-        // Build an admin notification email out of the submitted field values.
-        $lines = array();
-        $reply_to_email = '';
-        foreach ($fields as $field_name => $field) {
-            if (!isset($_POST[$field_name]) || $_POST[$field_name] === '') {
-                continue;
-            }
-            $label = isset($field['label']) ? $field['label'] : $field_name;
-            $type  = isset($field['type']) ? $field['type'] : 'text';
-            $value = $type === 'textarea'
-                ? sanitize_textarea_field(wp_unslash($_POST[$field_name]))
-                : sanitize_text_field(wp_unslash($_POST[$field_name]));
-
-            if ($type === 'email' && is_email($value)) {
-                $reply_to_email = $value;
-            }
-
-            $lines[] = $label . ': ' . $value;
-        }
-
-        $site_name = get_bloginfo('name');
-        $subject   = sprintf(__('[%1$s] New submission: %2$s', 'my-login-form'), $site_name, $form->name);
-        $message   = implode("\n", $lines);
-        $headers   = $reply_to_email !== '' ? array('Reply-To: ' . $reply_to_email) : array();
-        $to        = get_option('admin_email');
-
-        // Always logs (not gated behind WP_DEBUG) so this is visible in the
-        // host's PHP error log even in production, where WP_DEBUG is normally off.
-        $mail_failure_reason = null;
-        $capture_failure = function ($wp_error) use (&$mail_failure_reason) {
-            $mail_failure_reason = $wp_error->get_error_message();
-        };
-        add_action('wp_mail_failed', $capture_failure);
-        $sent = wp_mail($to, $subject, $message, $headers);
-        remove_action('wp_mail_failed', $capture_failure);
-
-        error_log(sprintf(
-            'My Login Form: contact submission (form #%d) wp_mail() to %s -> %s%s',
-            $form_id,
-            $to,
-            $sent ? 'sent' : 'FAILED',
-            $mail_failure_reason ? ' (' . $mail_failure_reason . ')' : ''
-        ));
-
-        wp_send_json_success(array(
-            'message' => __('Form submitted successfully!', 'my-login-form'),
-            'clear_form' => true,
-            'redirect' => home_url()
-        ));
-    }
-    
     public function save_form_settings() {
     // Check if nonce exists
     if (!isset($_POST['nonce'])) {
