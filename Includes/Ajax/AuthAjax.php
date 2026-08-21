@@ -527,6 +527,10 @@ class AuthAjax {
             wp_send_json_error(__('Please enter a valid email address.', 'my-login-form'));
         }
 
+        if (!$this->has_real_email_domain($email)) {
+            wp_send_json_error(__('That email domain doesn\'t look like it can receive mail. Please check for a typo.', 'my-login-form'));
+        }
+
         if (email_exists($email)) {
             wp_send_json_error(__('An account with this email already exists.', 'my-login-form'));
         }
@@ -777,6 +781,23 @@ class AuthAjax {
         ]);
     }
 
+    /**
+     * Whether an email's domain has any mail server configured at all (MX,
+     * falling back to A per RFC 5321 §5.1). Doesn't prove the visitor owns
+     * the inbox — only a clicked confirmation link could — but it catches
+     * typo'd/made-up domains like "test@test123.com" with no added friction.
+     * Fails open (returns true) when checkdnsrr() isn't available, since
+     * some hosts disable it — better to accept an unverifiable address than
+     * block real signups/submissions because of a host restriction.
+     */
+    private function has_real_email_domain(string $email): bool {
+        if (!function_exists('checkdnsrr')) {
+            return true;
+        }
+        $domain = substr(strrchr($email, '@'), 1);
+        return checkdnsrr($domain, 'MX') || checkdnsrr($domain, 'A');
+    }
+
     private function handle_custom_form($form): void {
         $fields = json_decode($form->fields, true) ?: array();
 
@@ -802,8 +823,7 @@ class AuthAjax {
                 $errors[] = sprintf(__('%s is not a valid email address', 'my-login-form'), $field['label'] ?? $field_name);
                 continue;
             }
-            $domain = substr(strrchr($email, '@'), 1);
-            if (function_exists('checkdnsrr') && !checkdnsrr($domain, 'MX') && !checkdnsrr($domain, 'A')) {
+            if (!$this->has_real_email_domain($email)) {
                 $errors[] = sprintf(__('%s doesn\'t look like a real email domain', 'my-login-form'), $field['label'] ?? $field_name);
             }
         }
