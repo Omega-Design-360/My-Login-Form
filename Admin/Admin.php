@@ -97,7 +97,6 @@ class Admin {
         // Define components to load
         $components_to_load = [
             'assets'    => 'MyLoginForm\\Admin\\Assets',
-            'dashboard' => 'MyLoginForm\\Admin\\Dashboard',
             'menus'     => 'MyLoginForm\\Admin\\Menus',
             'notices'   => 'MyLoginForm\\Admin\\Notices',
             'settings'  => 'MyLoginForm\\Admin\\Settings'

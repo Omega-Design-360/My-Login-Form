@@ -55,7 +55,7 @@ class Loader {
     public function init(): self {
         // Initialize services first
         $this->init_services();
-        
+
         // Register hooks
         $this->register_hooks();
         
@@ -80,7 +80,6 @@ class Loader {
     private function init_services() {
         $this->services = [
             'database'      => 'MyLoginForm\\Database\\Database',
-            'security'      => 'MyLoginForm\\Security\\Nonce',
             'users'         => 'MyLoginForm\\Users\\Users',
             'shortcodes'    => 'MyLoginForm\\Shortcodes\\Shortcodes',
             'emails'        => 'MyLoginForm\\Emails\\Emails',
@@ -230,13 +229,6 @@ class Loader {
             'users' => [
                 'class'    => \MyLoginForm\Users\Users::class,
                 'priority' => 40,
-                'required' => false,
-                'deps'     => ['hooks','database'],
-                'enabled'  => true,
-            ],
-            'forms' => [
-                'class'    => \MyLoginForm\Forms\Forms::class,
-                'priority' => 50,
                 'required' => false,
                 'deps'     => ['hooks','database'],
                 'enabled'  => true,
