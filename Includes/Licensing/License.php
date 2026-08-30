@@ -2,8 +2,10 @@
 /**
  * My Login Form - License Client
  *
- * Talks to the licensing Edge Function (supabase/functions/license-api/index.ts)
- * over HTTPS and caches the result in WordPress options. This class is the
+ * Talks to the licensing Edge Function — its source is kept outside this
+ * repo, in the store-only my-login-form-licensing-backend project (see
+ * functions/license-api/index.ts there) — over HTTPS and caches the result
+ * in WordPress options. This class is the
  * *only* thing on a customer's site that knows anything about licensing —
  * it never talks to Supabase's database directly and never sees the
  * service_role key, only the Edge Function's public URL
@@ -116,7 +118,8 @@ class License {
     /**
      * Normalize a domain/URL for comparison: strip protocol, "www.", and any
      * trailing slash, lowercase. Mirrors the Edge Function's normalizeDomain()
-     * exactly (supabase/functions/license-api/index.ts) — normalizing identically on
+     * exactly (see the store-only my-login-form-licensing-backend project's
+     * functions/license-api/index.ts) — normalizing identically on
      * both ends means a logic difference between them can never itself cause
      * a false "different site" mismatch.
      *

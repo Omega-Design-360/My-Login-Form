@@ -31,7 +31,8 @@
  define('MY_LOGIN_FORM_MIN_WP', '5.6');
 
  // ============================================================================
- // LICENSING — the plugin's only secret is a URL (see supabase/licensing/README.md).
+ // LICENSING — the plugin's only secret is a URL (see the store-only
+ // my-login-form-licensing-backend project's licensing/README.md).
  // Baked in here so every shipped copy requires a real license from the
  // moment it's installed, with no bypass — Gate.php only skips enforcement
  // when this is blank, which a distributed copy should never be. Override

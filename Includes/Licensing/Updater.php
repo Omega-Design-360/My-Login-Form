@@ -4,7 +4,8 @@
  *
  * Gated by license validity: an expired or inactive license gets no update
  * information at all — no bug fixes, no security patches. This is the
- * enforcement that actually motivates renewals (see supabase/licensing/README.md) —
+ * enforcement that actually motivates renewals (see the store-only
+ * my-login-form-licensing-backend project's licensing/README.md) —
  * everything else (feature gating, admin nags) is secondary to this.
  *
  * Requires a companion update-server endpoint you host separately
