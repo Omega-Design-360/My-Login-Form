@@ -18,19 +18,19 @@
 
 1. [Who is this plugin for?](#who-is-this-plugin-for)
 2. [Key features](#key-features)
-3. [How the plugin is organized](#how-the-plugin-is-organized)
-4. [Installation](#installation)
-5. [Getting started](#getting-started)
-6. [The Form Designer](#the-form-designer)
-7. [Shortcodes reference](#shortcodes-reference)
-8. [Admin dashboard pages](#admin-dashboard-pages)
-9. [Settings reference](#settings-reference)
-10. [Supabase integration (social login & OTP)](#supabase-integration-social-login--otp)
-11. [WooCommerce integration](#woocommerce-integration)
-12. [Email delivery (Resend)](#email-delivery-resend)
-13. [Licensing](#licensing)
-14. [Security notes](#security-notes)
-15. [Database tables created](#database-tables-created)
+3. [Installation](#installation)
+4. [Getting started](#getting-started)
+5. [The Form Designer](#the-form-designer)
+6. [Shortcodes reference](#shortcodes-reference)
+7. [Admin dashboard pages](#admin-dashboard-pages)
+8. [Settings reference](#settings-reference)
+9. [Supabase integration (social login & OTP)](#supabase-integration-social-login--otp)
+10. [WooCommerce integration](#woocommerce-integration)
+11. [Email delivery (Resend)](#email-delivery-resend)
+12. [Licensing](#licensing)
+13. [Security notes](#security-notes)
+14. [Database tables created](#database-tables-created)
+15. [How the plugin is organized (for developers)](#how-the-plugin-is-organized-for-developers)
 16. [Known limitations / incomplete features](#known-limitations--incomplete-features)
 17. [FAQ](#faq)
 18. [Support](#support)
@@ -60,30 +60,8 @@ This is a **commercial, license‑gated plugin** (see [Licensing](#licensing)): 
 - **User Data dashboard** — searchable/paginated user list (works against core WordPress users, or an imported/synced data set), CSV export, bulk Supabase sync, bulk WordPress‑account creation from imported records, per‑user detail and delete.
 - **Merge tags & conditional content** — drop `{first_name}`, `{email}`, etc. straight into page/post content (with a configurable guest fallback name), and wrap content in `[my_login_if_logged_in]` / `[my_login_if_logged_out]` blocks.
 - **Resend‑powered transactional email** — optional integration with [Resend](https://resend.com) via HTTP API or SMTP relay, so password‑reset and account emails land reliably.
-- **Security by default** — nonce verification on every AJAX action, capability checks, sanitized input / escaped output, anti‑enumeration error messages, configurable IP/user blocklists, login attempt lockouts, and reCAPTCHA support.
+- **Security by default** — nonce verification on every AJAX action, capability checks, sanitized input / escaped output, anti‑enumeration error messages, configurable IP/user blocklists, and rate limiting on login, OTP, and form-submission endpoints to block automated abuse.
 - **Translation‑ready** — full `my-login-form` text domain, `.pot` file included under `languages/`.
-
----
-
-## How the plugin is organized
-
-```
-my-login-form/
-├── my-login-form.php          # Bootstrap: constants, autoloader, hooks, HPOS compatibility
-├── Admin/                     # Admin UI: menus, dashboard, settings, form designer, assets
-├── Includes/
-│   ├── Ajax/                  # AJAX handlers (auth, designer, dashboard, users, settings, licensing, onboarding)
-│   ├── Core/                  # Autoloader + hook registration
-│   ├── Database/              # Custom table schemas (forms, users, logs, OTP, admin sessions)
-│   ├── Emails/                # wp_mail overrides / Resend integration
-│   ├── Integrations/          # WooCommerce integration
-│   ├── Licensing/             # License gate, activation client, renewal notices, update checker
-│   ├── Shortcodes/            # Public-facing shortcode + merge-tag rendering
-│   └── Lifecycle/              # Activation / deactivation / uninstall routines
-├── Public/Forms/               # Generated per-form CSS/JS/HTML assets + renderer
-├── supabase/                   # Supabase "Integration Hub" admin page, REST client, OTP/social login backend
-└── languages/                  # Translation files (.pot)
-```
 
 ---
 
@@ -124,6 +102,8 @@ Located at **My Login Form → Form Designer**.
 **Per‑form settings**: redirect after login, redirect after registration (home / profile / login / custom URL), which social providers to show, and a code editor tab for form‑specific CSS/JS.
 
 Each saved form generates its own `Public/Forms/css/{form_key}.css`, `Public/Forms/js/{form_key}.js`, and `Public/Forms/html/{form_key}.html` — assets are only loaded on pages where that form's shortcode actually appears.
+
+**Custom, Welcome, and Opt‑in forms** (any form type other than Login/Register/Forgot Password/Reset Password) work as a contact‑form‑style tool: on submission, every field's label and value are emailed to the site's Administration Email Address (WordPress's own **Settings → General**, not this plugin's settings), with the visitor's own address set as the Reply‑To if one of the fields is type Email. Required‑field validation runs first, and any Email‑type field is checked for both valid formatting and a real, mail‑capable domain before the notification is sent — this rejects obvious typos and made‑up addresses without any extra step for the visitor.
 
 ---
 
@@ -171,7 +151,7 @@ All pages live under the **My Login Form** top‑level menu (`manage_options` ca
 **My Login Form → Settings**, organized into tabs:
 
 - **General** — default redirect after login/registration, WooCommerce integration toggle, allow‑registration toggle, default role for new self‑registered users (locked to Customer/Subscriber — never an elevated role), allowed email domains, default guest name for merge tags.
-- **Security** — reCAPTCHA site/secret keys, email‑verification (OTP) toggle, session timeout, max login attempts and lockout duration, IP blocklist and user blocklist (one per line).
+- **Security** — reCAPTCHA site/secret key fields *(not yet functional — see [Known limitations](#known-limitations--incomplete-features))*, email‑verification (OTP) toggle, session timeout, max login attempts and lockout duration, IP blocklist and user blocklist (one per line).
 - **Email** — welcome‑email toggle, admin new‑registration notification toggle, Resend API key and From name/email (HTTP‑API integration — see below).
 - **Custom Code** — site‑wide custom CSS and JavaScript.
 - **Advanced** — delete‑data‑on‑uninstall toggle, a System Information panel (versions, active integrations, form/user counts), and Quick Actions (clear cache, reset settings, export/import settings as JSON).
@@ -240,7 +220,7 @@ Need a license? See the **Buy a License** link on the gate screen or Settings pa
 - All input sanitized, all output escaped.
 - Login error messages are generic to avoid username/email enumeration; OTP resend responds identically whether or not an account exists.
 - Self‑registration can never be assigned an elevated role — hardcoded to Customer/Subscriber regardless of misconfiguration.
-- Configurable IP and user blocklists, login‑attempt lockouts, and optional reCAPTCHA.
+- Configurable IP and user blocklists, login‑attempt lockouts, and rate limiting on login, OTP send/resend, and form submissions — each capped per IP (or per email, for OTP) within a rolling time window, so a script can't brute‑force a password or mass‑spam the admin's inbox.
 - Secrets (license keys, API keys, Supabase service‑role key) are stored with `autoload` disabled and are never redisplayed in full in the admin UI.
 
 ---
@@ -264,12 +244,44 @@ Uninstalling the plugin only removes these tables and options if you've explicit
 
 ---
 
+## How the plugin is organized (for developers)
+
+Everything below is internal file layout — skip this section unless you're editing the plugin's code.
+
+```
+my-login-form/
+├── my-login-form.php          # Bootstrap: constants, autoloader, hooks, HPOS compatibility
+├── Admin/                     # Admin UI: menus, dashboard, settings, form designer, assets
+├── Includes/
+│   ├── Ajax/                  # AJAX handlers (auth, designer, dashboard, users, settings, licensing, onboarding)
+│   ├── Core/                  # Autoloader + hook registration
+│   ├── Database/              # Custom table schemas (forms, users, logs, OTP, admin sessions)
+│   ├── Emails/                # wp_mail overrides / Resend integration
+│   ├── Integrations/          # WooCommerce integration
+│   ├── Licensing/             # License gate + activation client (talks to the Edge Function by URL only —
+│   │                          # never sees the backend's source or its secret; see below)
+│   ├── Shortcodes/            # Public-facing shortcode + merge-tag rendering
+│   └── Lifecycle/              # Activation / deactivation / uninstall routines
+├── Public/Forms/               # Generated per-form CSS/JS/HTML assets + renderer
+├── supabase/                   # Customer-facing Supabase integration: Integration Hub admin page,
+│                                # REST client, OTP/social login backend, social-share tracking
+└── languages/                  # Translation files (.pot)
+```
+
+The license-generation/validation backend (the Edge Function's source, its database schema, and the
+store-side WooCommerce license-key generator) intentionally lives **outside** this folder entirely, in a
+separate `my-login-form-licensing-backend` project — nothing in a customer's install ever needs or
+contains that code, so there's nothing to accidentally leak by handing someone this plugin's ZIP.
+
+---
+
 ## Known limitations / incomplete features
 
 In the interest of accurate documentation:
 
 - **Firebase** is referenced in a couple of internal labels and notices, but there is currently no working admin UI or AJAX path for it — treat it as not yet available. Supabase is the supported OAuth/verification backend.
-- A standalone Form Designer prototype file exists in the codebase but isn't linked from any menu — it has no effect on the plugin you interact with in `wp-admin`.
+- **reCAPTCHA is not yet functional.** The Settings → Security tab has fields for a site key and secret key, but nothing currently renders the reCAPTCHA widget on the frontend or verifies a token on submission. Filling these in has no effect. Rate limiting (see [Security notes](#security-notes)) is the active protection against automated abuse today.
+- `Admin/Pages/designerdemo.php` is a standalone Form Designer prototype page that exists in the codebase but isn't linked from any menu — it has no effect on the plugin you interact with in `wp-admin`.
 
 ---
 
@@ -295,6 +307,9 @@ No. The plugin is a complete standalone WordPress login/registration solution wi
 
 **Is the plugin translation‑ready?**
 Yes — fully internationalized under the `my-login-form` text domain, with a `.pot` file in `languages/`.
+
+**I built a contact-style (Custom) form — where do submissions go?**
+Straight to your site's Administration Email Address (WordPress's own **Settings → General**), as a plain email listing every field's label and value. Reply to that email and it goes to whatever address the visitor entered, if the form has an email field.
 
 ---
 
