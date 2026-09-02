@@ -91,7 +91,7 @@ $current_page = $current_page ?? 1;
     <div class="users-actions-bar">
         <div class="search-container">
             <form method="get">
-                <input type="hidden" name="page" value="my-login-form-users">
+                <input type="hidden" name="page" value="my-login-form-users-data">
                 <div class="search-wrapper">
                     <input type="search" name="s" value="<?php echo esc_attr($search); ?>" 
                            placeholder="<?php _e('Search by name or email...', 'my-login-form'); ?>" 
@@ -191,7 +191,7 @@ $current_page = $current_page ?? 1;
                 <?php else: ?>
                     <?php foreach ($users as $user): ?>
                         <tr>
-                            <th class="check-column"><input type="checkbox" name="user_ids[]" value="<?php echo $user->id; ?>"></th>
+                            <th class="check-column"><input type="checkbox" name="user_ids[]" value="<?php echo $user->id; ?>" data-source="<?php echo esc_attr($user->source); ?>"></th>
                             <td><?php echo $user->id; ?></td>
                             <td class="user-name">
                                 <div class="user-avatar">
@@ -273,7 +273,7 @@ $current_page = $current_page ?? 1;
                                 <button onclick="viewUser(<?php echo intval($user->id); ?>, '<?php echo esc_js($user->source); ?>')" class="button button-small action-view" title="<?php _e('View Details', 'my-login-form'); ?>">
                                     <i class="fas fa-eye"></i>
                                 </button>
-                                <button onclick="editUser(<?php echo intval($user->id); ?>)" class="button button-small action-edit" title="<?php _e('Edit', 'my-login-form'); ?>">
+                                <button onclick="editUser(<?php echo intval($user->id); ?>, '<?php echo esc_js($user->source); ?>')" class="button button-small action-edit" title="<?php _e('Edit', 'my-login-form'); ?>">
                                     <i class="fas fa-edit"></i>
                                 </button>
                                 <button onclick="deleteUser(<?php echo intval($user->id); ?>, '<?php echo esc_js($user->source); ?>')" class="button button-small action-delete" title="<?php _e('Delete', 'my-login-form'); ?>">
@@ -301,6 +301,40 @@ $current_page = $current_page ?? 1;
             </div>
             <div class="modal-footer">
                 <button onclick="closeUserModal()" class="button"><?php _e('Close', 'my-login-form'); ?></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Edit Modal -->
+    <div id="userEditModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><?php _e('Edit User', 'my-login-form'); ?></h2>
+                <button class="modal-close" onclick="closeUserEditModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="userEditContent">
+                <input type="hidden" id="editUserId" value="">
+                <input type="hidden" id="editUserSource" value="">
+                <p>
+                    <label for="editFirstName"><?php _e('First Name', 'my-login-form'); ?></label><br>
+                    <input type="text" id="editFirstName" class="regular-text">
+                </p>
+                <p>
+                    <label for="editLastName"><?php _e('Last Name', 'my-login-form'); ?></label><br>
+                    <input type="text" id="editLastName" class="regular-text">
+                </p>
+                <p>
+                    <label for="editEmail"><?php _e('Email', 'my-login-form'); ?></label><br>
+                    <input type="email" id="editEmail" class="regular-text">
+                </p>
+                <p>
+                    <label for="editPhone"><?php _e('Phone', 'my-login-form'); ?></label><br>
+                    <input type="text" id="editPhone" class="regular-text">
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button onclick="closeUserEditModal()" class="button"><?php _e('Cancel', 'my-login-form'); ?></button>
+                <button onclick="saveUserEdit()" class="button button-primary"><?php _e('Save Changes', 'my-login-form'); ?></button>
             </div>
         </div>
     </div>

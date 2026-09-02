@@ -38,10 +38,21 @@ class AuthAjax {
         // cookie — "remember me" being unchecked/hidden shouldn't mean
         // re-logging in every few hours.
         add_filter('auth_cookie_expiration', [$this, 'extend_auth_cookie_expiration'], 10, 3);
+
+        // Tracks last-login time and login count for every user (not just
+        // ones signing in through this plugin's own form) — the Users Data
+        // "View Details" modal and the Dashboard's Active Users stat both
+        // read these mlf_last_login/mlf_login_count meta keys already.
+        add_action('wp_login', [$this, 'track_user_login'], 10, 2);
     }
 
     public function extend_auth_cookie_expiration($expiration, $user_id, $remember) {
         return $remember ? 10 * DAY_IN_SECONDS : 7 * DAY_IN_SECONDS;
+    }
+
+    public function track_user_login(string $user_login, \WP_User $user): void {
+        update_user_meta($user->ID, 'mlf_last_login', current_time('mysql'));
+        update_user_meta($user->ID, 'mlf_login_count', (int) get_user_meta($user->ID, 'mlf_login_count', true) + 1);
     }
 
     /**

@@ -1,7 +1,7 @@
 /* =============================================================
    My Login Form — Shared Admin Design Tokens
    Color / gradient / button variables used by every admin page
-   (Dashboard, Users Data, Settings, Supabase, Designer, Onboarding).
+   (Dashboard, Users Data, Settings, Supabase, Designer).
    Loaded once, before each page's own stylesheet, so there is a
    single source of truth for the brand palette.
    ============================================================= */

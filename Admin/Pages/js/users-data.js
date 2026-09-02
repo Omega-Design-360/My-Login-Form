@@ -14,19 +14,70 @@ function applyBulkAction() {
         return;
     }
 
+    // Sync / Create WP Users operate on all pending users (same as their
+    // dedicated toolbar buttons) rather than the checkbox selection, since
+    // that's what their AJAX endpoints support.
+    if (action === 'sync') {
+        syncWithSupabase();
+        return;
+    }
+
+    if (action === 'create_wp') {
+        createWordPressUsers();
+        return;
+    }
+
+    // action === 'delete'
     const checkboxes = document.querySelectorAll('input[name="user_ids[]"]:checked');
     if (checkboxes.length === 0) {
         alert('Please select at least one user');
         return;
     }
 
-    if (action === 'delete' && !confirm('Are you sure you want to delete selected users? This action cannot be undone.')) {
+    if (!confirm('Are you sure you want to delete selected users? This action cannot be undone.')) {
         return;
     }
 
-    // Set the bulk action field and submit the form
-    document.getElementById('bulk_action_field').value = action;
-    document.getElementById('users-form').submit();
+    const userIds = Array.from(checkboxes).map(cb => cb.value);
+    const source = checkboxes[0].dataset.source || 'plugin';
+
+    const applyBtn = document.querySelector('.bulkactions .button.action');
+    const originalText = applyBtn ? applyBtn.innerHTML : '';
+    if (applyBtn) {
+        applyBtn.disabled = true;
+        applyBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting...';
+    }
+
+    const params = new URLSearchParams();
+    params.append('nonce', myLoginFormUsersData.nonce);
+    params.append('source', source);
+    userIds.forEach(id => params.append('user_ids[]', id));
+
+    fetch(myLoginFormUsersData.ajaxUrl + '?action=my_login_form_bulk_delete', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: params
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.data.message);
+            location.reload();
+        } else {
+            alert('Error: ' + (data.data && data.data.message ? data.data.message : data.data));
+        }
+    })
+    .catch(error => {
+        alert('Network error: ' + error);
+    })
+    .finally(() => {
+        if (applyBtn) {
+            applyBtn.disabled = false;
+            applyBtn.innerHTML = originalText;
+        }
+    });
 }
 
 // Export CSV
@@ -179,8 +230,91 @@ function viewUser(userId, source) {
 }
 
 // Edit User
-function editUser(userId) {
-    alert('Edit user feature coming soon!');
+function editUser(userId, source) {
+    const modal = document.getElementById('userEditModal');
+
+    document.getElementById('editUserId').value = userId;
+    document.getElementById('editUserSource').value = source || 'plugin';
+    document.getElementById('editFirstName').value = '';
+    document.getElementById('editLastName').value = '';
+    document.getElementById('editEmail').value = '';
+    document.getElementById('editPhone').value = '';
+
+    modal.style.display = 'flex';
+
+    fetch(myLoginFormUsersData.ajaxUrl + '?action=my_login_form_get_user', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+            user_id: userId,
+            source: source || 'plugin',
+            nonce: myLoginFormUsersData.nonce
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const user = data.data;
+            document.getElementById('editFirstName').value = user.first_name || '';
+            document.getElementById('editLastName').value = user.last_name || '';
+            document.getElementById('editEmail').value = user.email || '';
+            document.getElementById('editPhone').value = user.phone || '';
+        } else {
+            alert('Error loading user details');
+            closeUserEditModal();
+        }
+    })
+    .catch(error => {
+        alert('Network error: ' + error);
+        closeUserEditModal();
+    });
+}
+
+// Save edited user
+function saveUserEdit() {
+    const userId = document.getElementById('editUserId').value;
+    const source = document.getElementById('editUserSource').value;
+    const email = document.getElementById('editEmail').value.trim();
+
+    if (!email) {
+        alert('Email is required');
+        return;
+    }
+
+    fetch(myLoginFormUsersData.ajaxUrl + '?action=my_login_form_update_user', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+            user_id: userId,
+            source: source,
+            first_name: document.getElementById('editFirstName').value,
+            last_name: document.getElementById('editLastName').value,
+            email: email,
+            phone: document.getElementById('editPhone').value,
+            nonce: myLoginFormUsersData.nonce
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.data.message);
+            location.reload();
+        } else {
+            alert('Error: ' + (data.data && data.data.message ? data.data.message : data.data));
+        }
+    })
+    .catch(error => {
+        alert('Network error: ' + error);
+    });
+}
+
+// Close user edit modal
+function closeUserEditModal() {
+    document.getElementById('userEditModal').style.display = 'none';
 }
 
 // Delete User
@@ -226,10 +360,17 @@ document.getElementById('userDetailsModal')?.addEventListener('click', function(
     }
 });
 
+document.getElementById('userEditModal')?.addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeUserEditModal();
+    }
+});
+
 // Close modal on escape key
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
         closeUserModal();
+        closeUserEditModal();
     }
 });
 

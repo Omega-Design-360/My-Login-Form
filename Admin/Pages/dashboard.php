@@ -29,27 +29,75 @@
     // User Data Page Link
     $user_data_page_link = admin_url('admin.php?page=my-login-form-user-data');
 
-    // Instead of accessing private property directly, use the getter
-    $recent_users = $users_table->get_users(array('limit' => 5, 'orderby' => 'created_at', 'order' => 'DESC'));
+    global $wpdb;
 
     // Get all forms
     $all_forms = $forms_table->get_all_forms();
     $recent_forms = array_slice($all_forms, 0, 5);
-
-    // Get all users
-    $all_users = $users_table->get_users(array('limit' => 100, 'orderby' => 'created_at', 'order' => 'DESC'));
-    $recent_users = array_slice($all_users, 0, 5);
-
-    // Calculate stats
     $total_forms = count($all_forms);
     $active_forms = count(array_filter($all_forms, function($form) { return $form->status === 'active'; }));
 
-    $total_users = $users_table->get_users_count();
-    $today_users = count($users_table->get_users(array('date_from' => date('Y-m-d 00:00:00'))));
-    $active_users = count($users_table->get_users(array('last_login' => date('Y-m-d H:i:s', strtotime('-30 days')))));
+    // ── Determine user data source ─────────────────────────────
+    // Same fallback the Users Data page uses: the plugin's custom user
+    // table is only ever populated by the Supabase import / CSV bulk-import
+    // features — real registrations are created via wp_create_user()
+    // straight into WordPress's own users table, so the plugin table is
+    // normally empty. Falling back to WP users whenever it's empty keeps
+    // these cards reflecting the site's real registered users.
+    $use_plugin_table = $users_table->get_users_count() > 0;
 
-    // Social login users
-    $social_users = count($users_table->get_users(array('social_provider' => 'not_empty')));
+    if ($use_plugin_table) {
+        $user_stats   = $users_table->get_user_statistics();
+        $total_users  = $user_stats['total_users'];
+        $today_users  = $users_table->get_users_count(array('date_from' => date('Y-m-d 00:00:00', current_time('timestamp'))));
+        $active_users = $user_stats['active_users_last_30_days'];
+        $social_users = $user_stats['social_logins'];
+
+        $all_users    = $users_table->get_users(array('limit' => 100, 'orderby' => 'created_at', 'order' => 'DESC'));
+        $recent_users = array_slice($all_users, 0, 5);
+
+        $chart_counter = function($date) use ($users_table) {
+            return $users_table->get_users_count(array(
+                'date_from' => $date . ' 00:00:00',
+                'date_to'   => $date . ' 23:59:59'
+            ));
+        };
+    } else {
+        $wp_counts    = count_users();
+        $total_users  = (int) $wp_counts['total_users'];
+        $today_users  = (int) $wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(*) FROM {$wpdb->users} WHERE user_registered >= %s",
+            date('Y-m-d 00:00:00', current_time('timestamp'))
+        ));
+        $active_users = (int) $wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(*) FROM {$wpdb->usermeta} WHERE meta_key = 'mlf_last_login' AND meta_value >= %s",
+            date('Y-m-d H:i:s', current_time('timestamp') - 30 * DAY_IN_SECONDS)
+        ));
+        $social_users = (int) $wpdb->get_var(
+            "SELECT COUNT(DISTINCT user_id) FROM {$wpdb->usermeta} WHERE meta_key = 'mlf_social_provider' AND meta_value != ''"
+        );
+
+        $recent_wp_users = get_users(array('number' => 5, 'orderby' => 'registered', 'order' => 'DESC'));
+        $recent_users = array_map(function($wp_user) {
+            $u = new \stdClass();
+            $u->id              = $wp_user->ID;
+            $u->user_email      = $wp_user->user_email;
+            $u->user_first_name = get_user_meta($wp_user->ID, 'first_name', true);
+            $u->user_last_name  = get_user_meta($wp_user->ID, 'last_name', true);
+            $u->created_at      = $wp_user->user_registered;
+            // Mirrors AuthAjax's own convention: absent meta (users never run
+            // through this plugin's OTP flow) reads as verified, not pending.
+            $u->email_verified  = get_user_meta($wp_user->ID, 'mlf_email_verified', true) !== '0';
+            return $u;
+        }, $recent_wp_users);
+
+        $chart_counter = function($date) use ($wpdb) {
+            return (int) $wpdb->get_var($wpdb->prepare(
+                "SELECT COUNT(*) FROM {$wpdb->users} WHERE DATE(user_registered) = %s",
+                $date
+            ));
+        };
+    }
 
     // Form types distribution
     $form_types = array();
@@ -70,14 +118,11 @@
 // Chart data for last 7 days
 $chart_labels = array();
 $chart_data = array();
+$today_timestamp = current_time('timestamp');
 for ($i = 6; $i >= 0; $i--) {
-    $date = date('Y-m-d', strtotime("-$i days"));
+    $date = date('Y-m-d', $today_timestamp - ($i * DAY_IN_SECONDS));
     $chart_labels[] = date('M j', strtotime($date));
-    $count = count($users_table->get_users(array(
-        'date_from' => $date . ' 00:00:00',
-        'date_to' => $date . ' 23:59:59'
-    )));
-    $chart_data[] = $count;
+    $chart_data[] = $chart_counter($date);
 }
 
 // System status

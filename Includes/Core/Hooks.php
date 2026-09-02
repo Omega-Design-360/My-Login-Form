@@ -280,7 +280,6 @@ public function enqueue_admin_assets($hook): void {
         'my-login-form-supabase'         => 'supabase',
         'my-login-form-social-supabase'  => 'supabase',
         'my-login-form-settings'         => 'settings',
-        'my-login-form-onboarding'       => 'onboarding',
     ];
     
     // Get page identifier (default to dashboard)
@@ -390,9 +389,16 @@ public function enqueue_admin_assets($hook): void {
         // settings.js's Quick Actions (Clear Cache / Reset / Export / Import)
         // call Admin\Settings's AJAX handlers, which all check this nonce.
         if ($page_id === 'settings') {
+            // WordPress's native CodeMirror editor for the Custom CSS/JS
+            // fields, same component used on the Designer page.
+            $css_editor_settings = wp_enqueue_code_editor(['type' => 'text/css']);
+            $js_editor_settings  = wp_enqueue_code_editor(['type' => 'application/javascript']);
+
             wp_localize_script('my-login-form-' . $page_id, 'myLoginFormAjax', [
-                'ajax_url' => admin_url('admin-ajax.php'),
-                'nonce'    => wp_create_nonce('my_login_form_dashboard_nonce'),
+                'ajax_url'          => admin_url('admin-ajax.php'),
+                'nonce'             => wp_create_nonce('my_login_form_dashboard_nonce'),
+                'cssEditorSettings' => $css_editor_settings,
+                'jsEditorSettings'  => $js_editor_settings,
             ]);
         }
 

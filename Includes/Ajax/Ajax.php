@@ -36,28 +36,14 @@ class Ajax {
             AuthAjax::get_instance();
         }
 
-        if (class_exists('MyLoginForm\Ajax\DashboardAjax')) {
-            DashboardAjax::get_instance();
-        }
-        
-        
         if (class_exists('MyLoginForm\Ajax\DesignerAjax')) {
             DesignerAjax::get_instance();
         }
 
-        // // Only load classes that actually exist
-        // if (class_exists('MyLoginForm\Ajax\OnboardingAjax')) {
-        //     OnboardingAjax::get_instance();
-        // }
-        
         if (class_exists('MyLoginForm\Ajax\SupabaseAjax')) {
             SupabaseAjax::get_instance();
         }
-        
-        if (class_exists('MyLoginForm\Ajax\SettingsAjax')) {
-            SettingsAjax::get_instance();
-        }
-        
+
         if (class_exists('MyLoginForm\Ajax\UsersdataAjax')) {
             UsersdataAjax::get_instance();
         }

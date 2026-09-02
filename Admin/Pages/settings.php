@@ -103,7 +103,7 @@ if (isset($_GET['settings-updated']) && $_GET['settings-updated'] === 'true') {
     <?php if (!$is_active): ?>
         <p style="color:#666666;font-size:13px;"><?php _e('Activate your license below to unlock the rest of these settings.', 'my-login-form'); ?></p>
     <?php else: ?>
-    <form method="post" action="<?php echo admin_url('admin-post.php'); ?>">
+    <form method="post" action="<?php echo admin_url('admin-post.php'); ?>" id="my-login-form-settings-form">
         <?php wp_nonce_field('my_login_form_save_settings'); ?>
         <input type="hidden" name="action" value="my_login_form_save_settings">
 
@@ -432,32 +432,6 @@ if (isset($_GET['settings-updated']) && $_GET['settings-updated'] === 'true') {
                                 <i class="fas fa-upload"></i> <?php _e('Import Settings', 'my-login-form'); ?>
                                 <input type="file" id="import-file" style="display: none;" accept=".json">
                             </label>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Documentation -->
-                <div class="settings-card docs-card">
-                    <div class="card-header">
-                        <h3><i class="fas fa-book"></i> <?php _e('Documentation', 'my-login-form'); ?></h3>
-                    </div>
-                    <div class="card-body">
-                        <div class="docs-links">
-                            <a href="#" target="_blank" class="doc-link">
-                                <i class="fas fa-play-circle"></i> <?php _e('Getting Started Guide', 'my-login-form'); ?>
-                            </a>
-                            <a href="#" target="_blank" class="doc-link">
-                                <i class="fas fa-video"></i> <?php _e('Video Tutorials', 'my-login-form'); ?>
-                            </a>
-                            <a href="#" target="_blank" class="doc-link">
-                                <i class="fas fa-question-circle"></i> <?php _e('FAQ', 'my-login-form'); ?>
-                            </a>
-                            <a href="#" target="_blank" class="doc-link">
-                                <i class="fas fa-bug"></i> <?php _e('Report a Bug', 'my-login-form'); ?>
-                            </a>
-                            <a href="#" target="_blank" class="doc-link">
-                                <i class="fas fa-star"></i> <?php _e('Rate this Plugin', 'my-login-form'); ?>
-                            </a>
                         </div>
                     </div>
                 </div>

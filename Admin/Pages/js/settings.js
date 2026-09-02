@@ -192,4 +192,26 @@ jQuery(document).ready(function($) {
             });
         });
     }
+
+    // ── CODE EDITORS (Custom CSS / JS) ─────────────────────
+    // Same wp.codeEditor component used on the Designer page. Falls back to
+    // the plain <textarea> if the user disabled syntax highlighting in their
+    // profile (wp_enqueue_code_editor() then returns false).
+    var cssEditor, jsEditor;
+
+    if (typeof wp !== 'undefined' && wp.codeEditor) {
+        if (myLoginFormAjax.cssEditorSettings && document.getElementById('custom_css')) {
+            cssEditor = wp.codeEditor.initialize(document.getElementById('custom_css'), myLoginFormAjax.cssEditorSettings);
+        }
+        if (myLoginFormAjax.jsEditorSettings && document.getElementById('custom_js')) {
+            jsEditor = wp.codeEditor.initialize(document.getElementById('custom_js'), myLoginFormAjax.jsEditorSettings);
+        }
+    }
+
+    // CodeMirror owns the keystrokes once initialized, so the underlying
+    // <textarea> never updates on its own — sync it back before the form posts.
+    $('#my-login-form-settings-form').on('submit', function() {
+        if (cssEditor) { cssEditor.codemirror.save(); }
+        if (jsEditor) { jsEditor.codemirror.save(); }
+    });
 });

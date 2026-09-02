@@ -1103,14 +1103,24 @@ public function table_exists() {
             $where[] = 'social_provider = %s';
             $query_params[] = $args['social_provider'];
         }
-        
+
+        if (!empty($args['date_from'])) {
+            $where[] = 'created_at >= %s';
+            $query_params[] = $args['date_from'];
+        }
+
+        if (!empty($args['date_to'])) {
+            $where[] = 'created_at <= %s';
+            $query_params[] = $args['date_to'];
+        }
+
         $where_clause = implode(' AND ', $where);
         $sql = "SELECT COUNT(*) FROM {$this->users_table} WHERE {$where_clause}";
-        
+
         if (!empty($query_params)) {
             $sql = $this->wpdb->prepare($sql, $query_params);
         }
-        
+
         return (int) $this->wpdb->get_var($sql);
     }
 

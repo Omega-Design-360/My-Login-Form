@@ -17,7 +17,9 @@ class UsersdataAjax {
 
     private function __construct() {
         add_action('wp_ajax_my_login_form_get_user',        [$this, 'get_user']);
+        add_action('wp_ajax_my_login_form_update_user',      [$this, 'update_user']);
         add_action('wp_ajax_my_login_form_delete_user',      [$this, 'delete_user']);
+        add_action('wp_ajax_my_login_form_bulk_delete',      [$this, 'bulk_delete']);
         add_action('wp_ajax_my_login_form_export_csv',       [$this, 'export_csv']);
         add_action('wp_ajax_my_login_form_sync_supabase',    [$this, 'sync_supabase']);
         add_action('wp_ajax_my_login_form_create_wp_users',  [$this, 'create_wp_users']);
@@ -113,6 +115,67 @@ class UsersdataAjax {
     }
 
     /**
+     * Update basic profile fields for a user, plugin table or native WP.
+     */
+    public function update_user(): void {
+        $this->guard();
+
+        $user_id = intval($_POST['user_id'] ?? 0);
+        $source  = sanitize_key($_POST['source'] ?? 'plugin');
+
+        if (!$user_id) {
+            wp_send_json_error(__('Invalid user ID.', 'my-login-form'));
+        }
+
+        $first_name = sanitize_text_field($_POST['first_name'] ?? '');
+        $last_name  = sanitize_text_field($_POST['last_name'] ?? '');
+        $email      = sanitize_email($_POST['email'] ?? '');
+        $phone      = sanitize_text_field($_POST['phone'] ?? '');
+
+        if (!is_email($email)) {
+            wp_send_json_error(__('Please enter a valid email address.', 'my-login-form'));
+        }
+
+        if ($source === 'wp') {
+            if (!get_userdata($user_id)) {
+                wp_send_json_error(__('User not found.', 'my-login-form'));
+            }
+
+            $result = wp_update_user([
+                'ID'         => $user_id,
+                'user_email' => $email,
+                'first_name' => $first_name,
+                'last_name'  => $last_name,
+            ]);
+
+            if (is_wp_error($result)) {
+                wp_send_json_error($result->get_error_message());
+            }
+
+            update_user_meta($user_id, 'phone', $phone);
+        } else {
+            $users_db = UsersDatabase::get_instance();
+
+            if (!$users_db->get_user($user_id)) {
+                wp_send_json_error(__('User not found.', 'my-login-form'));
+            }
+
+            $result = $users_db->update_user($user_id, [
+                'user_first_name' => $first_name,
+                'user_last_name'  => $last_name,
+                'user_email'      => $email,
+                'user_phone'      => $phone,
+            ]);
+
+            if (!$result) {
+                wp_send_json_error(__('Failed to update user.', 'my-login-form'));
+            }
+        }
+
+        wp_send_json_success(['message' => __('User updated successfully.', 'my-login-form')]);
+    }
+
+    /**
      * Delete a user from the plugin's custom table, or a native WP user.
      */
     public function delete_user(): void {
@@ -141,6 +204,54 @@ class UsersdataAjax {
         }
 
         wp_send_json_success(['message' => __('User deleted successfully.', 'my-login-form')]);
+    }
+
+    /**
+     * Delete multiple users at once (Bulk Actions on the Users Data page).
+     * All selected rows come from the same table (plugin or native WP), so
+     * a single $source applies to the whole batch.
+     */
+    public function bulk_delete(): void {
+        $this->guard();
+
+        $user_ids = array_filter(array_map('intval', (array) ($_POST['user_ids'] ?? [])));
+        $source   = sanitize_key($_POST['source'] ?? 'plugin');
+
+        if (empty($user_ids)) {
+            wp_send_json_error(__('No users selected.', 'my-login-form'));
+        }
+
+        $deleted = 0;
+        $failed  = 0;
+
+        foreach ($user_ids as $user_id) {
+            if ($source === 'wp') {
+                if ($user_id === get_current_user_id()) {
+                    $failed++;
+                    continue;
+                }
+                require_once ABSPATH . 'wp-admin/includes/user.php';
+                $result = wp_delete_user($user_id);
+            } else {
+                $users_db = UsersDatabase::get_instance();
+                $result   = $users_db->delete_user($user_id, false);
+            }
+
+            if ($result) {
+                $deleted++;
+            } else {
+                $failed++;
+            }
+        }
+
+        wp_send_json_success([
+            'message' => sprintf(
+                /* translators: 1: number deleted, 2: number failed */
+                __('%1$d user(s) deleted, %2$d failed.', 'my-login-form'),
+                $deleted,
+                $failed
+            ),
+        ]);
     }
 
     /**

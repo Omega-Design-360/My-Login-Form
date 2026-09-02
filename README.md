@@ -253,7 +253,7 @@ my-login-form/
 ├── my-login-form.php          # Bootstrap: constants, autoloader, hooks, HPOS compatibility
 ├── Admin/                     # Admin UI: menus, dashboard, settings, form designer, assets
 ├── Includes/
-│   ├── Ajax/                  # AJAX handlers (auth, designer, dashboard, users, settings, licensing, onboarding)
+│   ├── Ajax/                  # AJAX handlers (auth, designer, users, licensing)
 │   ├── Core/                  # Autoloader + hook registration
 │   ├── Database/              # Custom table schemas (forms, users, logs, OTP, admin sessions)
 │   ├── Emails/                # wp_mail overrides / Resend integration
