@@ -33,7 +33,30 @@ class Notices {
     }
 
     private function __construct() {
+        add_action('admin_notices', [$this, 'maybe_show_reconfirm_nag']);
         add_action('admin_notices', [$this, 'maybe_show_renewal_nag']);
+    }
+
+    /**
+     * @return void
+     */
+    public function maybe_show_reconfirm_nag(): void {
+        if (!current_user_can('manage_options')) {
+            return;
+        }
+
+        if (!License::get_instance()->needs_reconfirmation()) {
+            return;
+        }
+
+        $license_url = admin_url('admin.php?page=my-login-form-settings');
+
+        printf(
+            '<div class="notice notice-warning"><p>%1$s <a href="%2$s" style="font-weight:600;">%3$s</a></p></div>',
+            esc_html__('My Login Form was updated. Please re-confirm your license key to keep premium features active on this site.', 'my-login-form'),
+            esc_url($license_url),
+            esc_html__('Re-confirm License →', 'my-login-form')
+        );
     }
 
     /**

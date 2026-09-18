@@ -17,6 +17,7 @@ class LicenseAjax {
     private function __construct() {
         add_action('wp_ajax_my_login_license_activate',   [$this, 'activate']);
         add_action('wp_ajax_my_login_license_deactivate', [$this, 'deactivate']);
+        add_action('wp_ajax_my_login_license_reconfirm',  [$this, 'reconfirm']);
     }
 
     public static function get_instance(): self {
@@ -57,5 +58,22 @@ class LicenseAjax {
 
         $result = \MyLoginForm\Licensing\License::get_instance()->deactivate();
         wp_send_json_success(['message' => $result['message']]);
+    }
+
+    /**
+     * Re-confirm an already-active license after a plugin update.
+     */
+    public function reconfirm(): void {
+        check_ajax_referer('my_login_license_nonce', 'nonce');
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(['message' => __('Permission denied.', 'my-login-form')], 403);
+        }
+
+        $result = \MyLoginForm\Licensing\License::get_instance()->reconfirm();
+
+        if ($result['success']) {
+            wp_send_json_success(['message' => $result['message']]);
+        }
+        wp_send_json_error(['message' => $result['message']]);
     }
 }

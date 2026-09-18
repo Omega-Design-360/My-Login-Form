@@ -16,13 +16,45 @@ defined('ABSPATH') || exit;
 
 $license     = \MyLoginForm\Licensing\License::get_instance();
 $status_data = $license->get_status_data();
+$needs_reconfirm = $license->needs_reconfirmation();
 $is_active   = $license->is_active();
 $buy_url     = defined('MY_LOGIN_FORM_BUY_URL') ? MY_LOGIN_FORM_BUY_URL : '';
 $dashboard_url = admin_url('admin.php?page=my-login-form-dashboard');
 ?>
 <div id="mlf-license-card" style="max-width:700px;margin-bottom:24px;background:#ffffff;border:1px solid #DCE8D6;border-radius:14px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,0.06);">
 
-    <?php if ($is_active): ?>
+    <?php if ($needs_reconfirm): ?>
+        <div style="display:flex;gap:16px;align-items:center;padding:24px;background:#FBF3E6;border-bottom:1px solid #E8D6B8;">
+            <div style="width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,#B35B00,#8A4700);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                <i class="fas fa-sync-alt" style="color:#fff;font-size:20px;"></i>
+            </div>
+            <div>
+                <h2 style="margin:0 0 4px;font-size:18px;color:#1a1a1a;"><?php _e('Re-confirm Your License', 'my-login-form'); ?></h2>
+                <p style="margin:0;color:#444444;font-size:13px;"><?php _e('My Login Form was updated to a new version. Confirm your license key is still valid to keep premium features active.', 'my-login-form'); ?></p>
+            </div>
+        </div>
+        <div style="padding:24px;">
+            <table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:20px;">
+                <tr>
+                    <th style="text-align:left;padding:8px 0;color:#666666;width:160px;"><?php _e('License Key', 'my-login-form'); ?></th>
+                    <td style="padding:8px 0;color:#2A2A2A;font-family:monospace;"><?php echo esc_html($license->mask_key($status_data['key'])); ?></td>
+                </tr>
+                <tr>
+                    <th style="text-align:left;padding:8px 0;color:#666666;"><?php _e('Email', 'my-login-form'); ?></th>
+                    <td style="padding:8px 0;color:#2A2A2A;"><?php echo esc_html($status_data['email']); ?></td>
+                </tr>
+                <tr>
+                    <th style="text-align:left;padding:8px 0;color:#666666;"><?php _e('Plan', 'my-login-form'); ?></th>
+                    <td style="padding:8px 0;color:#2A2A2A;"><?php echo esc_html(ucwords(str_replace('-', ' ', $status_data['plan']))); ?></td>
+                </tr>
+            </table>
+            <button id="mlf-license-reconfirm" style="background:linear-gradient(135deg,#1FBB00,#0F5900);color:#fff;border:none;border-radius:8px;padding:12px 26px;font-weight:700;font-size:14px;cursor:pointer;">
+                <i class="fas fa-check-circle"></i> <?php _e('Re-confirm License', 'my-login-form'); ?>
+            </button>
+            <div id="mlf-license-message" style="display:none;margin-top:14px;font-size:13px;"></div>
+        </div>
+
+    <?php elseif ($is_active): ?>
         <div style="display:flex;gap:16px;align-items:center;padding:24px;background:#F4F8F1;border-bottom:1px solid #DCE8D6;">
             <div style="width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,#1FBB00,#0F5900);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
                 <i class="fas fa-check-circle" style="color:#fff;font-size:22px;"></i>
@@ -128,6 +160,24 @@ jQuery(document).ready(function($) {
                 // Verified — go straight to the Dashboard instead of
                 // reloading back onto this same Settings page.
                 setTimeout(function(){ window.location.href = '<?php echo esc_js($dashboard_url); ?>'; }, 1200);
+            } else {
+                $btn.prop('disabled', false);
+            }
+        }).fail(function() {
+            showMessage('<?php echo esc_js(__('Network error. Please try again.', 'my-login-form')); ?>', false);
+            $btn.prop('disabled', false);
+        });
+    });
+
+    $('#mlf-license-reconfirm').on('click', function() {
+        var $btn = $(this).prop('disabled', true);
+        $.post(ajaxurl, {
+            action: 'my_login_license_reconfirm',
+            nonce: nonce
+        }).done(function(r) {
+            showMessage((r && r.data && r.data.message) ? r.data.message : '<?php echo esc_js(__('Something went wrong.', 'my-login-form')); ?>', !!(r && r.success));
+            if (r && r.success) {
+                setTimeout(function(){ location.reload(); }, 1200);
             } else {
                 $btn.prop('disabled', false);
             }

@@ -1,20 +1,20 @@
 <?php
 /**
- * My Login Form - Self-Hosted Update Checker
+ * My Login Form - Self-Hosted Update Checker (GitHub Releases)
  *
  * Gated by license validity: an expired or inactive license gets no update
  * information at all — no bug fixes, no security patches. This is the
- * enforcement that actually motivates renewals (see the store-only
- * my-login-form-licensing-backend project's licensing/README.md) —
- * everything else (feature gating, admin nags) is secondary to this.
+ * enforcement that actually motivates renewals — everything else (feature
+ * gating, admin nags) is secondary to this.
  *
- * Requires a companion update-server endpoint you host separately
- * (MY_LOGIN_FORM_UPDATE_SERVER_URL) — this class only defines the contract
- * it expects that server to honor: a POST returning JSON shaped like
- * WordPress's own update_plugins transient entries (version, package,
- * slug, name, sections, etc. — the same shape EDD Software Licensing /
- * WooCommerce's plugin updater use). Building that server is out of scope
- * for the plugin itself; it's infrastructure you host wherever you like.
+ * Reads new versions straight from the plugin's GitHub repo
+ * (MY_LOGIN_FORM_GITHUB_REPO, "owner/repo") via the public Releases API —
+ * no separate update server to host. A tagged GitHub Release (not just a
+ * push to the branch) is what makes a new version appear in wp-admin: the
+ * release's tag name (e.g. "v1.2.0") becomes the version WordPress compares
+ * against MY_LOGIN_FORM_VERSION. If the release has a .zip asset attached,
+ * that's installed as-is; otherwise the release's source zipball is used
+ * and re-packaged into the correct folder name during install.
  *
  * @package MyLoginForm\Licensing
  */
@@ -43,6 +43,7 @@ class Updater {
     private function __construct() {
         add_filter('pre_set_site_transient_update_plugins', [$this, 'check_for_update']);
         add_filter('plugins_api', [$this, 'plugin_info'], 20, 3);
+        add_filter('upgrader_source_selection', [$this, 'fix_source_folder'], 10, 4);
     }
 
     /**
@@ -95,51 +96,132 @@ class Updater {
     }
 
     /**
-     * Fetches (and briefly caches) the latest-version info from the update
-     * server. Returns null on any failure — a missing/unreachable update
-     * server must never break the plugin, it just means no update shows up.
+     * A GitHub release's zip — whether the auto-generated source zipball
+     * or a hand-attached asset that wasn't built with the right top-level
+     * folder — almost never extracts to a directory named "my-login-form",
+     * which is what WP's upgrader needs to overwrite the existing plugin
+     * folder instead of installing a second, differently-named copy
+     * alongside it. This renames the extracted source directory to match
+     * right before WP copies it into place.
+     *
+     * @param string       $source
+     * @param string       $remote_source
+     * @param \WP_Upgrader $upgrader
+     * @param array        $hook_extra
+     * @return string|\WP_Error
+     */
+    public function fix_source_folder($source, $remote_source, $upgrader, $hook_extra = []) {
+        if (empty($hook_extra['plugin']) || $hook_extra['plugin'] !== MY_LOGIN_FORM_BASENAME) {
+            return $source;
+        }
+
+        $expected_slug = dirname(MY_LOGIN_FORM_BASENAME);
+        $current_slug  = basename(untrailingslashit($source));
+
+        if ($current_slug === $expected_slug) {
+            return $source;
+        }
+
+        global $wp_filesystem;
+        $corrected = trailingslashit($remote_source) . $expected_slug . '/';
+
+        if ($wp_filesystem->move($source, $corrected, true)) {
+            return $corrected;
+        }
+
+        return new \WP_Error(
+            'mlf_update_rename_failed',
+            __('Could not rename the downloaded update to the plugin folder name.', 'my-login-form')
+        );
+    }
+
+    /**
+     * Fetches (and briefly caches) the latest-release info from GitHub.
+     * Returns null on any failure — no releases published yet, repo
+     * unreachable, rate-limited, etc. must never break the plugin, it just
+     * means no update shows up.
      *
      * @return object|null
      */
     private function get_remote_info() {
-        $url = defined('MY_LOGIN_FORM_UPDATE_SERVER_URL') ? MY_LOGIN_FORM_UPDATE_SERVER_URL : '';
-        if (!$url) {
+        $repo = defined('MY_LOGIN_FORM_GITHUB_REPO') ? trim(MY_LOGIN_FORM_GITHUB_REPO) : '';
+        if (!$repo) {
             return null;
         }
 
-        $license_key   = get_option('my_login_form_license_key', '');
-        $transient_key = 'mlf_update_info_' . md5($url . $license_key);
+        $transient_key = 'mlf_update_info_' . md5($repo);
 
         $cached = get_transient($transient_key);
         if ($cached !== false) {
             return $cached ?: null;
         }
 
-        $response = wp_remote_post($url, [
+        $response = wp_remote_get('https://api.github.com/repos/' . $repo . '/releases/latest', [
             'timeout' => 10,
-            'body'    => [
-                'action'      => 'get_version',
-                'slug'        => dirname(MY_LOGIN_FORM_BASENAME),
-                'license_key' => $license_key,
-                'domain'      => License::get_instance()->normalize_domain(home_url()),
-                'version'     => defined('MY_LOGIN_FORM_VERSION') ? MY_LOGIN_FORM_VERSION : '',
+            'headers' => [
+                'Accept'     => 'application/vnd.github+json',
+                // GitHub's API rejects requests with no User-Agent.
+                'User-Agent' => 'MyLoginForm-Updater/' . (defined('MY_LOGIN_FORM_VERSION') ? MY_LOGIN_FORM_VERSION : '1.0'),
             ],
         ]);
 
         if (is_wp_error($response) || wp_remote_retrieve_response_code($response) !== 200) {
-            // Cache the miss briefly too, so an unreachable update server
-            // doesn't slow down every single wp-admin page load.
+            // Cache the miss briefly too (no release published yet, repo
+            // unreachable, rate-limited, ...) so a bad response doesn't slow
+            // down every single wp-admin page load.
             set_transient($transient_key, false, 15 * MINUTE_IN_SECONDS);
             return null;
         }
 
-        $data = json_decode(wp_remote_retrieve_body($response));
-        if (!$data || empty($data->version)) {
+        $release = json_decode(wp_remote_retrieve_body($response));
+        if (!$release || empty($release->tag_name)) {
             set_transient($transient_key, false, 15 * MINUTE_IN_SECONDS);
             return null;
         }
 
-        set_transient($transient_key, $data, 6 * HOUR_IN_SECONDS);
-        return $data;
+        $remote = $this->build_remote_object($repo, $release);
+
+        set_transient($transient_key, $remote, 6 * HOUR_IN_SECONDS);
+        return $remote;
+    }
+
+    /**
+     * Maps a GitHub release API response onto the shape WordPress expects
+     * from the update_plugins transient / plugins_api (version, package,
+     * slug, name, sections, etc.).
+     *
+     * @param string   $repo
+     * @param \stdClass $release
+     * @return object
+     */
+    private function build_remote_object(string $repo, \stdClass $release) {
+        $package = $release->zipball_url ?? '';
+
+        // Prefer a hand-attached .zip release asset over the auto-generated
+        // source zipball — an asset can be built to contain just the
+        // plugin's files, while the zipball is the entire repo at that tag.
+        if (!empty($release->assets) && is_array($release->assets)) {
+            foreach ($release->assets as $asset) {
+                if (!empty($asset->browser_download_url) && preg_match('/\.zip$/i', $asset->name ?? '')) {
+                    $package = $asset->browser_download_url;
+                    break;
+                }
+            }
+        }
+
+        $remote           = new \stdClass();
+        $remote->name     = 'My Login Form';
+        $remote->slug     = dirname(MY_LOGIN_FORM_BASENAME);
+        $remote->plugin   = MY_LOGIN_FORM_BASENAME;
+        $remote->version  = ltrim($release->tag_name, 'vV');
+        $remote->url      = $release->html_url ?? ('https://github.com/' . $repo);
+        $remote->package  = $package;
+        $remote->author   = '<a href="https://omegadesign.io">Omega Design</a>';
+        $remote->sections = [
+            'description' => wpautop(esc_html($release->name ?? $remote->version)),
+            'changelog'   => wpautop(wp_kses_post($release->body ?? '')),
+        ];
+
+        return $remote;
     }
 }

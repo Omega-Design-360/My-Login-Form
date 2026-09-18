@@ -47,11 +47,12 @@
      // license card.
      define('MY_LOGIN_FORM_BUY_URL', 'https://omegadesign.io/product/my-login-plugin/');
  }
- if (!defined('MY_LOGIN_FORM_UPDATE_SERVER_URL')) {
-     // Optional — a separately-hosted endpoint for self-hosted plugin
-     // updates (Includes/Licensing/Updater.php). Leave blank if you're
-     // distributing updates some other way.
-     define('MY_LOGIN_FORM_UPDATE_SERVER_URL', '');
+ if (!defined('MY_LOGIN_FORM_GITHUB_REPO')) {
+     // "owner/repo" on GitHub — Includes/Licensing/Updater.php reads new
+     // versions straight from this repo's Releases (a tagged Release is
+     // what makes a new version show up as an update in wp-admin, not
+     // every push). Leave blank to disable update checks entirely.
+     define('MY_LOGIN_FORM_GITHUB_REPO', 'Omega-Design-360/My-Login-Form');
  }
 
  include MY_LOGIN_FORM_DIR . 'Includes/Core/Core.php';

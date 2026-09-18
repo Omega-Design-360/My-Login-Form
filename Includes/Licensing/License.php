@@ -112,7 +112,52 @@ class License {
         if (!$key || !$email) {
             return false;
         }
-        return get_option('my_login_form_license_status', 'inactive') === 'active';
+        if (get_option('my_login_form_license_status', 'inactive') !== 'active') {
+            return false;
+        }
+        // A version bump since the admin last confirmed this key holds
+        // premium features off (same gate as everything else — see Gate.php)
+        // until they explicitly re-confirm on the License card.
+        return !$this->needs_reconfirmation();
+    }
+
+    /**
+     * Whether the site has an active-per-the-server license, but the admin
+     * hasn't yet re-confirmed it since the plugin was updated to its
+     * current version. Checked independently of is_active() (which folds
+     * this in) so the License card and admin notice can tell "needs
+     * reconfirmation" apart from "never licensed at all".
+     *
+     * @return bool
+     */
+    public function needs_reconfirmation(): bool {
+        if ($this->get_api_url() === '') {
+            return false;
+        }
+
+        $key   = get_option('my_login_form_license_key', '');
+        $email = get_option('my_login_form_license_email', '');
+        if (!$key || !$email) {
+            return false;
+        }
+        if (get_option('my_login_form_license_status', 'inactive') !== 'active') {
+            return false;
+        }
+
+        $confirmed = get_option('my_login_form_license_confirmed_version', '');
+        $current   = defined('MY_LOGIN_FORM_VERSION') ? MY_LOGIN_FORM_VERSION : '';
+
+        if ($confirmed === '') {
+            // No confirmation on record — either this site activated before
+            // this feature existed, or activate() hasn't run yet for some
+            // other reason. Self-heal to "confirmed at the current version"
+            // rather than retroactively locking out an already-active
+            // customer who did nothing wrong.
+            update_option('my_login_form_license_confirmed_version', $current, false);
+            return false;
+        }
+
+        return $confirmed !== $current;
     }
 
     /**
@@ -153,6 +198,7 @@ class License {
             'license_key' => $key,
             'domain'      => $this->normalize_domain(home_url()),
             'email'       => $email,
+            'product'     => 'my-login-form',
         ]);
 
         if (is_wp_error($response)) {
@@ -171,11 +217,58 @@ class License {
             update_option('my_login_form_license_expires', $body['expires_at'] ?? '', false);
             update_option('my_login_form_license_status', 'active', false);
             update_option('my_login_form_license_last_valid_at', time(), false);
+            update_option('my_login_form_license_confirmed_version', defined('MY_LOGIN_FORM_VERSION') ? MY_LOGIN_FORM_VERSION : '', false);
 
             return ['success' => true, 'message' => __('License activated! All features are now unlocked.', 'my-login-form')];
         }
 
         $error = is_array($body) && !empty($body['error']) ? $body['error'] : __('This license key is not valid.', 'my-login-form');
+        return ['success' => false, 'message' => $error];
+    }
+
+    /**
+     * Re-confirm an already-active license after a plugin update. Unlike
+     * validate_license() (the silent daily cron check), this always talks
+     * to the server synchronously and only clears the reconfirmation gate
+     * (needs_reconfirmation()) on a definitive "still valid" answer — a
+     * failed/unreachable call leaves the gate up rather than guessing.
+     *
+     * @return array{success: bool, message: string}
+     */
+    public function reconfirm(): array {
+        $key = get_option('my_login_form_license_key', '');
+        if (!$key) {
+            return ['success' => false, 'message' => __('No license key on file.', 'my-login-form')];
+        }
+
+        $response = $this->call_api('validate', [
+            'license_key' => $key,
+            'domain'      => $this->normalize_domain(home_url()),
+            'product'     => 'my-login-form',
+        ]);
+
+        if (is_wp_error($response)) {
+            return ['success' => false, 'message' => __('Could not reach the license server. Please try again in a moment.', 'my-login-form')];
+        }
+
+        $code = wp_remote_retrieve_response_code($response);
+        $body = json_decode(wp_remote_retrieve_body($response), true);
+
+        if ($code >= 200 && $code < 300 && !empty($body['valid'])) {
+            update_option('my_login_form_license_status', 'active', false);
+            update_option('my_login_form_license_last_valid_at', time(), false);
+            update_option('my_login_form_license_confirmed_version', defined('MY_LOGIN_FORM_VERSION') ? MY_LOGIN_FORM_VERSION : '', false);
+            if (isset($body['expires_at'])) {
+                update_option('my_login_form_license_expires', $body['expires_at'] ?? '', false);
+            }
+            return ['success' => true, 'message' => __('License re-confirmed. All features are unlocked.', 'my-login-form')];
+        }
+
+        if ($code >= 400 && $code < 500) {
+            update_option('my_login_form_license_status', 'inactive', false);
+        }
+
+        $error = is_array($body) && !empty($body['error']) ? $body['error'] : __('This license could not be re-confirmed.', 'my-login-form');
         return ['success' => false, 'message' => $error];
     }
 
@@ -203,6 +296,7 @@ class License {
         delete_option('my_login_form_license_expires');
         delete_option('my_login_form_license_status');
         delete_option('my_login_form_license_last_valid_at');
+        delete_option('my_login_form_license_confirmed_version');
 
         return ['success' => true, 'message' => __('License deactivated. This site no longer counts toward your activation limit.', 'my-login-form')];
     }
@@ -224,6 +318,7 @@ class License {
         $response = $this->call_api('validate', [
             'license_key' => $key,
             'domain'      => $this->normalize_domain(home_url()),
+            'product'     => 'my-login-form',
         ]);
 
         if (is_wp_error($response)) {
