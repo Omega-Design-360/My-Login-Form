@@ -4,7 +4,7 @@
   * Plugin Name: My Login Form
   * Plugin URI: https://example.com/my-login-form
   * Description: Advanced login/registration with Firebase, social login, WooCommerce integration, and form builder.
-  * Version: 1.5.0
+  * Version: 1.5.6
   * Requires at least: 5.6
   * Requires PHP: 7.4
   * Author: Amjad Shahzad
@@ -19,7 +19,11 @@
  defined('ABSPATH') || exit;
 
  // Define Only Essential Constants
- define('MY_LOGIN_FORM_VERSION', '1.5.0');
+ // Read straight from the "Version:" header above instead of hardcoding it
+ // a second time here — this constant is what the updater and license
+ // re-confirmation gate compare against, so a copy that could drift out of
+ // sync with the header has bitten us more than once.
+ define('MY_LOGIN_FORM_VERSION', get_file_data(__FILE__, ['Version' => 'Version'])['Version']);
  define('MY_LOGIN_FORM_FILE', __FILE__);
  define('MY_LOGIN_FORM_DIR', plugin_dir_path(__FILE__));
  define('MY_LOGIN_FORM_URL', plugin_dir_url(__FILE__));
