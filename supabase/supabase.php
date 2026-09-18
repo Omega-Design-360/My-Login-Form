@@ -229,7 +229,7 @@ if ($active_tab === 'otp-log') {
         <!-- Extra help box -->
         <div style="margin-top:18px;padding:14px 18px;background:rgba(255,255,255,.07);border-radius:8px;font-size:13px;color:rgba(234,246,228,0.7);line-height:1.7;">
             <strong style="color:#EAF6E4;">💡 <?php _e('Tips', 'my-login-form'); ?>:</strong>
-            <?php _e('The free Supabase plan is enough for most websites. You don\'t need to touch any code. If the "Test Connection" button shows an error, double-check that you copied the full URL and key without any extra spaces.', 'my-login-form'); ?>
+            <?php _e('The free plan is enough for most sites. If "Test Connection" fails, check for extra spaces in the URL or key.', 'my-login-form'); ?>
         </div>
     </div>
     <?php endif; ?>
@@ -284,7 +284,7 @@ if ($active_tab === 'otp-log') {
                         <input type="url" id="setup_supabase_url" class="large-input" 
                                value="<?php echo esc_url($supabase_url); ?>" 
                                placeholder="https://your-project.supabase.co">
-                        <p class="description"><?php _e('Your Supabase project endpoint (e.g., https://xxxxx.supabase.co)', 'my-login-form'); ?></p>
+                        <p class="description"><?php _e('e.g. https://xxxxx.supabase.co', 'my-login-form'); ?></p>
                     </div>
                     
                     <div class="form-group">
@@ -296,7 +296,7 @@ if ($active_tab === 'otp-log') {
                                value=""
                                placeholder="<?php echo $supabase_anon_key_hint !== '' ? esc_attr(sprintf(__('Saved: %s — leave blank to keep', 'my-login-form'), $supabase_anon_key_hint)) : 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'; ?>"
                                autocomplete="off">
-                        <p class="description"><?php _e('Your anonymous API key from Project Settings > API. For security this is never displayed again after saving — leave blank to keep the current key.', 'my-login-form'); ?></p>
+                        <p class="description"><?php _e('From Project Settings > API. Leave blank to keep current key.', 'my-login-form'); ?></p>
                     </div>
 
                     <div class="form-group">
@@ -310,7 +310,7 @@ if ($active_tab === 'otp-log') {
                                autocomplete="off">
                         <p class="description warning">
                             <i class="fas fa-exclamation-triangle"></i>
-                            <?php _e('This key bypasses all database security rules — never share it. For security it is never displayed again after saving; leave blank to keep the current key.', 'my-login-form'); ?>
+                            <?php _e('Bypasses all security rules — never share it. Leave blank to keep current key.', 'my-login-form'); ?>
                         </p>
                     </div>
                     
@@ -378,7 +378,7 @@ if ($active_tab === 'otp-log') {
                 </div>
                 <div class="header-text">
                     <h2><?php _e('Supabase Database Setup', 'my-login-form'); ?></h2>
-                    <p><?php _e('Run this SQL once inside your Supabase project to create the required table', 'my-login-form'); ?></p>
+                    <p><?php _e('Run this SQL once to create the required table', 'my-login-form'); ?></p>
                 </div>
             </div>
             <div class="card-body">
@@ -577,7 +577,7 @@ CREATE POLICY "Allow service update"
                 </div>
                 <div class="header-text">
                     <h2><?php _e('Social Login Providers', 'my-login-form'); ?></h2>
-                    <p><?php _e('Enable OAuth login for your forms. Enabled providers appear in the Form Designer palette.', 'my-login-form'); ?></p>
+                    <p><?php _e('Enabled providers appear in the Form Designer', 'my-login-form'); ?></p>
                 </div>
             </div>
             <div class="card-body">
@@ -590,7 +590,7 @@ CREATE POLICY "Allow service update"
                 <form method="post" action="">
                     <?php wp_nonce_field('my_login_social_login_settings'); ?>
                     <input type="hidden" name="save_social_login" value="1">
-                    <p style="color:#444444;font-size:13px;margin:0 0 16px;"><?php _e('Toggle providers on/off. Only enabled providers show in the Form Designer.', 'my-login-form'); ?></p>
+                    <p style="color:#444444;font-size:13px;margin:0 0 16px;"><?php _e('Toggle providers on or off', 'my-login-form'); ?></p>
                     <?php
                     $login_providers = [
                         'google'    => ['name' => 'Google',     'icon' => 'fab fa-google',     'color' => '#DB4437'],
@@ -806,7 +806,7 @@ CREATE POLICY "Allow service update"
                 </div>
                 <div class="header-text">
                     <h2><?php _e('OTP Verification Log', 'my-login-form'); ?></h2>
-                    <p><?php _e('Audit trail of every 6-digit code sent and verified through Supabase — register, login, and forgot-password. Supabase generates and checks the codes themselves; this only records that an attempt happened.', 'my-login-form'); ?></p>
+                    <p><?php _e('Audit trail of codes sent and verified via Supabase', 'my-login-form'); ?></p>
                 </div>
             </div>
             <div class="card-body">
@@ -932,8 +932,9 @@ CREATE POLICY "Allow service update"
     color: #fff;
 }
 
-.header-description {
+.integration-header .header-description {
     margin: 0;
+    color: #fff;
     opacity: 0.9;
 }
 
@@ -1622,8 +1623,8 @@ input:checked + .toggle-slider-mini:before {
     border-radius:14px; padding:28px 24px; margin-bottom:24px; color:#fff;
 }
 .my-login-friendly-wizard .wizard-header { text-align:center; margin-bottom:24px; }
-.my-login-friendly-wizard .wizard-header h2 { color:#fff; margin:0 0 6px; font-size:20px; }
-.my-login-friendly-wizard .wizard-header p  { color:rgba(234,246,228,0.8); margin:0; }
+.setup-wizard.my-login-friendly-wizard .wizard-header h2 { color:#ffffff !important; margin:0 0 6px; font-size:20px; }
+.setup-wizard.my-login-friendly-wizard .wizard-header p  { color:rgba(234,246,228,0.92) !important; margin:0; }
 .my-login-steps-row {
     display:flex; align-items:flex-start; gap:8px; flex-wrap:wrap;
 }

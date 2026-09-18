@@ -107,6 +107,66 @@
 /* ── Form Fields ── */
 .form-field { margin-bottom: 24px; }
 
+.form-row {
+    display: flex;
+    gap: 24px;
+    align-items: flex-start;
+}
+
+.form-row .form-field,
+.form-row .mlf-input-row,
+.form-row .code-card {
+    flex: 1;
+    min-width: 0;
+}
+
+/* ── Code cards (Global Custom CSS/JS) ── */
+.code-card {
+    background: var(--mlf-surface);
+    border: 1px solid var(--mlf-border);
+    border-radius: var(--mlf-radius-sm);
+    overflow: hidden;
+}
+
+.code-card-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background: var(--mlf-bg);
+    border-bottom: 1px solid var(--mlf-border);
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--mlf-text);
+}
+
+.code-card-body {
+    padding: 14px;
+}
+
+.code-card-body textarea {
+    margin-bottom: 0;
+}
+
+.code-card-body .description {
+    margin-bottom: 0;
+}
+
+.form-row .form-field input[type="text"],
+.form-row .form-field select,
+.form-row .form-field textarea,
+.form-row .mlf-input-row .mlf-text-input,
+.form-row .mlf-input-row .mlf-select-input {
+    max-width: 100%;
+}
+
+@media (max-width: 768px) {
+    .form-row {
+        flex-direction: column;
+        gap: 0;
+    }
+}
+
 .form-field label:not(.checkbox-label) {
     display: block;
     margin-bottom: 8px;
@@ -141,7 +201,8 @@
 
 .form-field .small-text { width: 100px; }
 
-.form-field textarea {
+.form-field textarea,
+.code-card-body textarea {
     width: 100%;
     max-width: 620px;
     padding: 12px 14px;
@@ -155,7 +216,12 @@
     transition: border-color 0.2s;
 }
 
-.form-field textarea:focus {
+.code-card-body textarea {
+    max-width: 100%;
+}
+
+.form-field textarea:focus,
+.code-card-body textarea:focus {
     border-color: var(--mlf-primary);
     outline: none;
     box-shadow: 0 0 0 3px rgba(31,187,0,0.15);
@@ -327,25 +393,25 @@
     border-radius: var(--mlf-radius-sm); padding: 14px 16px; margin: 8px 0 4px 0;
 }
 .mlf-divider { border: none; border-top: 1px solid var(--mlf-border); margin: 14px 0; }
-.mlf-section-sub { font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--mlf-text-muted); margin: 0 0 12px; }
-.mlf-number-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px,1fr)); gap: 14px; }
+.mlf-section-sub { font-weight: 700; font-size: 10px; text-transform: uppercase; letter-spacing: .05em; color: var(--mlf-text-muted); margin: 0 0 8px; }
+.mlf-number-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px,1fr)); gap: 8px; }
 .mlf-number-card {
     background: var(--mlf-surface); border: 1px solid var(--mlf-border); border-radius: var(--mlf-radius-sm);
-    padding: 14px 16px; display: flex; flex-direction: column; gap: 6px;
+    padding: 8px 10px; display: flex; flex-direction: column; gap: 3px;
 }
-.mlf-number-card label { font-weight: 600; font-size: 13px; color: var(--mlf-text); }
+.mlf-number-card label { font-weight: 600; font-size: 11px; color: var(--mlf-text); }
 .mlf-number-wrap { display: flex; align-items: center; gap: 6px; }
 .mlf-duration-wrap { display: flex; align-items: center; gap: 8px; }
 .mlf-num-btn {
-    width: 28px; height: 28px; border: 1px solid var(--mlf-border); background: var(--mlf-bg);
-    border-radius: 6px; font-size: 16px; line-height: 1; cursor: pointer; color: var(--mlf-secondary);
+    width: 22px; height: 22px; border: 1px solid var(--mlf-border); background: var(--mlf-bg);
+    border-radius: 6px; font-size: 13px; line-height: 1; cursor: pointer; color: var(--mlf-secondary);
     display: flex; align-items: center; justify-content: center;
     transition: background 0.2s, color 0.2s, border-color 0.2s;
 }
 .mlf-num-btn:hover { background: var(--mlf-primary); color: var(--mlf-white); border-color: var(--mlf-primary); }
 .mlf-num-input {
-    width: 54px; text-align: center; border: 1px solid var(--mlf-border);
-    border-radius: 6px; padding: 4px 6px; font-size: 14px;
+    width: 70px; text-align: center; border: 1px solid var(--mlf-border);
+    border-radius: 6px; padding: 3px 5px; font-size: 13px;
     background: var(--mlf-bg); color: var(--mlf-text);
 }
 .mlf-unit { font-size: 12px; color: var(--mlf-text-muted); }

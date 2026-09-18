@@ -91,10 +91,11 @@ if (isset($_GET['settings-updated']) && $_GET['settings-updated'] === 'true') {
     <hr class="wp-header-end">
 
     <?php
-    // The card is rendered at the bottom of the page (see the closing
-    // </div> below), but $is_active needs to be known now to gate the form.
-    // Buffer its output here and echo the buffered markup down there instead
-    // of including the file twice.
+    // The card is rendered further down (under Quick Actions when the
+    // license is active, or in place of the settings form when it isn't),
+    // but $is_active needs to be known now to gate the form. Buffer its
+    // output here and echo the buffered markup down there instead of
+    // including the file twice.
     ob_start();
     include MY_LOGIN_FORM_DIR . 'Admin/Pages/partials/license-card.php';
     $license_card_html = ob_get_clean();
@@ -102,6 +103,7 @@ if (isset($_GET['settings-updated']) && $_GET['settings-updated'] === 'true') {
 
     <?php if (!$is_active): ?>
         <p style="color:#666666;font-size:13px;"><?php _e('Activate your license below to unlock the rest of these settings.', 'my-login-form'); ?></p>
+        <?php echo $license_card_html; ?>
     <?php else: ?>
     <form method="post" action="<?php echo admin_url('admin-post.php'); ?>" id="my-login-form-settings-form">
         <?php wp_nonce_field('my_login_form_save_settings'); ?>
@@ -111,38 +113,40 @@ if (isset($_GET['settings-updated']) && $_GET['settings-updated'] === 'true') {
             <!-- Main Settings -->
             <div class="settings-main">
                 <!-- General Settings -->
-                <div class="settings-card">
+                <div class="settings-card general-settings-card">
                     <div class="card-header">
                         <h2><i class="fas fa-sliders-h"></i> <?php _e('General Settings', 'my-login-form'); ?></h2>
                     </div>
                     <div class="card-body">
-                        <div class="form-field">
-                            <label for="default_redirect"><?php _e('Default Redirect After Login', 'my-login-form'); ?></label>
-                            <select name="default_redirect" id="default_redirect" class="regular-text mlf-redirect-select">
-                                <option value="home" <?php selected($settings['default_redirect'], 'home'); ?>><?php _e('Home Page', 'my-login-form'); ?></option>
-                                <option value="my_profile" <?php selected($settings['default_redirect'], 'my_profile'); ?>><?php _e('My Account', 'my-login-form'); ?></option>
-                                <option value="custom" <?php selected($settings['default_redirect'], 'custom'); ?>><?php _e('Custom URL', 'my-login-form'); ?></option>
-                            </select>
-                            <p class="description"><?php _e('Where users are redirected after successful login (used by any form that doesn\'t set its own redirect in the Form Designer)', 'my-login-form'); ?></p>
-                            <input type="text" name="default_redirect_url" id="default_redirect_url" class="regular-text mlf-redirect-custom-url"
-                                   value="<?php echo esc_attr($settings['default_redirect_url']); ?>"
-                                   placeholder="https://example.com/welcome"
-                                   style="<?php echo ($settings['default_redirect'] === 'custom') ? '' : 'display:none;'; ?>margin-top:8px;">
-                        </div>
+                        <div class="form-row">
+                            <div class="form-field">
+                                <label for="default_redirect"><?php _e('Default Redirect After Login', 'my-login-form'); ?></label>
+                                <select name="default_redirect" id="default_redirect" class="regular-text mlf-redirect-select">
+                                    <option value="home" <?php selected($settings['default_redirect'], 'home'); ?>><?php _e('Home Page', 'my-login-form'); ?></option>
+                                    <option value="my_profile" <?php selected($settings['default_redirect'], 'my_profile'); ?>><?php _e('My Account', 'my-login-form'); ?></option>
+                                    <option value="custom" <?php selected($settings['default_redirect'], 'custom'); ?>><?php _e('Custom URL', 'my-login-form'); ?></option>
+                                </select>
+                                <p class="description"><?php _e('Where users land after login', 'my-login-form'); ?></p>
+                                <input type="text" name="default_redirect_url" id="default_redirect_url" class="regular-text mlf-redirect-custom-url"
+                                       value="<?php echo esc_attr($settings['default_redirect_url']); ?>"
+                                       placeholder="https://example.com/welcome"
+                                       style="<?php echo ($settings['default_redirect'] === 'custom') ? '' : 'display:none;'; ?>margin-top:8px;">
+                            </div>
 
-                        <div class="form-field">
-                            <label for="default_redirect_registration"><?php _e('Redirect After Create New Account', 'my-login-form'); ?></label>
-                            <select name="default_redirect_registration" id="default_redirect_registration" class="regular-text mlf-redirect-select">
-                                <option value="home" <?php selected($settings['default_redirect_registration'], 'home'); ?>><?php _e('Home Page', 'my-login-form'); ?></option>
-                                <option value="my_profile" <?php selected($settings['default_redirect_registration'], 'my_profile'); ?>><?php _e('My Account', 'my-login-form'); ?></option>
-                                <option value="login" <?php selected($settings['default_redirect_registration'], 'login'); ?>><?php _e('Login Page', 'my-login-form'); ?></option>
-                                <option value="custom" <?php selected($settings['default_redirect_registration'], 'custom'); ?>><?php _e('Custom URL', 'my-login-form'); ?></option>
-                            </select>
-                            <p class="description"><?php _e('Where users are redirected after successfully creating an account', 'my-login-form'); ?></p>
-                            <input type="text" name="default_redirect_registration_url" id="default_redirect_registration_url" class="regular-text mlf-redirect-custom-url"
-                                   value="<?php echo esc_attr($settings['default_redirect_registration_url']); ?>"
-                                   placeholder="https://example.com/welcome"
-                                   style="<?php echo ($settings['default_redirect_registration'] === 'custom') ? '' : 'display:none;'; ?>margin-top:8px;">
+                            <div class="form-field">
+                                <label for="default_redirect_registration"><?php _e('Redirect After Create New Account', 'my-login-form'); ?></label>
+                                <select name="default_redirect_registration" id="default_redirect_registration" class="regular-text mlf-redirect-select">
+                                    <option value="home" <?php selected($settings['default_redirect_registration'], 'home'); ?>><?php _e('Home Page', 'my-login-form'); ?></option>
+                                    <option value="my_profile" <?php selected($settings['default_redirect_registration'], 'my_profile'); ?>><?php _e('My Account', 'my-login-form'); ?></option>
+                                    <option value="login" <?php selected($settings['default_redirect_registration'], 'login'); ?>><?php _e('Login Page', 'my-login-form'); ?></option>
+                                    <option value="custom" <?php selected($settings['default_redirect_registration'], 'custom'); ?>><?php _e('Custom URL', 'my-login-form'); ?></option>
+                                </select>
+                                <p class="description"><?php _e('Where users land after signup', 'my-login-form'); ?></p>
+                                <input type="text" name="default_redirect_registration_url" id="default_redirect_registration_url" class="regular-text mlf-redirect-custom-url"
+                                       value="<?php echo esc_attr($settings['default_redirect_registration_url']); ?>"
+                                       placeholder="https://example.com/welcome"
+                                       style="<?php echo ($settings['default_redirect_registration'] === 'custom') ? '' : 'display:none;'; ?>margin-top:8px;">
+                            </div>
                         </div>
 
                         <div class="form-field">
@@ -150,7 +154,7 @@ if (isset($_GET['settings-updated']) && $_GET['settings-updated'] === 'true') {
                             <input type="text" name="guest_default_name" id="guest_default_name" class="regular-text"
                                    value="<?php echo esc_attr($settings['guest_default_name'] ?? 'Sunshine'); ?>"
                                    placeholder="Sunshine">
-                            <p class="description"><?php _e('Shown in place of {name} (e.g. in the "Welcome, {name}!" greeting block) for visitors who aren\'t logged in yet. Logged-in users always see their own first name, last name, or display name instead.', 'my-login-form'); ?></p>
+                            <p class="description"><?php _e('Placeholder name for logged-out visitors', 'my-login-form'); ?></p>
                         </div>
 
                         <div class="form-field">
@@ -161,9 +165,9 @@ if (isset($_GET['settings-updated']) && $_GET['settings-updated'] === 'true') {
                                 <span><?php _e('Enable WooCommerce Integration', 'my-login-form'); ?></span>
                             </label>
                             <?php if ($system_info['woocommerce_active']): ?>
-                                <p class="description success"><i class="fas fa-check-circle"></i> <?php _e('WooCommerce is active. Integration enabled.', 'my-login-form'); ?></p>
+                                <p class="description success"><i class="fas fa-check-circle"></i> <?php _e('Active', 'my-login-form'); ?></p>
                             <?php else: ?>
-                                <p class="description warning"><i class="fas fa-exclamation-triangle"></i> <?php _e('WooCommerce is not installed or activated.', 'my-login-form'); ?></p>
+                                <p class="description warning"><i class="fas fa-exclamation-triangle"></i> <?php _e('Not installed', 'my-login-form'); ?></p>
                             <?php endif; ?>
                         </div>
                     </div>
@@ -180,7 +184,7 @@ if (isset($_GET['settings-updated']) && $_GET['settings-updated'] === 'true') {
                         <div class="mlf-toggle-row">
                             <div class="mlf-toggle-info">
                                 <span class="mlf-toggle-title"><?php _e('Google reCAPTCHA', 'my-login-form'); ?></span>
-                                <span class="mlf-toggle-desc"><?php _e('Block bots and spam submissions on all forms', 'my-login-form'); ?></span>
+                                <span class="mlf-toggle-desc"><?php _e('Blocks bots on all forms', 'my-login-form'); ?></span>
                             </div>
                             <label class="mlf-switch">
                                 <input type="checkbox" name="enable_recaptcha" id="enable_recaptcha" value="1" <?php checked($settings['enable_recaptcha'], 1); ?>>
@@ -209,7 +213,7 @@ if (isset($_GET['settings-updated']) && $_GET['settings-updated'] === 'true') {
                         <div class="mlf-toggle-row">
                             <div class="mlf-toggle-info">
                                 <span class="mlf-toggle-title"><?php _e('Two-Factor Authentication (2FA)', 'my-login-form'); ?></span>
-                                <span class="mlf-toggle-desc"><?php _e('Require a one-time code in addition to the password', 'my-login-form'); ?></span>
+                                <span class="mlf-toggle-desc"><?php _e('Requires a one-time code at login', 'my-login-form'); ?></span>
                             </div>
                             <label class="mlf-switch">
                                 <input type="checkbox" name="enable_2fa" value="1" <?php checked($settings['enable_2fa'], 1); ?>>
@@ -224,7 +228,7 @@ if (isset($_GET['settings-updated']) && $_GET['settings-updated'] === 'true') {
                         <div class="mlf-toggle-row">
                             <div class="mlf-toggle-info">
                                 <span class="mlf-toggle-title"><?php _e('Restrict User Data via REST API', 'my-login-form'); ?></span>
-                                <span class="mlf-toggle-desc"><?php _e('Closes off the sensitive "edit" view of WordPress\'s built-in /wp-json/wp/v2/users REST endpoint (email, roles, and any extra fields other plugins attach) so only site administrators can see it, and everyone else can only ever fetch their own record that way. The normal public author info (name, avatar, bio) that WordPress itself already exposes — used by the block editor\'s author picker, embeds, etc. — is left untouched, so this won\'t affect the editor or front-end.', 'my-login-form'); ?></span>
+                                <span class="mlf-toggle-desc"><?php _e('Hides other users\' data from the REST API', 'my-login-form'); ?></span>
                             </div>
                             <label class="mlf-switch">
                                 <input type="checkbox" name="restrict_users_rest_api" value="1" <?php checked($settings['restrict_users_rest_api'], 1); ?>>
@@ -280,7 +284,7 @@ if (isset($_GET['settings-updated']) && $_GET['settings-updated'] === 'true') {
                         <div class="mlf-toggle-row">
                             <div class="mlf-toggle-info">
                                 <span class="mlf-toggle-title"><?php _e('Allow New Registrations', 'my-login-form'); ?></span>
-                                <span class="mlf-toggle-desc"><?php _e('When off, registration forms display a "closed" notice', 'my-login-form'); ?></span>
+                                <span class="mlf-toggle-desc"><?php _e('Shows a "closed" notice when off', 'my-login-form'); ?></span>
                             </div>
                             <label class="mlf-switch">
                                 <input type="checkbox" name="allow_registration" id="allow_registration" value="1"
@@ -289,58 +293,62 @@ if (isset($_GET['settings-updated']) && $_GET['settings-updated'] === 'true') {
                             </label>
                         </div>
 
-                        <div class="mlf-input-row" style="margin-top:14px;">
-                            <label><?php _e('Default Role for New Users', 'my-login-form'); ?></label>
-                            <select name="default_role" id="default_role_select" class="mlf-select-input">
-                                <?php
-                                // These forms register front-end site visitors, not staff — the
-                                // list is intentionally limited to Customer/Subscriber. This is a
-                                // UI-level guardrail; AuthAjax::handle_register() enforces the same
-                                // allow-list server-side regardless of what's saved here.
-                                $saved_role = $settings['default_role'] ?? get_option('default_role', 'subscriber');
-                                $all_roles = get_editable_roles();
-                                $allowed_role_keys = array_values(array_filter(['customer', 'subscriber'], function ($r) use ($all_roles) {
-                                    return isset($all_roles[$r]);
-                                }));
-                                if (!in_array($saved_role, $allowed_role_keys, true)) {
-                                    $saved_role = 'subscriber';
-                                }
-                                foreach ($allowed_role_keys as $role_key) {
-                                    $selected = selected($saved_role, $role_key, false);
-                                    echo '<option value="' . esc_attr($role_key) . '" ' . $selected . '>' . esc_html($all_roles[$role_key]['name']) . '</option>';
-                                }
-                                ?>
-                            </select>
-                            <p class="description"><?php _e('Role assigned automatically after registration', 'my-login-form'); ?></p>
+                        <div class="form-row" style="margin-top:14px;">
+                            <div class="mlf-input-row">
+                                <label><?php _e('Default Role for New Users', 'my-login-form'); ?></label>
+                                <select name="default_role" id="default_role_select" class="mlf-select-input">
+                                    <?php
+                                    // These forms register front-end site visitors, not staff — the
+                                    // list is intentionally limited to Customer/Subscriber. This is a
+                                    // UI-level guardrail; AuthAjax::handle_register() enforces the same
+                                    // allow-list server-side regardless of what's saved here.
+                                    $saved_role = $settings['default_role'] ?? get_option('default_role', 'subscriber');
+                                    $all_roles = get_editable_roles();
+                                    $allowed_role_keys = array_values(array_filter(['customer', 'subscriber'], function ($r) use ($all_roles) {
+                                        return isset($all_roles[$r]);
+                                    }));
+                                    if (!in_array($saved_role, $allowed_role_keys, true)) {
+                                        $saved_role = 'subscriber';
+                                    }
+                                    foreach ($allowed_role_keys as $role_key) {
+                                        $selected = selected($saved_role, $role_key, false);
+                                        echo '<option value="' . esc_attr($role_key) . '" ' . $selected . '>' . esc_html($all_roles[$role_key]['name']) . '</option>';
+                                    }
+                                    ?>
+                                </select>
+                                <p class="description"><?php _e('Role assigned automatically after registration', 'my-login-form'); ?></p>
+                            </div>
+
+                            <div class="mlf-input-row">
+                                <label><?php _e('Allowed Email Domains', 'my-login-form'); ?>
+                                    <span class="mlf-badge-optional"><?php _e('optional', 'my-login-form'); ?></span>
+                                </label>
+                                <input type="text" name="allowed_email_domains" id="allowed_email_domains"
+                                       value="<?php echo esc_attr($settings['allowed_email_domains'] ?? ''); ?>"
+                                       placeholder="gmail.com, company.org"
+                                       class="mlf-text-input">
+                                <p class="description"><?php _e('Comma-separated, blank allows any', 'my-login-form'); ?></p>
+                            </div>
                         </div>
 
-                        <div class="mlf-input-row" style="margin-top:14px;">
-                            <label><?php _e('Allowed Email Domains', 'my-login-form'); ?>
-                                <span class="mlf-badge-optional"><?php _e('optional', 'my-login-form'); ?></span>
-                            </label>
-                            <input type="text" name="allowed_email_domains" id="allowed_email_domains"
-                                   value="<?php echo esc_attr($settings['allowed_email_domains'] ?? ''); ?>"
-                                   placeholder="gmail.com, company.org"
-                                   class="mlf-text-input">
-                            <p class="description"><?php _e('Comma-separated list. Leave empty to allow any domain.', 'my-login-form'); ?></p>
-                        </div>
+                        <div class="form-row" style="margin-top:14px;">
+                            <div class="mlf-input-row">
+                                <label><?php _e('Blocked IP Addresses', 'my-login-form'); ?>
+                                    <span class="mlf-badge-optional"><?php _e('optional', 'my-login-form'); ?></span>
+                                </label>
+                                <textarea name="blocked_ips" id="blocked_ips" rows="3" class="mlf-text-input"
+                                          placeholder="192.168.1.1&#10;10.0.0.1"><?php echo esc_textarea($settings['blocked_ips'] ?? ''); ?></textarea>
+                                <p class="description"><?php _e('One IP per line', 'my-login-form'); ?></p>
+                            </div>
 
-                        <div class="mlf-input-row" style="margin-top:14px;">
-                            <label><?php _e('Blocked IP Addresses', 'my-login-form'); ?>
-                                <span class="mlf-badge-optional"><?php _e('optional', 'my-login-form'); ?></span>
-                            </label>
-                            <textarea name="blocked_ips" id="blocked_ips" rows="3" class="mlf-text-input"
-                                      placeholder="192.168.1.1&#10;10.0.0.1"><?php echo esc_textarea($settings['blocked_ips'] ?? ''); ?></textarea>
-                            <p class="description"><?php _e('One IP address per line. Blocked IPs cannot log in or register.', 'my-login-form'); ?></p>
-                        </div>
-
-                        <div class="mlf-input-row" style="margin-top:14px;">
-                            <label><?php _e('Blocked Usernames / Emails', 'my-login-form'); ?>
-                                <span class="mlf-badge-optional"><?php _e('optional', 'my-login-form'); ?></span>
-                            </label>
-                            <textarea name="blocked_users" id="blocked_users" rows="3" class="mlf-text-input"
-                                      placeholder="spammer@example.com&#10;baduser"><?php echo esc_textarea($settings['blocked_users'] ?? ''); ?></textarea>
-                            <p class="description"><?php _e('One username or email per line (case-insensitive). Blocked accounts cannot log in or register.', 'my-login-form'); ?></p>
+                            <div class="mlf-input-row">
+                                <label><?php _e('Blocked Usernames / Emails', 'my-login-form'); ?>
+                                    <span class="mlf-badge-optional"><?php _e('optional', 'my-login-form'); ?></span>
+                                </label>
+                                <textarea name="blocked_users" id="blocked_users" rows="3" class="mlf-text-input"
+                                          placeholder="spammer@example.com&#10;baduser"><?php echo esc_textarea($settings['blocked_users'] ?? ''); ?></textarea>
+                                <p class="description"><?php _e('One username or email per line', 'my-login-form'); ?></p>
+                            </div>
                         </div>
 
                     </div>
@@ -435,46 +443,82 @@ if (isset($_GET['settings-updated']) && $_GET['settings-updated'] === 'true') {
                         </div>
                     </div>
                 </div>
+
+                <?php echo $license_card_html; ?>
             </div>
         </div>
 
-        <!-- Email Settings (full width) -->
+        <!-- Custom CSS & JS -->
         <div class="settings-card">
+                    <div class="card-header">
+                        <h2><i class="fas fa-code"></i> <?php _e('Custom Code', 'my-login-form'); ?></h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-row">
+                            <div class="code-card">
+                                <div class="code-card-header">
+                                    <i class="fab fa-css3-alt"></i> <?php _e('Global Custom CSS', 'my-login-form'); ?>
+                                </div>
+                                <div class="code-card-body">
+                                    <label for="custom_css" class="screen-reader-text"><?php _e('Global Custom CSS', 'my-login-form'); ?></label>
+                                    <textarea name="custom_css" id="custom_css" rows="10" class="code-editor"
+                                              placeholder="<?php _e('/* Add global CSS that applies to all forms */', 'my-login-form'); ?>"><?php echo esc_textarea($settings['custom_css']); ?></textarea>
+                                    <p class="description"><?php _e('Applied to all forms site-wide', 'my-login-form'); ?></p>
+                                </div>
+                            </div>
+
+                            <div class="code-card">
+                                <div class="code-card-header">
+                                    <i class="fab fa-js"></i> <?php _e('Global Custom JavaScript', 'my-login-form'); ?>
+                                </div>
+                                <div class="code-card-body">
+                                    <label for="custom_js" class="screen-reader-text"><?php _e('Global Custom JavaScript', 'my-login-form'); ?></label>
+                                    <textarea name="custom_js" id="custom_js" rows="10" class="code-editor"
+                                              placeholder="<?php _e('// Add global JavaScript for all forms', 'my-login-form'); ?>"><?php echo esc_textarea($settings['custom_js']); ?></textarea>
+                                    <p class="description"><?php _e('Runs on all forms site-wide', 'my-login-form'); ?></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Email Settings (full width) -->
+                <div class="settings-card">
                     <div class="card-header">
                         <h2><i class="fas fa-envelope"></i> <?php _e('Email Settings', 'my-login-form'); ?></h2>
                     </div>
                     <div class="card-body">
                         <div class="form-field">
                             <label class="checkbox-label">
-                                <input type="checkbox" name="email_verification" value="1" 
+                                <input type="checkbox" name="email_verification" value="1"
                                        <?php checked($settings['email_verification'], 1); ?>>
                                 <span><?php _e('Require Email Verification', 'my-login-form'); ?></span>
                             </label>
-                            <p class="description"><?php _e('New users must enter a 6-digit code emailed to them (sent via Supabase) before they can log in. Requires a connected Supabase project, and its "Confirm signup" email template must use {{ .Token }} instead of the default magic link.', 'my-login-form'); ?></p>
+                            <p class="description"><?php _e('Requires a 6-digit email code before login (needs Supabase)', 'my-login-form'); ?></p>
                         </div>
-                        
+
                         <div class="form-field">
                             <label class="checkbox-label">
-                                <input type="checkbox" name="welcome_email" value="1" 
+                                <input type="checkbox" name="welcome_email" value="1"
                                        <?php checked($settings['welcome_email'], 1); ?>>
                                 <span><?php _e('Send Welcome Email', 'my-login-form'); ?></span>
                             </label>
-                            <p class="description"><?php _e('Send a welcome email to new users after registration', 'my-login-form'); ?></p>
+                            <p class="description"><?php _e('Emails new users after registration', 'my-login-form'); ?></p>
                         </div>
-                        
+
                         <div class="form-field">
                             <label class="checkbox-label">
                                 <input type="checkbox" name="admin_notifications" value="1"
                                        <?php checked($settings['admin_notifications'], 1); ?>>
                                 <span><?php _e('Admin Notifications', 'my-login-form'); ?></span>
                             </label>
-                            <p class="description"><?php _e('Notify admin when new users register', 'my-login-form'); ?></p>
+                            <p class="description"><?php _e('Notifies admin on new registrations', 'my-login-form'); ?></p>
                         </div>
 
                         <div class="mlf-divider"></div>
 
                         <p class="mlf-section-sub"><i class="fas fa-paper-plane" style="margin-right:6px;"></i><?php _e('Resend (Mail Delivery)', 'my-login-form'); ?></p>
-                        <p class="description" style="margin-top:-6px;"><?php _e('Optional — routes every email this site sends (password resets, WooCommerce order emails, etc.) through Resend instead of your host\'s default mail server, which is often unreliable or ends up in spam. Leave the API key blank to keep using the default.', 'my-login-form'); ?></p>
+                        <p class="description" style="margin-top:-6px;"><?php _e('Optional — routes site emails through Resend', 'my-login-form'); ?></p>
 
                         <div class="form-field">
                             <label for="resend_api_key"><?php _e('Resend API Key', 'my-login-form'); ?></label>
@@ -489,7 +533,7 @@ if (isset($_GET['settings-updated']) && $_GET['settings-updated'] === 'true') {
                             <input type="email" name="resend_from_email" id="resend_from_email" class="regular-text"
                                    value="<?php echo esc_attr($settings['resend_from_email']); ?>"
                                    placeholder="noreply@yourdomain.com">
-                            <p class="description"><?php _e('Must be on a domain you\'ve verified in your Resend account.', 'my-login-form'); ?></p>
+                            <p class="description"><?php _e('Must be a Resend-verified domain', 'my-login-form'); ?></p>
                         </div>
 
                         <div class="form-field">
@@ -497,28 +541,6 @@ if (isset($_GET['settings-updated']) && $_GET['settings-updated'] === 'true') {
                             <input type="text" name="resend_from_name" id="resend_from_name" class="regular-text"
                                    value="<?php echo esc_attr($settings['resend_from_name']); ?>"
                                    placeholder="<?php echo esc_attr(get_bloginfo('name')); ?>">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Custom CSS & JS -->
-                <div class="settings-card">
-                    <div class="card-header">
-                        <h2><i class="fas fa-code"></i> <?php _e('Custom Code', 'my-login-form'); ?></h2>
-                    </div>
-                    <div class="card-body">
-                        <div class="form-field">
-                            <label for="custom_css"><?php _e('Global Custom CSS', 'my-login-form'); ?></label>
-                            <textarea name="custom_css" id="custom_css" rows="10" class="code-editor" 
-                                      placeholder="<?php _e('/* Add global CSS that applies to all forms */', 'my-login-form'); ?>"><?php echo esc_textarea($settings['custom_css']); ?></textarea>
-                            <p class="description"><?php _e('CSS added here will be applied to all forms site-wide', 'my-login-form'); ?></p>
-                        </div>
-                        
-                        <div class="form-field">
-                            <label for="custom_js"><?php _e('Global Custom JavaScript', 'my-login-form'); ?></label>
-                            <textarea name="custom_js" id="custom_js" rows="10" class="code-editor" 
-                                      placeholder="<?php _e('// Add global JavaScript for all forms', 'my-login-form'); ?>"><?php echo esc_textarea($settings['custom_js']); ?></textarea>
-                            <p class="description"><?php _e('JavaScript added here will run on all forms site-wide', 'my-login-form'); ?></p>
                         </div>
                     </div>
                 </div>
@@ -552,8 +574,6 @@ if (isset($_GET['settings-updated']) && $_GET['settings-updated'] === 'true') {
         </div>
     </form>
     <?php endif; ?>
-
-    <?php echo $license_card_html; ?>
 </div>
 
 <script>

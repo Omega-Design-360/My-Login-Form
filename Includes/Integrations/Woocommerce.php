@@ -50,6 +50,12 @@ class Woocommerce {
         //    WordPress way (wp_login_url() / wp_loginout(), e.g. a theme's
         //    "Log in" menu link) gets pointed at our page too.
         add_filter('login_url', [$this, 'filter_login_url'], 10, 2);
+
+        // 4) Checkout page, guest checkout disabled + account required:
+        //    restyle WooCommerce's "must be logged in" prompt (both the
+        //    classic template's plain message and the checkout block's
+        //    client-side one) to match this plugin's own login/register pages.
+        add_action('wp_enqueue_scripts', [$this, 'enqueue_checkout_auth_notice']);
     }
 
     /**
@@ -143,6 +149,71 @@ class Woocommerce {
         return $redirect
             ? add_query_arg('redirect_to', rawurlencode($redirect), $our_login_url)
             : $our_login_url;
+    }
+
+    /**
+     * True when a guest hitting checkout has no way to complete the order
+     * without an account — i.e. guest checkout is off and registration is
+     * mandatory. Same condition WooCommerce's own checkout template checks
+     * before printing its plain-text "must be logged in" message.
+     */
+    public function checkout_requires_login(): bool {
+        if (is_user_logged_in() || !function_exists('WC') || !WC()->checkout()) {
+            return false;
+        }
+        $checkout = WC()->checkout();
+        return !$checkout->is_registration_enabled() && $checkout->is_registration_required();
+    }
+
+    /**
+     * Restyle WooCommerce's "must be logged in" checkout prompt to match
+     * this plugin's own login/register pages instead of WooCommerce's (or
+     * the active theme's) default look.
+     *
+     * Handles both checkout flavors:
+     *  - Classic (shortcode) checkout renders the message server-side, so
+     *    it's just CSS here — see render_checkout_login_prompt() note below.
+     *  - The Checkout block renders it entirely client-side from a compiled
+     *    JS bundle with no PHP template or filter to hook, so
+     *    Public/Assets/js/checkout-auth-notice.js patches the DOM once it mounts.
+     */
+    public function enqueue_checkout_auth_notice(): void {
+        if (!function_exists('is_checkout') || !is_checkout()) {
+            return;
+        }
+        if (function_exists('is_wc_endpoint_url') && is_wc_endpoint_url()) {
+            return;
+        }
+        if (!$this->checkout_requires_login()) {
+            return;
+        }
+
+        wp_enqueue_style(
+            'my-login-form-checkout-auth-notice',
+            MY_LOGIN_FORM_URL . 'Public/Assets/css/checkout-auth-notice.css',
+            [],
+            filemtime(MY_LOGIN_FORM_DIR . 'Public/Assets/css/checkout-auth-notice.css')
+        );
+
+        wp_enqueue_script(
+            'my-login-form-checkout-auth-notice',
+            MY_LOGIN_FORM_URL . 'Public/Assets/js/checkout-auth-notice.js',
+            [],
+            filemtime(MY_LOGIN_FORM_DIR . 'Public/Assets/js/checkout-auth-notice.js'),
+            true
+        );
+
+        $login_url = wp_login_url($this->current_url());
+
+        wp_localize_script('my-login-form-checkout-auth-notice', 'myLoginCheckoutAuth', [
+            'loginUrl'      => $login_url,
+            'registerUrl'   => my_login_form_registration_url(),
+            'showRegister'  => true,
+            'title'         => __('Please log in to continue', 'my-login-form'),
+            'message'       => __("You'll need to log in to complete your order. Sign in if you already have an account, or create a new one — it only takes a minute.", 'my-login-form'),
+            'loginLabel'    => __('Log in now', 'my-login-form'),
+            'registerLabel' => __('Create an account', 'my-login-form'),
+        ]);
     }
 
     /**

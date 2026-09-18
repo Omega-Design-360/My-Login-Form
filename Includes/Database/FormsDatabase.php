@@ -62,6 +62,97 @@ class FormsDatabase {
         // Check for updates and default forms
         $this->maybe_update_forms_table();
         $this->create_default_forms_if_not_exist();
+        $this->maybe_add_default_greetings();
+    }
+
+    /**
+     * One-time backfill: sites that already had their default forms seeded
+     * before greeting blocks were added to register/forgot-password/
+     * reset-password/welcome/opt-in never got one (create_default_forms()
+     * only runs on an empty table). Add a default, Designer-editable
+     * greeting to any of those default forms still missing one.
+     */
+    private function maybe_add_default_greetings() {
+        if (get_option('mlf_greeting_migration_v1')) return;
+        if (!$this->table_exists()) return;
+
+        $defaults = [
+            'register'        => ['title' => 'Create Your Account', 'subtitle' => 'Join us in just a few steps'],
+            'forgot-password' => ['title' => 'Forgot Password?',     'subtitle' => "Enter your email and we'll send you a reset link"],
+            'reset-password'  => ['title' => 'Set a New Password',   'subtitle' => 'Choose something secure and memorable'],
+            'welcome'         => ['title' => 'Welcome Aboard!',      'subtitle' => 'Tell us a bit about yourself to get started'],
+            'opt-in'          => ['title' => 'Stay in the Loop',     'subtitle' => 'Subscribe to get the latest updates'],
+        ];
+
+        $keys = array_keys($defaults);
+        $placeholders = implode(',', array_fill(0, count($keys), '%s'));
+        $forms = $this->wpdb->get_results(
+            $this->wpdb->prepare(
+                "SELECT id, form_key, form_containers, settings FROM {$this->forms_table} WHERE form_key IN ($placeholders)",
+                $keys
+            )
+        );
+
+        foreach ($forms as $form) {
+            if (!isset($defaults[$form->form_key])) continue;
+
+            $containers = json_decode($form->form_containers, true);
+            if (!is_array($containers) || empty($containers)) continue;
+            if ($this->containers_have_greeting($containers)) continue;
+
+            $first_key = array_key_first($containers);
+            if (!isset($containers[$first_key]['items']) || !is_array($containers[$first_key]['items'])) continue;
+
+            array_unshift($containers[$first_key]['items'], [
+                'id'       => 'greeting_' . str_replace('-', '_', $form->form_key),
+                'type'     => 'greeting',
+                'title'    => $defaults[$form->form_key]['title'],
+                'subtitle' => $defaults[$form->form_key]['subtitle'],
+                'styles'   => [],
+            ]);
+
+            $settings = json_decode($form->settings, true);
+            if (!is_array($settings)) $settings = [];
+
+            $this->wpdb->update(
+                $this->forms_table,
+                ['form_containers' => wp_json_encode($containers)],
+                ['id' => $form->id]
+            );
+
+            if (defined('MY_LOGIN_FORM_DIR')) {
+                $html_dir = MY_LOGIN_FORM_DIR . 'Public/Forms/html/';
+                $css_dir  = MY_LOGIN_FORM_DIR . 'Public/Forms/css/';
+                if (!file_exists($html_dir)) wp_mkdir_p($html_dir);
+                if (!file_exists($css_dir))  wp_mkdir_p($css_dir);
+
+                file_put_contents($html_dir . $form->form_key . '.html', $this->build_html_from_containers($containers, $settings));
+
+                // Same reasoning as create_default_forms(): DesignerAjax::build_form_css()
+                // is the single source of truth for generated CSS.
+                if (class_exists('MyLoginForm\\Ajax\\DesignerAjax')) {
+                    $css = \MyLoginForm\Ajax\DesignerAjax::get_instance()->build_form_css($form->id, $settings, $settings['custom_css'] ?? '', $containers);
+                    file_put_contents($css_dir . $form->form_key . '.css', $css);
+                }
+            }
+        }
+
+        update_option('mlf_greeting_migration_v1', 1);
+    }
+
+    private function containers_have_greeting($containers) {
+        foreach ($containers as $c) {
+            if ($this->items_have_greeting($c['items'] ?? [])) return true;
+        }
+        return false;
+    }
+
+    private function items_have_greeting($items) {
+        foreach ($items as $item) {
+            if (($item['type'] ?? '') === 'greeting') return true;
+            if (($item['type'] ?? '') === 'sub' && $this->items_have_greeting($item['items'] ?? [])) return true;
+        }
+        return false;
     }
 
     public function create_forms_table() {
@@ -247,6 +338,7 @@ class FormsDatabase {
             'main_default_register' => [
                 'id' => 'main_default_register', 'type' => 'main', 'bgColor' => '#ffffff', 'styles' => [],
                 'items' => [
+                    ['id'=>'greeting_register', 'type'=>'greeting','title'=>'Create Your Account','subtitle'=>'Join us in just a few steps','styles'=>[]],
                     ['id'=>'sub_reg_names','type'=>'sub','bgColor'=>'#F3FBF0','items'=>[
                         ['id'=>'fld_reg_first','type'=>'field','fieldType'=>'first_name','label'=>'First Name','htmlType'=>'text','placeholder'=>'First name','required'=>false],
                         ['id'=>'fld_reg_last', 'type'=>'field','fieldType'=>'last_name', 'label'=>'Last Name', 'htmlType'=>'text','placeholder'=>'Last name', 'required'=>false],
@@ -264,6 +356,7 @@ class FormsDatabase {
             'main_default_forgot' => [
                 'id' => 'main_default_forgot', 'type' => 'main', 'bgColor' => '#ffffff', 'styles' => [],
                 'items' => [
+                    ['id'=>'greeting_forgot', 'type'=>'greeting','title'=>'Forgot Password?','subtitle'=>'Enter your email and we\'ll send you a reset link','styles'=>[]],
                     ['id'=>'fld_forgot_email','type'=>'field','fieldType'=>'email','label'=>'Email Address','htmlType'=>'email','placeholder'=>'Enter your registered email','required'=>true],
                 ],
             ],
@@ -279,6 +372,7 @@ class FormsDatabase {
             'main_default_reset' => [
                 'id' => 'main_default_reset', 'type' => 'main', 'bgColor' => '#ffffff', 'styles' => [],
                 'items' => [
+                    ['id'=>'greeting_reset', 'type'=>'greeting','title'=>'Set a New Password','subtitle'=>'Choose something secure and memorable','styles'=>[]],
                     ['id'=>'fld_reset_pass',    'type'=>'field','fieldType'=>'password',         'label'=>'New Password',     'htmlType'=>'password','placeholder'=>'Choose a strong password','required'=>true],
                     ['id'=>'fld_reset_confirm', 'type'=>'field','fieldType'=>'confirm_password', 'label'=>'Confirm New Password','htmlType'=>'password','placeholder'=>'Confirm your new password','required'=>true],
                 ],
@@ -292,6 +386,7 @@ class FormsDatabase {
             'main_default_welcome' => [
                 'id' => 'main_default_welcome', 'type' => 'main', 'bgColor' => '#ffffff', 'styles' => [],
                 'items' => [
+                    ['id'=>'greeting_welcome', 'type'=>'greeting','title'=>'Welcome Aboard!','subtitle'=>'Tell us a bit about yourself to get started','styles'=>[]],
                     ['id'=>'sub_wel_names','type'=>'sub','bgColor'=>'#F3FBF0','items'=>[
                         ['id'=>'fld_wel_first','type'=>'field','fieldType'=>'first_name','label'=>'First Name','htmlType'=>'text','placeholder'=>'Your first name','required'=>true],
                         ['id'=>'fld_wel_last', 'type'=>'field','fieldType'=>'last_name', 'label'=>'Last Name', 'htmlType'=>'text','placeholder'=>'Your last name', 'required'=>false],
@@ -307,6 +402,7 @@ class FormsDatabase {
             'main_default_optin' => [
                 'id' => 'main_default_optin', 'type' => 'main', 'bgColor' => '#ffffff', 'styles' => [],
                 'items' => [
+                    ['id'=>'greeting_optin', 'type'=>'greeting','title'=>'Stay in the Loop','subtitle'=>'Subscribe to get the latest updates','styles'=>[]],
                     ['id'=>'fld_optin_first',  'type'=>'field','fieldType'=>'first_name','label'=>'First Name',   'htmlType'=>'text',    'placeholder'=>'Your first name', 'required'=>false],
                     ['id'=>'fld_optin_email',  'type'=>'field','fieldType'=>'email',     'label'=>'Email Address','htmlType'=>'email',   'placeholder'=>'Enter your email','required'=>true],
                     ['id'=>'fld_optin_consent','type'=>'field','fieldType'=>'consent',   'label'=>'I agree to receive updates and offers via email', 'htmlType'=>'checkbox', 'placeholder'=>'', 'required'=>true],
