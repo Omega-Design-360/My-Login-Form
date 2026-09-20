@@ -53,10 +53,22 @@
  }
  if (!defined('MY_LOGIN_FORM_GITHUB_REPO')) {
      // "owner/repo" on GitHub — Includes/Licensing/Updater.php reads new
-     // versions straight from this repo's Releases (a tagged Release is
-     // what makes a new version show up as an update in wp-admin, not
-     // every push). Leave blank to disable update checks entirely.
+     // versions straight from the latest commit on MY_LOGIN_FORM_GITHUB_BRANCH:
+     // bump the Version header in this file and push, no GitHub Release/tag
+     // needed. Leave blank to disable update checks entirely.
      define('MY_LOGIN_FORM_GITHUB_REPO', 'Omega-Design-360/My-Login-Form');
+ }
+ if (!defined('MY_LOGIN_FORM_GITHUB_BRANCH')) {
+     // The branch the updater polls for new commits. Defaults to 'main'.
+     define('MY_LOGIN_FORM_GITHUB_BRANCH', 'main');
+ }
+ if (!defined('MY_LOGIN_FORM_GITHUB_WEBHOOK_SECRET')) {
+     // Optional. When set, a GitHub webhook (Settings > Webhooks on the
+     // repo, payload URL {site}/wp-json/my-login-form/v1/deploy-webhook,
+     // content type application/json, this value as the secret) clears the
+     // update cache instantly on every push instead of waiting out the
+     // 6-hour poll window. Leave blank to rely on polling only.
+     define('MY_LOGIN_FORM_GITHUB_WEBHOOK_SECRET', '');
  }
 
  include MY_LOGIN_FORM_DIR . 'Includes/Core/Core.php';

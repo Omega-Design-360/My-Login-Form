@@ -58,10 +58,18 @@ class Loader {
 
         // Register hooks
         $this->register_hooks();
-        
+
         // Load modules
         $this->load_modules();
-        
+
+        // Unconditional (not just is_admin()) — the update-check filters
+        // only matter in wp-admin/cron, but the GitHub push webhook this
+        // also registers is an unauthenticated REST request that never has
+        // is_admin() true, so it needs to be wired up on every request.
+        if (class_exists('MyLoginForm\\Licensing\\Updater')) {
+            \MyLoginForm\Licensing\Updater::get_instance();
+        }
+
         // Initialize admin and public
         if (is_admin()) {
             $this->init_admin();
@@ -125,10 +133,7 @@ class Loader {
             }
         }
 
-        // Update-check gating and renewal nags only matter in wp-admin.
-        if (class_exists('MyLoginForm\\Licensing\\Updater')) {
-            \MyLoginForm\Licensing\Updater::get_instance();
-        }
+        // Renewal nags only matter in wp-admin.
         if (class_exists('MyLoginForm\\Licensing\\Notices')) {
             \MyLoginForm\Licensing\Notices::get_instance();
         }
