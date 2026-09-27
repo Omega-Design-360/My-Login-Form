@@ -4,7 +4,7 @@
   * Plugin Name: My Login Form
   * Plugin URI: https://example.com/my-login-form
   * Description: Advanced login/registration with Firebase, social login, WooCommerce integration, and form builder.
-  * Version: 1.5.7
+  * Version: 1.5.8
   * Requires at least: 5.6
   * Requires PHP: 7.4
   * Author: Amjad Shahzad
