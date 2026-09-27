@@ -1,0 +1,69 @@
+# Builds an installable My-Login-Form.zip (extracting to "My-Login-Form/",
+# not GitHub's "My-Login-Form-main/") and publishes it as a GitHub Release
+# whenever a push to main carries a Version header that has no release yet.
+#
+# Download link that always points at the newest build:
+# https://github.com/Omega-Design-360/My-Login-Form/releases/latest/download/My-Login-Form.zip
+
+name: Release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Read version from plugin header
+        id: version
+        run: |
+          version=$(grep -m1 -E '^[[:space:]]*\*?[[:space:]]*Version:' my-login-form.php | sed -E 's/.*Version:[[:space:]]*//' | tr -d '[:space:]')
+          if [ -z "$version" ]; then
+            echo "No Version header found in my-login-form.php" >&2
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "tag=v$version" >> "$GITHUB_OUTPUT"
+
+      - name: Skip if this version is already released
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "${{ steps.version.outputs.tag }}" >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "Release ${{ steps.version.outputs.tag }} already exists, nothing to do."
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build My-Login-Form.zip
+        if: steps.check.outputs.exists == 'false'
+        run: |
+          # Build from the version's tag if it was already pushed by hand,
+          # otherwise from this commit. export-ignore paths in
+          # .gitattributes (e.g. .github/) are left out of the zip.
+          ref="${{ steps.version.outputs.tag }}"
+          git rev-parse -q --verify "refs/tags/$ref" >/dev/null || ref="$GITHUB_SHA"
+          git archive --format=zip --prefix=My-Login-Form/ -o My-Login-Form.zip "$ref"
+          echo "REF=$ref" >> "$GITHUB_ENV"
+
+      - name: Publish release
+        if: steps.check.outputs.exists == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          target=$(git rev-parse "$REF^{commit}")
+          gh release create "${{ steps.version.outputs.tag }}" My-Login-Form.zip \
+            --target "$target" \
+            --title "${{ steps.version.outputs.version }}" \
+            --generate-notes
