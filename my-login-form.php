@@ -70,6 +70,15 @@
      // 6-hour poll window. Leave blank to rely on polling only.
      define('MY_LOGIN_FORM_GITHUB_WEBHOOK_SECRET', '');
  }
+ if (!defined('MY_LOGIN_FORM_GITHUB_TOKEN')) {
+     // GitHub personal access token (fine-grained, read-only "Contents" on
+     // the repo) — required once the repo is private, since GitHub answers
+     // unauthorized requests for a private repo with a 404. Define it in
+     // wp-config.php, never here, so it isn't shipped inside the plugin zip.
+     // Falls back to the Omega Design theme's OMEGA_GITHUB_TOKEN so one
+     // token in wp-config.php can cover both.
+     define('MY_LOGIN_FORM_GITHUB_TOKEN', defined('OMEGA_GITHUB_TOKEN') ? OMEGA_GITHUB_TOKEN : '');
+ }
 
  include MY_LOGIN_FORM_DIR . 'Includes/Core/Core.php';
 

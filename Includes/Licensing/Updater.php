@@ -63,6 +63,47 @@ class Updater {
         add_action('admin_init', [$this, 'maybe_bust_cache_on_manual_check']);
         add_action('rest_api_init', [$this, 'register_webhook_endpoint']);
         add_action('upgrader_process_complete', [$this, 'clear_cache_after_update'], 10, 2);
+        add_filter('http_request_args', [$this, 'authorize_github_requests'], 10, 2);
+    }
+
+    /**
+     * For a private repo, every request that touches it — our own
+     * get_remote_info() calls, and WP core's own download_url() call during
+     * "Update Now" (which we have no other hook into to add headers) —
+     * needs an Authorization header or GitHub returns 404 (not 403 — GitHub
+     * hides private repos from unauthorized requests rather than confirming
+     * they exist). http_request_args fires for every wp_remote_* call in WP,
+     * including ones triggered deep inside core, so this one filter covers
+     * both cases at once. Scoped to this repo's URLs only, so the token is
+     * never sent anywhere else.
+     *
+     * @param array  $args
+     * @param string $url
+     * @return array
+     */
+    public function authorize_github_requests($args, $url) {
+        $token = defined('MY_LOGIN_FORM_GITHUB_TOKEN') ? trim((string) MY_LOGIN_FORM_GITHUB_TOKEN) : '';
+        $repo  = defined('MY_LOGIN_FORM_GITHUB_REPO') ? trim(MY_LOGIN_FORM_GITHUB_REPO) : '';
+
+        if ('' === $token || '' === $repo) {
+            return $args;
+        }
+
+        $github_prefixes = [
+            'https://api.github.com/repos/' . $repo . '/',
+            'https://raw.githubusercontent.com/' . $repo . '/',
+            'https://github.com/' . $repo . '/archive/',
+            'https://codeload.github.com/' . $repo . '/',
+        ];
+
+        foreach ($github_prefixes as $prefix) {
+            if (0 === stripos($url, $prefix)) {
+                $args['headers']['Authorization'] = 'Bearer ' . $token;
+                break;
+            }
+        }
+
+        return $args;
     }
 
     /**
