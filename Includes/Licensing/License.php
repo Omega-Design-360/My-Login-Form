@@ -209,10 +209,17 @@ class License {
         $body = json_decode(wp_remote_retrieve_body($response), true);
 
         if ($code >= 200 && $code < 300 && !empty($body['valid'])) {
+            // Backstop for the server's own email check: the key must belong
+            // to the exact email entered, never just any registered one.
+            $owner_email = strtolower(trim((string) ($body['email'] ?? '')));
+            if ($owner_email === '' || $owner_email !== strtolower($email)) {
+                return ['success' => false, 'message' => __('The email and license key do not match.', 'my-login-form')];
+            }
+
             // autoload=false throughout — these hold the customer's license
             // key/email and shouldn't be loaded into memory on every request.
             update_option('my_login_form_license_key', $key, false);
-            update_option('my_login_form_license_email', $body['email'] ?? $email, false);
+            update_option('my_login_form_license_email', $email, false);
             update_option('my_login_form_license_plan', $body['plan'] ?? '', false);
             update_option('my_login_form_license_expires', $body['expires_at'] ?? '', false);
             update_option('my_login_form_license_status', 'active', false);
