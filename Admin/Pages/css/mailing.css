@@ -378,6 +378,13 @@
 .mlf-mailing-email-option strong { color: var(--mlf-heading); font-size: var(--mlf-fs-base); }
 .mlf-mailing-email-option small { color: var(--mlf-text-muted); font-size: var(--mlf-fs-sm); line-height: var(--mlf-lh-normal); }
 .mlf-mailing-email-preferences .mlf-mailing-config-save { min-height: 40px; padding: 0 16px; border-radius: var(--mlf-btn-radius); }
+.mlf-mailing-otp-guide h2 { margin-top: 2px; }
+.mlf-mailing-otp-guide ol { margin: 14px 0 16px 22px; }
+.mlf-mailing-otp-guide li { margin: 0 0 8px; line-height: 1.6; }
+.mlf-mailing-otp-guide .mlf-mailing-otp-code { margin: 14px 0; }
+.mlf-mailing-otp-guide code { display: inline-block; padding: 5px 9px; color: var(--mlf-heading); background: var(--mlf-surface-2); border: 1px solid var(--mlf-border); border-radius: 6px; }
+.mlf-mailing-otp-guide .mlf-mailing-otp-template { max-width: 760px; margin: 8px 0 16px; padding: 14px 16px; overflow-x: auto; color: var(--mlf-heading); background: var(--mlf-surface-2); border: 1px solid var(--mlf-border); border-radius: 8px; }
+.mlf-mailing-otp-guide .mlf-mailing-otp-template code { display: block; padding: 0; color: inherit; background: transparent; border: 0; white-space: pre-wrap; }
 
 @media (max-width: 782px) {
     .mlf-mailing-page { width: calc(100% - 24px); margin-top: 12px; }

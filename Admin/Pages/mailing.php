@@ -210,6 +210,31 @@ $config_error = isset($_GET['config_error']) && is_scalar($_GET['config_error'])
         </form>
     </section>
 
+    <section class="mlf-mailing-instructions mlf-mailing-otp-guide" aria-labelledby="mlf-mailing-otp-guide-title">
+        <div class="mlf-mailing-instructions-icon" aria-hidden="true"><span class="dashicons dashicons-lock"></span></div>
+        <div>
+            <p class="mlf-mailing-eyebrow"><?php esc_html_e('EMAIL VERIFICATION', 'my-login-form'); ?></p>
+            <h2 id="mlf-mailing-otp-guide-title"><?php esc_html_e('Send a one-time code instead of a magic link', 'my-login-form'); ?></h2>
+            <p><?php esc_html_e('Supabase chooses between a clickable magic link and a numeric code from its email templates. The plugin needs the numeric code so visitors can enter it on your site.', 'my-login-form'); ?></p>
+            <ol>
+                <li><?php esc_html_e('In Supabase, open Authentication → Email Templates → Magic Link.', 'my-login-form'); ?></li>
+                <li><?php esc_html_e('Replace the template body with the code example below. Remove the button or link that uses {{ .ConfirmationURL }}, then save.', 'my-login-form'); ?></li>
+                <li><?php esc_html_e('Repeat for Confirm signup so first-time Supabase Auth users also receive a code.', 'my-login-form'); ?></li>
+                <li><?php esc_html_e('On this page, enable Supabase and Require email verification, then save both settings.', 'my-login-form'); ?></li>
+            </ol>
+            <p class="mlf-mailing-otp-code"><strong><?php esc_html_e('Example template body (paste into both templates):', 'my-login-form'); ?></strong></p>
+            <pre class="mlf-mailing-otp-template"><code><?php echo esc_html('<h2>Your verification code</h2><p>Enter this code on the website:</p><p>{{ .Token }}</p>'); ?></code></pre>
+            <p class="mlf-mailing-privacy">
+                <?php esc_html_e('Supabase sends a magic link when {{ .ConfirmationURL }} is used. The Resend API settings above send WordPress emails; Supabase Auth sends OTP emails separately. For real users, configure SMTP in Supabase Authentication → SMTP Settings. Supabase’s built-in sender is restricted and rate-limited.', 'my-login-form'); ?>
+                <a href="https://supabase.com/docs/guides/auth/auth-email-templates" target="_blank" rel="noopener noreferrer"><?php esc_html_e('Supabase email template guide', 'my-login-form'); ?></a>
+            </p>
+            <p class="mlf-mailing-privacy">
+                <?php esc_html_e('With Resend SMTP, use host smtp.resend.com, port 465, username resend, your Resend API key as the password, and a verified sender address. The login password remains required; this code is an additional verification step.', 'my-login-form'); ?>
+                <a href="https://supabase.com/docs/guides/auth/auth-smtp" target="_blank" rel="noopener noreferrer"><?php esc_html_e('Supabase SMTP setup', 'my-login-form'); ?></a>
+            </p>
+        </div>
+    </section>
+
     <?php if ($mailing_ready) : ?>
         <form class="mlf-mailing-compose" method="post" enctype="multipart/form-data" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
             <input type="hidden" name="action" value="my_login_form_send_mailing">

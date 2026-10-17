@@ -209,8 +209,8 @@ class AuthAjax {
     /**
      * Ask Supabase Auth to email a 6-digit OTP code to $email, creating a
      * matching Supabase Auth user if one doesn't exist yet. Requires the
-     * project's "Confirm signup" email template to use {{ .Token }} —
-     * otherwise Supabase sends a magic link instead of a code.
+     * project's "Magic Link" and "Confirm signup" email templates to use
+     * {{ .Token }} — otherwise Supabase sends a magic link instead of a code.
      */
     private function send_supabase_email_otp(string $email): bool {
         $url  = get_option('my_login_supabase_url', '');
@@ -261,25 +261,35 @@ class AuthAjax {
         $host = parse_url($url, PHP_URL_HOST);
         $ssl  = !in_array($host, ['localhost', '127.0.0.1', '::1'], true);
 
-        $response = wp_remote_post(trailingslashit($url) . 'auth/v1/verify', [
-            'headers'   => [
-                'apikey'       => $anon,
-                'Content-Type' => 'application/json',
-            ],
-            'body'      => wp_json_encode([
-                'email' => $email,
-                'token' => $token,
-                'type'  => 'email',
-            ]),
-            'timeout'   => 10,
-            'sslverify' => $ssl,
-        ]);
+        // Supabase can send either a sign-in email OTP or a signup confirmation
+        // OTP from the same /otp endpoint (create_user=true). Existing Auth
+        // users verify as "email"; a newly created, unconfirmed Auth user
+        // verifies as "signup". Try both so a reset/login OTP does not strand
+        // WordPress users whose Supabase Auth account is being created on demand.
+        foreach (['email', 'signup'] as $type) {
+            $response = wp_remote_post(trailingslashit($url) . 'auth/v1/verify', [
+                'headers'   => [
+                    'apikey'       => $anon,
+                    'Content-Type' => 'application/json',
+                ],
+                'body'      => wp_json_encode([
+                    'email' => $email,
+                    'token' => $token,
+                    'type'  => $type,
+                ]),
+                'timeout'   => 10,
+                'sslverify' => $ssl,
+            ]);
 
-        if (is_wp_error($response)) {
-            return false;
+            if (!is_wp_error($response)) {
+                $code = wp_remote_retrieve_response_code($response);
+                if ($code >= 200 && $code < 300) {
+                    return true;
+                }
+            }
         }
-        $code = wp_remote_retrieve_response_code($response);
-        return $code >= 200 && $code < 300;
+
+        return false;
     }
 
     /**
@@ -297,6 +307,70 @@ class AuthAjax {
             }
         }
         return wp_login_url();
+    }
+
+    /**
+     * Resolve a published page that actually renders the reset-password form.
+     * Older or manually edited sites can have a stale page ID saved here;
+     * sending reset links to a forgot-password page makes users repeat the
+     * email step indefinitely.
+     */
+    private function resolve_reset_password_page_url(): string {
+        global $wpdb;
+
+        $table = $wpdb->prefix . 'my_login_forms';
+        $reset_form = $wpdb->get_row(
+            "SELECT id, form_key FROM {$table} WHERE form_type = 'reset_password' AND status = 'active' ORDER BY id ASC LIMIT 1"
+        );
+
+        $page_has_reset_form = static function ($page) use ($reset_form): bool {
+            if (!$page || 'page' !== $page->post_type || 'publish' !== $page->post_status) {
+                return false;
+            }
+
+            if (!has_shortcode($page->post_content, 'my_login_form')) {
+                return false;
+            }
+
+            preg_match_all('/\[my_login_form\b([^\]]*)\]/i', $page->post_content, $matches);
+            foreach ($matches[1] as $attributes) {
+                $attributes = shortcode_parse_atts($attributes);
+                if (!is_array($attributes)) {
+                    continue;
+                }
+
+                if (!$reset_form && ($attributes['key'] ?? '') === 'reset-password') {
+                    return true;
+                }
+                if ($reset_form && (
+                    ($attributes['key'] ?? '') === $reset_form->form_key
+                    || (int) ($attributes['id'] ?? 0) === (int) $reset_form->id
+                )) {
+                    return true;
+                }
+            }
+
+            return false;
+        };
+
+        $tracked_id = (int) get_option('my_login_form_reset_password_page_id');
+        $tracked = $tracked_id ? get_post($tracked_id) : null;
+        if ($page_has_reset_form($tracked)) {
+            return get_permalink($tracked_id);
+        }
+
+        // Recover when the stored page ID is stale or points to the wrong form.
+        $pages = $wpdb->get_results(
+            "SELECT ID, post_type, post_status, post_content FROM {$wpdb->posts} WHERE post_type = 'page' AND post_status = 'publish' AND post_content LIKE '%[my_login_form%'"
+        );
+        foreach ($pages as $page) {
+            if ($page_has_reset_form($page)) {
+                update_option('my_login_form_reset_password_page_id', (int) $page->ID);
+                return get_permalink($page->ID);
+            }
+        }
+
+        return '';
     }
 
     /**
@@ -352,11 +426,13 @@ class AuthAjax {
                 wp_send_json_error(__('Something went wrong generating your reset link. Please try again.', 'my-login-form'));
             }
 
-            $reset_page_id = (int) get_option('my_login_form_reset_password_page_id');
-            $reset_url     = $reset_page_id ? get_permalink($reset_page_id) : network_site_url('wp-login.php?action=rp', 'login');
+            $reset_url = $this->resolve_reset_password_page_url();
+            if (!$reset_url) {
+                $reset_url = network_site_url('wp-login.php?action=rp', 'login');
+            }
             $reset_url     = add_query_arg([
                 'key'   => $key,
-                'login' => rawurlencode($user->user_login),
+                'login' => $user->user_login,
             ], $reset_url);
 
             wp_send_json_success([
@@ -752,19 +828,20 @@ class AuthAjax {
         $user = get_user_by('email', $email);
 
         $link_message   = __('If an account exists for that email, a password reset link has been sent.', 'my-login-form');
-        $reset_page_id  = (int) get_option('my_login_form_reset_password_page_id');
-        $reset_page_url = $reset_page_id ? get_permalink($reset_page_id) : '';
-
         if (!$user) {
-            wp_send_json_success(['message' => $link_message, 'redirect' => $reset_page_url]);
+            // Stay on the request form. The reset page requires the key/login
+            // from the email link; redirecting here without them can make an
+            // incorrectly assigned reset page look like another email prompt.
+            my_login_form_log('Password reset request received; no WordPress account matched.', 'info');
+            wp_send_json_success(['message' => $link_message]);
         }
 
         $key = get_password_reset_key($user);
         if (is_wp_error($key)) {
-            wp_send_json_success(['message' => $link_message, 'redirect' => $reset_page_url]);
+            wp_send_json_success(['message' => $link_message]);
         }
 
-        $reset_url = $reset_page_url;
+        $reset_url = $this->resolve_reset_password_page_url();
         if (!$reset_url) {
             // No Reset Password page tracked — fall back to WordPress's own
             // reset screen rather than emailing a broken link.
@@ -772,16 +849,19 @@ class AuthAjax {
         }
         $reset_url = add_query_arg([
             'key'   => $key,
-            'login' => rawurlencode($user->user_login),
+            'login' => $user->user_login,
         ], $reset_url);
 
         $site_name = get_bloginfo('name');
         $subject   = sprintf(__('[%s] Password Reset Request', 'my-login-form'), $site_name);
         $message   = sprintf(__("Someone requested a password reset for your account on %s.\n\nIf this was you, click the link below to choose a new password:\n%s\n\nIf you didn't request this, you can safely ignore this email — your password won't change.", 'my-login-form'), $site_name, $reset_url);
 
-        wp_mail($email, $subject, $message);
+        $mail_sent = wp_mail($email, $subject, $message);
+        if (!$mail_sent) {
+            my_login_form_log('Password reset email could not be delivered by the configured mail transport.', 'error');
+        }
 
-        wp_send_json_success(['message' => $link_message, 'redirect' => $reset_page_url]);
+        wp_send_json_success(['message' => $link_message]);
     }
 
     /**

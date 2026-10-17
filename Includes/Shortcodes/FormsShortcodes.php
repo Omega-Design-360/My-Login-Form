@@ -664,6 +664,12 @@ class FormsShortcodes {
      * Enqueue form assets (CSS/JS from Public/Forms folders)
      */
     private function enqueue_form_assets($form) {
+        // The renderer binds login/reset/OTP submissions with jQuery.
+        // Localizing data on the jquery handle does not enqueue the library,
+        // and some themes or optimization plugins dequeue it unless a script
+        // explicitly requires it. Ensure the form's submit handler is present.
+        wp_enqueue_script('jquery');
+
         $form_controls_path = MY_LOGIN_FORM_DIR . 'Public/Assets/js/form-controls.js';
         if ( file_exists( $form_controls_path ) ) {
             wp_enqueue_script(
@@ -1131,6 +1137,15 @@ class FormsShortcodes {
             #my-login-wrap-<?php echo $form_id; ?> .my-login-password-toggle:hover {
                 color: #2A2A2A;
             }
+            #my-login-wrap-<?php echo $form_id; ?> .my-login-forgot-retry {
+                margin-top: 12px;
+                padding: 8px 12px;
+                color: var(--mlf-link, #0F5900);
+                background: transparent;
+                border: 1px solid currentColor;
+                border-radius: 6px;
+                cursor: pointer;
+            }
         </style>
         <?php if ($otp_capable): ?>
         <style>
@@ -1169,7 +1184,7 @@ class FormsShortcodes {
                 <?php endif; ?>
             </div>
             <?php else: ?>
-            <form class="my-login-form" data-form-id="<?php echo $form_id; ?>" novalidate>
+            <form method="post" class="my-login-form" data-form-id="<?php echo $form_id; ?>" novalidate>
                 <?php wp_nonce_field('my_login_form_submit', 'my_login_form_nonce'); ?>
                 <input type="hidden" name="action"    value="my_login_form_submit">
                 <input type="hidden" name="form_id"   value="<?php echo $form_id; ?>">
@@ -1241,6 +1256,16 @@ class FormsShortcodes {
         <script>
         (function($){
             $(function(){
+                // Avoid JavaScript logical-AND operators in shortcode output:
+                // some themes encode ampersands inside the_content, which
+                // breaks the inline script before its submit handlers can run.
+                function mlfAllTruthy(){
+                    for (var i = 0; i < arguments.length; i++) {
+                        if (!arguments[i]) return false;
+                    }
+                    return true;
+                }
+
                 var fid     = <?php echo $form_id; ?>;
                 var $w      = $('#my-login-wrap-' + fid);
                 var $frm    = $w.find('.my-login-form');
@@ -1274,7 +1299,7 @@ class FormsShortcodes {
                                 .attr('data-value', option.value)
                                 .attr('aria-selected', option.selected ? 'true' : 'false');
                             if (option.disabled) $item.prop('disabled', true);
-                            if (optionIndex === 0 && option.value === '') $item.addClass('mlf-select-placeholder');
+                            if (mlfAllTruthy(optionIndex === 0, option.value === '')) $item.addClass('mlf-select-placeholder');
                             $menu.append($item);
                         });
 
@@ -1312,7 +1337,7 @@ class FormsShortcodes {
                             var rect = $trigger[0].getBoundingClientRect();
                             var menuHeight = Math.min(240, Math.max(48, $menu[0].scrollHeight));
                             var spaceBelow = window.innerHeight - rect.bottom;
-                            var openAbove = spaceBelow < menuHeight + 12 && rect.top > spaceBelow;
+                            var openAbove = spaceBelow < menuHeight + 12 ? rect.top > spaceBelow : false;
                             $menu.css({
                                 position: 'fixed',
                                 top: Math.max(8, openAbove ? rect.top - menuHeight - 6 : rect.bottom + 6) + 'px',
@@ -1370,7 +1395,7 @@ class FormsShortcodes {
                             $trigger.trigger('click').trigger('focus');
                         });
                         $(document).on('click.mlfSelect' + fid + '_' + index, function(event){
-                            if (!$widget[0].contains(event.target) && !$menu[0].contains(event.target)) closeMenu(false);
+                            if (!($widget[0].contains(event.target) || $menu[0].contains(event.target))) closeMenu(false);
                         });
                         $(window).on('resize.mlfSelect' + fid + '_' + index + ' scroll.mlfSelect' + fid + '_' + index, function(){
                             if (!$menu.prop('hidden')) openMenu(false);
@@ -1394,7 +1419,7 @@ class FormsShortcodes {
                     $msg.hide().removeClass('error success');
 
                     var $invalidSelect = $frm.find('select.mlf-select-enhanced').filter(function(){
-                        return $(this).data('mlf-required') === '1' && !this.value;
+                        return $(this).data('mlf-required') === '1' ? !this.value : false;
                     }).first();
                     if ($invalidSelect.length) {
                         var $trigger = $invalidSelect.next('.mlf-select-widget').find('.mlf-select-trigger');
@@ -1408,8 +1433,8 @@ class FormsShortcodes {
                     // of the round-trip to AuthAjax's own server-side check.
                     var $pass    = $frm.find('[name="password"]');
                     var $confirm = $frm.find('[name="confirm_password"]');
-                    if ($confirm.length && $pass.val() !== $confirm.val()) {
-                        $msg.addClass('error').html('<?php _e("Passwords do not match.", "my-login-form"); ?>').show();
+                    if ($confirm.length ? $pass.val() !== $confirm.val() : false) {
+                        $msg.addClass('error').html('<?php echo esc_js(__('Passwords do not match.', 'my-login-form')); ?>').show();
                         return;
                     }
 
@@ -1419,26 +1444,40 @@ class FormsShortcodes {
                         type: 'POST',
                         data: $frm.serialize(),
                         success: function(r){
-                            if (r && r.success) {
+                            if (r ? r.success : false) {
                                 if (r.data.otp_required) {
                                     showOtpStep(r.data.email, r.data.message);
                                     return;
                                 }
-                                $msg.addClass('success').html(r.data.message || '<?php _e("Success!", "my-login-form"); ?>').show();
+                                $msg.addClass('success').html(r.data.message || '<?php echo esc_js(__('Success!', 'my-login-form')); ?>').show();
+                                // A non-OTP forgot-password request has completed.
+                                // Keep the generic confirmation visible, but hide
+                                // the email form so the page doesn't appear to
+                                // ask for the same address repeatedly.
+                                if ('forgot_password' === '<?php echo esc_js($form->form_type); ?>') {
+                                    $frm.hide();
+                                    var $retry = $('<button type="button" class="my-login-forgot-retry"></button>')
+                                        .text('<?php echo esc_js(__('Request another reset', 'my-login-form')); ?>');
+                                    $msg.append($('<br>')).append($retry);
+                                    $retry.on('click', function(){
+                                        $msg.hide().empty().removeClass('error success');
+                                        $frm.show().find('input[type="email"]').first().trigger('focus');
+                                    });
+                                }
                                 if (r.data.redirect) {
                                     setTimeout(function(){ window.location.href = r.data.redirect; }, 1200);
                                 }
-                            } else if (r && r.data && typeof r.data === 'object') {
-                                $msg.addClass('error').html(r.data.message || '<?php _e("An error occurred", "my-login-form"); ?>').show();
+                            } else if (r ? (r.data ? typeof r.data === 'object' : false) : false) {
+                                $msg.addClass('error').html(r.data.message || '<?php echo esc_js(__('An error occurred', 'my-login-form')); ?>').show();
                                 if (r.data.otp_required) {
                                     showOtpStep(r.data.email, '');
                                 }
                             } else {
-                                $msg.addClass('error').html((r && r.data) ? r.data : '<?php _e("An error occurred", "my-login-form"); ?>').show();
+                                $msg.addClass('error').html(r ? (r.data ? r.data : '<?php echo esc_js(__('An error occurred', 'my-login-form')); ?>') : '<?php echo esc_js(__('An error occurred', 'my-login-form')); ?>').show();
                             }
                         },
                         error: function(){
-                            $msg.addClass('error').html('<?php _e("Network error. Please try again.", "my-login-form"); ?>').show();
+                            $msg.addClass('error').html('<?php echo esc_js(__('Network error. Please try again.', 'my-login-form')); ?>').show();
                         },
                         complete: function(){ $btn.prop('disabled', false); }
                     });
@@ -1451,19 +1490,19 @@ class FormsShortcodes {
                     $.ajax({
                         url:  '<?php echo admin_url("admin-ajax.php"); ?>',
                         type: 'POST',
-                        data: $otpFrm.serialize() + '&action=my_login_form_verify_otp',
+                        data: $otpFrm.serialize() + String.fromCharCode(38) + 'action=my_login_form_verify_otp',
                         success: function(r){
-                            if (r && r.success) {
-                                $msg.addClass('success').html(r.data.message || '<?php _e("Success!", "my-login-form"); ?>').show();
+                            if (r ? r.success : false) {
+                                $msg.addClass('success').html(r.data.message || '<?php echo esc_js(__('Success!', 'my-login-form')); ?>').show();
                                 if (r.data.redirect) {
                                     setTimeout(function(){ window.location.href = r.data.redirect; }, 1200);
                                 }
                             } else {
-                                $msg.addClass('error').html((r && r.data && r.data.message) ? r.data.message : ((r && r.data) ? r.data : '<?php _e("An error occurred", "my-login-form"); ?>')).show();
+                                $msg.addClass('error').html(r ? (r.data ? (r.data.message ? r.data.message : r.data) : '<?php echo esc_js(__('An error occurred', 'my-login-form')); ?>') : '<?php echo esc_js(__('An error occurred', 'my-login-form')); ?>').show();
                             }
                         },
                         error: function(){
-                            $msg.addClass('error').html('<?php _e("Network error. Please try again.", "my-login-form"); ?>').show();
+                            $msg.addClass('error').html('<?php echo esc_js(__('Network error. Please try again.', 'my-login-form')); ?>').show();
                         },
                         complete: function(){ $btn.prop('disabled', false); }
                     });
@@ -1481,7 +1520,7 @@ class FormsShortcodes {
                             context: $otpFrm.find('[name="context"]').val()
                         },
                         success: function(r){
-                            var text = (r && r.data && r.data.message) ? r.data.message : ((r && r.data) ? r.data : '');
+                            var text = r ? (r.data ? (r.data.message ? r.data.message : r.data) : '') : '';
                             if (text) {
                                 $msg.removeClass('error success').addClass('success').html(text).show();
                             }

@@ -449,6 +449,12 @@ public function enqueue_admin_assets($hook): void {
     public function my_login_form_enqueue_assets(): void {
         global $wpdb, $post;
 
+        // Shortcodes can be injected by page builders/widgets and therefore
+        // may not appear in the queried post's content. Their inline submit
+        // handlers still need jQuery before the body renders, so enqueue it
+        // before any of the early-return paths below.
+        wp_enqueue_script( 'jquery' );
+
         $table = $wpdb->prefix . 'my_login_forms';
 
         if ( $wpdb->get_var( "SHOW TABLES LIKE '$table'" ) !== $table ) {
