@@ -309,6 +309,10 @@ class FormsShortcodes {
                 border-radius: 8px;
                 max-width: 500px;
                 margin: 20px auto;
+                font-family: inherit !important;
+            }
+            .my-login-form-<?php echo $form->id; ?> *:not(i):not([class^="fa"]):not([class*=" fa"]) {
+                font-family: inherit !important;
             }
             .my-login-form-<?php echo $form->id; ?> .form-group {
                 margin-bottom: 15px;
@@ -524,7 +528,7 @@ class FormsShortcodes {
                                            class="<?php echo esc_attr($field_class); ?>"
                                            placeholder="<?php echo esc_attr($field_placeholder); ?>"
                                            <?php echo $field_required ? 'required' : ''; ?>>
-                                    <button type="button" class="my-login-password-toggle" aria-label="<?php esc_attr_e('Show password', 'my-login-form'); ?>" aria-pressed="false" tabindex="-1"><i class="fas fa-eye"></i></button>
+                                    <button type="button" class="my-login-password-toggle" aria-label="<?php esc_attr_e('Show password', 'my-login-form'); ?>" aria-pressed="false" tabindex="0"><i class="fas fa-eye"></i></button>
                                 </div>
 
                             <?php else: ?>
@@ -646,15 +650,6 @@ class FormsShortcodes {
                 window.location.href = '<?php echo admin_url('admin-ajax.php'); ?>?action=my_login_social_login&provider=' + provider;
             });
 
-            $('.my-login-password-toggle').on('click', function() {
-                var $btn   = $(this);
-                var $input = $btn.siblings('input');
-                var toText = $input.attr('type') === 'password';
-                $input.attr('type', toText ? 'text' : 'password');
-                $btn.find('i').toggleClass('fa-eye fa-eye-slash');
-                $btn.attr('aria-pressed', toText ? 'true' : 'false');
-                $btn.attr('aria-label', toText ? '<?php echo esc_js(__('Hide password', 'my-login-form')); ?>' : '<?php echo esc_js(__('Show password', 'my-login-form')); ?>');
-            });
         });
         </script>
         
@@ -665,6 +660,16 @@ class FormsShortcodes {
      * Enqueue form assets (CSS/JS from Public/Forms folders)
      */
     private function enqueue_form_assets($form) {
+        $form_controls_path = MY_LOGIN_FORM_DIR . 'Public/Assets/js/form-controls.js';
+        if ( file_exists( $form_controls_path ) ) {
+            wp_enqueue_script(
+                'my-login-form-controls',
+                MY_LOGIN_FORM_URL . 'Public/Assets/js/form-controls.js',
+                array(),
+                filemtime( $form_controls_path ),
+                true
+            );
+        }
         // Font Awesome — already enqueued by Hooks::my_login_form_enqueue_assets() in
         // wp_enqueue_scripts (before wp_head). Register here as a safety net for
         // placements that bypass that hook (e.g. some page builders).
@@ -878,6 +883,17 @@ class FormsShortcodes {
         $button_text  = isset($settings['button_text'])  ? $settings['button_text']  : __('Submit', 'my-login-form');
         $show_labels  = !empty($settings['show_labels']);
         $border_color = isset($settings['border_color']) ? $settings['border_color'] : '#DCE8D6';
+        $select_accent = '#1FBB00';
+        $select_border = '#DCE8D6';
+        $select_radius = '12px';
+        if (!empty($settings['template_key'])) {
+            $form_template = \MyLoginForm\Templates\FormTemplates::get(sanitize_key($settings['template_key']));
+            if ($form_template) {
+                $select_accent = $form_template['accent'] ?? $select_accent;
+                $select_border = $form_template['border_color'] ?? $select_border;
+                $select_radius = (int) ($form_template['control_radius'] ?? 12) . 'px';
+            }
+        }
 
         // Where AuthAjax::handle_login()/handle_register() should send the visitor
         // afterwards. Per-form setting (Designer → Settings tab → "Default
@@ -954,6 +970,117 @@ class FormsShortcodes {
         ob_start();
         ?>
         <style>
+            #my-login-wrap-<?php echo $form_id; ?>,
+            #my-login-wrap-<?php echo $form_id; ?> *:not(i):not([class^="fa"]):not([class*=" fa"]) {
+                font-family: inherit !important;
+            }
+            #my-login-wrap-<?php echo $form_id; ?> .mlf-select-native {
+                position: absolute !important;
+                width: 1px !important;
+                height: 1px !important;
+                padding: 0 !important;
+                margin: -1px !important;
+                overflow: hidden !important;
+                clip: rect(0, 0, 0, 0) !important;
+                clip-path: inset(50%) !important;
+                white-space: nowrap !important;
+                border: 0 !important;
+            }
+            #my-login-wrap-<?php echo $form_id; ?> .mlf-select-widget {
+                position: relative;
+                width: 100%;
+                max-width: 100%;
+                box-sizing: border-box;
+                margin-top: 3px;
+            }
+            #my-login-wrap-<?php echo $form_id; ?> .mlf-select-trigger {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 12px;
+                width: 100%;
+                max-width: 100%;
+                min-height: 48px;
+                padding: 13px 16px;
+                box-sizing: border-box;
+                color: #111;
+                background: #fff;
+                border: 1px solid var(--mlf-template-control-border, #DCE8D6);
+                border-radius: var(--mlf-template-control-radius, 12px);
+                font: inherit;
+                text-align: left;
+                cursor: pointer;
+                transition: border-color .2s, box-shadow .2s;
+            }
+            #my-login-wrap-<?php echo $form_id; ?> .mlf-select-trigger::after {
+                content: "";
+                flex: 0 0 8px;
+                width: 8px;
+                height: 8px;
+                border-right: 2px solid var(--mlf-template-accent, #1FBB00);
+                border-bottom: 2px solid var(--mlf-template-accent, #1FBB00);
+                transform: rotate(45deg) translateY(-2px);
+                transition: transform .2s;
+            }
+            #my-login-wrap-<?php echo $form_id; ?> .mlf-select-trigger[aria-expanded="true"]::after {
+                transform: rotate(225deg) translate(-2px, -1px);
+            }
+            #my-login-wrap-<?php echo $form_id; ?> .mlf-select-trigger:hover,
+            #my-login-wrap-<?php echo $form_id; ?> .mlf-select-trigger:focus-visible {
+                border-color: var(--mlf-template-accent, #1FBB00);
+                outline: none;
+                box-shadow: 0 0 0 3px color-mix(in srgb, var(--mlf-template-accent, #1FBB00) 20%, transparent);
+            }
+            #my-login-wrap-<?php echo $form_id; ?> .mlf-select-menu,
+            .mlf-select-menu.mlf-select-menu-form-<?php echo $form_id; ?> {
+                position: absolute;
+                z-index: 10000;
+                top: calc(100% + 6px);
+                left: 0;
+                right: 0;
+                max-height: 240px;
+                overflow-y: auto;
+                padding: 5px;
+                background: #fff;
+                border: 1px solid var(--mlf-template-control-border, #DCE8D6);
+                border-radius: var(--mlf-template-control-radius, 12px);
+                background-clip: padding-box;
+                box-shadow: 0 12px 28px rgba(0, 0, 0, .16);
+            }
+            #my-login-wrap-<?php echo $form_id; ?> .mlf-select-menu[hidden],
+            .mlf-select-menu.mlf-select-menu-form-<?php echo $form_id; ?>[hidden] { display: none !important; }
+            #my-login-wrap-<?php echo $form_id; ?> .mlf-select-option,
+            .mlf-select-menu.mlf-select-menu-form-<?php echo $form_id; ?> .mlf-select-option {
+                display: block;
+                width: 100%;
+                padding: 10px 12px;
+                color: #111;
+                background: transparent;
+                border: 0;
+                border-radius: 8px;
+                font: inherit;
+                text-align: left;
+                cursor: pointer;
+            }
+            #my-login-wrap-<?php echo $form_id; ?> .mlf-select-option:hover,
+            #my-login-wrap-<?php echo $form_id; ?> .mlf-select-option:focus-visible,
+            #my-login-wrap-<?php echo $form_id; ?> .mlf-select-option[aria-selected="true"] {
+                color: #111;
+                background: color-mix(in srgb, var(--mlf-template-accent, #1FBB00) 12%, white);
+                outline: none;
+            }
+            .mlf-select-menu.mlf-select-menu-form-<?php echo $form_id; ?> .mlf-select-option:hover,
+            .mlf-select-menu.mlf-select-menu-form-<?php echo $form_id; ?> .mlf-select-option:focus-visible,
+            .mlf-select-menu.mlf-select-menu-form-<?php echo $form_id; ?> .mlf-select-option[aria-selected="true"] {
+                color: #111;
+                background: color-mix(in srgb, var(--mlf-template-accent, #1FBB00) 12%, white);
+                outline: none;
+            }
+            #my-login-wrap-<?php echo $form_id; ?> .mlf-select-option:disabled,
+            .mlf-select-menu.mlf-select-menu-form-<?php echo $form_id; ?> .mlf-select-option:disabled {
+                color: #777;
+                cursor: default;
+            }
             #my-login-wrap-<?php echo $form_id; ?> .my-login-password-wrap {
                 position: relative;
             }
@@ -998,7 +1125,7 @@ class FormsShortcodes {
             }
         </style>
         <?php endif; ?>
-        <div class="my-login-wrap my-login-wrap-<?php echo $form_id; ?>" id="my-login-wrap-<?php echo $form_id; ?>">
+        <div class="my-login-wrap my-login-wrap-<?php echo $form_id; ?>" id="my-login-wrap-<?php echo $form_id; ?>" style="--mlf-template-accent:<?php echo esc_attr($select_accent); ?>;--mlf-template-control-border:<?php echo esc_attr($select_border); ?>;--mlf-template-control-radius:<?php echo esc_attr($select_radius); ?>;">
             <div class="my-login-msg" id="my-login-msg-<?php echo $form_id; ?>"></div>
 
             <?php if (!$reset_link_valid): ?>
@@ -1094,6 +1221,139 @@ class FormsShortcodes {
                 var $msg    = $w.find('#my-login-msg-' + fid);
                 var $otpFrm = $w.find('#my-login-otp-' + fid);
 
+                function enhanceSelects() {
+                    $w.find('select').each(function(index){
+                        var select = this;
+                        var $select = $(select);
+                        if ($select.hasClass('mlf-select-enhanced')) return;
+
+                        var required = select.required;
+                        select.required = false;
+                        $select.addClass('mlf-select-native mlf-select-enhanced')
+                            .attr({'aria-hidden': 'true', 'tabindex': '-1'})
+                            .data('mlf-required', required ? '1' : '0');
+
+                        var label = $w.find('label[for="' + select.id + '"]').first().text().trim();
+                        var menuId = 'mlf-select-menu-' + fid + '-' + index;
+                        var $widget = $('<div class="mlf-select-widget"></div>');
+                        var $trigger = $('<button type="button" class="mlf-select-trigger" aria-haspopup="listbox" aria-expanded="false"></button>')
+                            .attr({'aria-controls': menuId, 'aria-label': label || select.name || 'Choose an option'});
+                        var $value = $('<span class="mlf-select-value"></span>');
+                        var $menu = $('<div class="mlf-select-menu mlf-select-menu-form-' + fid + '" role="listbox" hidden></div>')
+                            .attr({'id': menuId, 'data-mlf-form-id': fid});
+
+                        Array.prototype.forEach.call(select.options, function(option, optionIndex){
+                            var $item = $('<button type="button" class="mlf-select-option" role="option"></button>')
+                                .text(option.text)
+                                .attr('data-value', option.value)
+                                .attr('aria-selected', option.selected ? 'true' : 'false');
+                            if (option.disabled) $item.prop('disabled', true);
+                            if (optionIndex === 0 && option.value === '') $item.addClass('mlf-select-placeholder');
+                            $menu.append($item);
+                        });
+
+                        function syncValue() {
+                            var selected = select.options[select.selectedIndex];
+                            $value.text(selected ? selected.text : 'Select…');
+                            $menu.find('.mlf-select-option').attr('aria-selected', 'false')
+                                .filter(function(){ return this.getAttribute('data-value') === select.value; })
+                                .attr('aria-selected', 'true');
+                            $trigger.attr('aria-invalid', 'false');
+                        }
+                        function closeMenu(returnFocus) {
+                            $menu.prop('hidden', true);
+                            $trigger.attr('aria-expanded', 'false');
+                            if (returnFocus) $trigger.trigger('focus');
+                        }
+                        function openMenu(focusSelected) {
+                            if (!$menu.parent().is('body')) $(document.body).append($menu);
+                            var styles = window.getComputedStyle($w[0]);
+                            var controlRadius = window.getComputedStyle($trigger[0]).borderRadius || '12px';
+                            $menu.css({
+                                '--mlf-template-accent': styles.getPropertyValue('--mlf-template-accent').trim() || '#1FBB00',
+                                '--mlf-template-control-border': styles.getPropertyValue('--mlf-template-control-border').trim() || '#DCE8D6',
+                                '--mlf-template-control-radius': styles.getPropertyValue('--mlf-template-control-radius').trim() || '12px'
+                            });
+                            // The menu is moved to <body> to escape nested container
+                            // clipping, so enforce the trigger's actual radius here.
+                            $menu[0].style.setProperty('border-radius', controlRadius, 'important');
+                            var optionRadius = Math.max(4, Math.min(12, (parseFloat(controlRadius) || 12) - 4)) + 'px';
+                            $menu.find('.mlf-select-option').each(function(){
+                                this.style.setProperty('border-radius', optionRadius, 'important');
+                            });
+                            $menu.prop('hidden', false);
+                            $trigger.attr('aria-expanded', 'true');
+                            var rect = $trigger[0].getBoundingClientRect();
+                            var menuHeight = Math.min(240, Math.max(48, $menu[0].scrollHeight));
+                            var spaceBelow = window.innerHeight - rect.bottom;
+                            var openAbove = spaceBelow < menuHeight + 12 && rect.top > spaceBelow;
+                            $menu.css({
+                                position: 'fixed',
+                                top: Math.max(8, openAbove ? rect.top - menuHeight - 6 : rect.bottom + 6) + 'px',
+                                left: Math.max(8, Math.min(rect.left, window.innerWidth - rect.width - 8)) + 'px',
+                                width: rect.width + 'px',
+                                maxHeight: Math.min(240, window.innerHeight - 16) + 'px'
+                            });
+                            if (focusSelected) {
+                                var $selected = $menu.find('[aria-selected="true"]:not(:disabled)').first();
+                                ($selected.length ? $selected : $menu.find('.mlf-select-option:not(:disabled)').first()).trigger('focus');
+                            }
+                        }
+
+                        $trigger.append($value);
+                        $widget.append($trigger);
+                        $select.after($widget);
+                        $(document.body).append($menu);
+                        syncValue();
+                        $select.on('change.mlfSelect', syncValue);
+                        $select.on('invalid.mlfSelect', function(event){
+                            event.preventDefault();
+                            $trigger.trigger('focus');
+                            openMenu(false);
+                        });
+                        $trigger.on('click', function(){
+                            if ($menu.prop('hidden')) openMenu(false);
+                            else closeMenu(false);
+                        }).on('keydown', function(event){
+                            if (event.key === 'ArrowDown' || event.key === 'Enter' || event.key === ' ') {
+                                event.preventDefault();
+                                openMenu(true);
+                            } else if (event.key === 'ArrowUp') {
+                                event.preventDefault();
+                                openMenu(true);
+                            }
+                        });
+                        $menu.on('click', '.mlf-select-option:not(:disabled)', function(){
+                            select.value = this.getAttribute('data-value');
+                            $select.trigger('input').trigger('change');
+                            closeMenu(true);
+                        }).on('keydown', '.mlf-select-option', function(event){
+                            var $options = $menu.find('.mlf-select-option:not(:disabled)');
+                            var optionIndex = $options.index(this);
+                            if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+                                event.preventDefault();
+                                var step = event.key === 'ArrowDown' ? 1 : -1;
+                                $options.eq((optionIndex + step + $options.length) % $options.length).trigger('focus');
+                            } else if (event.key === 'Escape') {
+                                event.preventDefault();
+                                closeMenu(true);
+                            }
+                        });
+                        $w.find('label[for="' + select.id + '"]').on('click.mlfSelect', function(event){
+                            event.preventDefault();
+                            $trigger.trigger('click').trigger('focus');
+                        });
+                        $(document).on('click.mlfSelect' + fid + '_' + index, function(event){
+                            if (!$widget[0].contains(event.target) && !$menu[0].contains(event.target)) closeMenu(false);
+                        });
+                        $(window).on('resize.mlfSelect' + fid + '_' + index + ' scroll.mlfSelect' + fid + '_' + index, function(){
+                            if (!$menu.prop('hidden')) openMenu(false);
+                        });
+                    });
+                }
+
+                enhanceSelects();
+
                 function showOtpStep(email, message){
                     $frm.hide();
                     $otpFrm.find('[name="email"]').val(email);
@@ -1106,6 +1366,17 @@ class FormsShortcodes {
                 $frm.on('submit', function(e){
                     e.preventDefault();
                     $msg.hide().removeClass('error success');
+
+                    var $invalidSelect = $frm.find('select.mlf-select-enhanced').filter(function(){
+                        return $(this).data('mlf-required') === '1' && !this.value;
+                    }).first();
+                    if ($invalidSelect.length) {
+                        var $trigger = $invalidSelect.next('.mlf-select-widget').find('.mlf-select-trigger');
+                        $trigger.attr('aria-invalid', 'true').trigger('focus');
+                        $trigger.trigger('click');
+                        $msg.addClass('error').text('<?php echo esc_js(__('Please choose an option from the dropdown.', 'my-login-form')); ?>').show();
+                        return;
+                    }
 
                     // Instant feedback for a "Confirm Password" field, ahead
                     // of the round-trip to AuthAjax's own server-side check.
@@ -1201,16 +1472,6 @@ class FormsShortcodes {
                     window.location.href = '<?php echo admin_url("admin-ajax.php"); ?>?action=my_login_social_login&provider=' + provider + '&form_id=' + fid + '&nonce=<?php echo wp_create_nonce("my_login_social_login"); ?>';
                 });
 
-                // Show/hide password toggle
-                $w.on('click', '.my-login-password-toggle', function(){
-                    var $btn   = $(this);
-                    var $input = $btn.siblings('input');
-                    var toText = $input.attr('type') === 'password';
-                    $input.attr('type', toText ? 'text' : 'password');
-                    $btn.find('i').toggleClass('fa-eye fa-eye-slash');
-                    $btn.attr('aria-pressed', toText ? 'true' : 'false');
-                    $btn.attr('aria-label', toText ? '<?php echo esc_js(__('Hide password', 'my-login-form')); ?>' : '<?php echo esc_js(__('Show password', 'my-login-form')); ?>');
-                });
             });
         })(jQuery);
         </script>
@@ -1331,14 +1592,27 @@ class FormsShortcodes {
             $html .= $lbl . '<textarea id="' . esc_attr($uid) . '" name="' . esc_attr($field_type) . '" placeholder="' . esc_attr($placeholder) . '" rows="4"' . $req . '></textarea>';
         } elseif ($html_type === 'select') {
             $lbl = $show_labels ? '<label class="my-login-label" for="' . esc_attr($uid) . '">' . esc_html($label) . $req_mark . '</label>' : '';
+            $options = isset($f['options']) && is_array($f['options']) ? $f['options'] : array();
+            $option_html = '';
+            foreach ($options as $option) {
+                if (!is_scalar($option)) {
+                    continue;
+                }
+                $option = sanitize_text_field((string) $option);
+                if ($option === '') {
+                    continue;
+                }
+                $option_html .= '<option value="' . esc_attr($option) . '">' . esc_html($option) . '</option>';
+            }
             $html .= $lbl . '<select id="' . esc_attr($uid) . '" name="' . esc_attr($field_type) . '"' . $req . '>'
                 . '<option value="">' . __('Select…', 'my-login-form') . '</option>'
+                . $option_html
                 . '</select>';
         } elseif ($html_type === 'password') {
             $lbl = $show_labels ? '<label class="my-login-label" for="' . esc_attr($uid) . '">' . esc_html($label) . $req_mark . '</label>' : '';
             $html .= $lbl . '<div class="my-login-password-wrap">'
                 . '<input type="password" id="' . esc_attr($uid) . '" name="' . esc_attr($field_type) . '" placeholder="' . esc_attr($placeholder) . '"' . $req . $min_length . '>'
-                . '<button type="button" class="my-login-password-toggle" aria-label="' . esc_attr__('Show password', 'my-login-form') . '" aria-pressed="false" tabindex="-1"><i class="fas fa-eye"></i></button>'
+                . '<button type="button" class="my-login-password-toggle" aria-label="' . esc_attr__('Show password', 'my-login-form') . '" aria-pressed="false" tabindex="0"><i class="fas fa-eye"></i></button>'
                 . '</div>';
         } else {
             $lbl = $show_labels ? '<label class="my-login-label" for="' . esc_attr($uid) . '">' . esc_html($label) . $req_mark . '</label>' : '';

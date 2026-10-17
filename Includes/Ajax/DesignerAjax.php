@@ -701,7 +701,7 @@ class DesignerAjax {
         // carries a style="" attribute; width/min-height/background/padding/
         // etc. are all real CSS rules, scoped per form via .my-login-wrap-{id}
         // and per element via .mlf-el-{id} where customized.
-        return '.my-login-main-container{margin:0 auto;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;box-sizing:border-box;box-shadow:0 10px 40px rgba(4,18,0,.08),0 2px 8px rgba(4,18,0,.06)}'
+        return '.my-login-main-container{margin:0 auto;box-sizing:border-box;box-shadow:0 10px 40px rgba(4,18,0,.08),0 2px 8px rgba(4,18,0,.06)}'
              . '.my-login-form-field{margin-bottom:16px}'
              . '.my-login-form-submit{margin-top:16px}'
              . '.my-login-label{display:block;font-size:13px;font-weight:600;color:#2A2A2A;margin-bottom:5px}'
@@ -1079,7 +1079,6 @@ class DesignerAjax {
                     margin: 0;
                     padding: 20px;
                     background: #f1f1f1;
-                    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
                 }
                 .preview-container {
                     max-width: 600px;
@@ -1268,7 +1267,6 @@ class DesignerAjax {
                     margin: 0;
                     padding: 20px;
                     background: #f1f1f1;
-                    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
                 }
                 .preview-container {
                     max-width: 600px;

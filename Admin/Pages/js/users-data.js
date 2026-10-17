@@ -82,7 +82,30 @@ function applyBulkAction() {
 
 // Export CSV
 function exportCSV() {
-    window.location.href = myLoginFormUsersData.ajaxUrl + '?action=my_login_form_export_csv&nonce=' + encodeURIComponent(myLoginFormUsersData.nonce);
+    const source = document.querySelector('input[name="user_ids[]"]')?.dataset.source || 'plugin';
+    window.location.href = myLoginFormUsersData.ajaxUrl + '?action=my_login_form_export_csv&source=' + encodeURIComponent(source) + '&nonce=' + encodeURIComponent(myLoginFormUsersData.nonce);
+}
+
+function exportSelectedCSV() {
+    const selected = Array.from(document.querySelectorAll('input[name="user_ids[]"]:checked'));
+    if (!selected.length) {
+        alert('Please select at least one user to export.');
+        return;
+    }
+
+    const source = selected[0].dataset.source || 'plugin';
+    if (selected.some(checkbox => (checkbox.dataset.source || 'plugin') !== source)) {
+        alert('Please select users from the same data source.');
+        return;
+    }
+
+    const params = new URLSearchParams({
+        action: 'my_login_form_export_csv',
+        source,
+        nonce: myLoginFormUsersData.nonce
+    });
+    selected.forEach(checkbox => params.append('user_ids[]', checkbox.value));
+    window.location.href = myLoginFormUsersData.ajaxUrl + '?' + params.toString();
 }
 
 // Sync with Supabase

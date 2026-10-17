@@ -104,8 +104,11 @@ $current_page = $current_page ?? 1;
         </div>
         
         <div class="action-buttons">
-            <button onclick="exportCSV()" class="button button-primary">
-                <i class="fas fa-download"></i> <?php _e('Export CSV', 'my-login-form'); ?>
+            <button type="button" onclick="exportSelectedCSV()" class="button button-primary">
+                <i class="fas fa-download"></i> <?php _e('Export Selected CSV', 'my-login-form'); ?>
+            </button>
+            <button type="button" onclick="exportCSV()" class="button">
+                <i class="fas fa-download"></i> <?php _e('Export All Users CSV', 'my-login-form'); ?>
             </button>
             <button onclick="syncWithSupabase()" class="button">
                 <i class="fas fa-sync-alt"></i> <?php _e('Sync with Supabase', 'my-login-form'); ?>

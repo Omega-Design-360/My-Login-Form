@@ -255,8 +255,7 @@ class UsersdataAjax {
     }
 
     /**
-     * Stream a CSV export of all users. Falls back to native WP users
-     * when the plugin's custom table has no rows.
+     * Stream a CSV export of all users or a selected set.
      */
     public function export_csv(): void {
         if (!isset($_GET['nonce']) || !wp_verify_nonce($_GET['nonce'], 'my_login_form_dashboard_nonce')) {
@@ -266,34 +265,44 @@ class UsersdataAjax {
             wp_die(esc_html__('Permission denied.', 'my-login-form'));
         }
 
-        $users_db = UsersDatabase::get_instance();
-        $csv      = $users_db->export_users_to_csv();
+        $source   = sanitize_key($_GET['source'] ?? 'plugin');
+        $user_ids = array_values(array_unique(array_filter(array_map('absint', (array) ($_GET['user_ids'] ?? [])))));
+        $selected = !empty($user_ids);
 
-        if (empty($csv)) {
-            $csv = $this->export_wp_users_to_csv();
+        if ($source === 'wp') {
+            $csv = $this->export_wp_users_to_csv($selected ? $user_ids : []);
+        } else {
+            $users_db = UsersDatabase::get_instance();
+            if ($selected) {
+                global $wpdb;
+                $table = $users_db->get_users_table_name();
+                $placeholders = implode(',', array_fill(0, count($user_ids), '%d'));
+                $users = $wpdb->get_results($wpdb->prepare("SELECT * FROM {$table} WHERE id IN ({$placeholders}) ORDER BY id ASC", $user_ids));
+                $csv = $this->rows_to_csv($users, 'plugin');
+            } else {
+                $csv = $this->rows_to_csv($users_db->get_users(['limit' => 0]), 'plugin');
+            }
         }
 
         nocache_headers();
         header('Content-Type: text/csv; charset=utf-8');
-        header('Content-Disposition: attachment; filename="my-login-form-users-' . gmdate('Y-m-d') . '.csv"');
+        header('Content-Disposition: attachment; filename="my-login-form-users-' . ($selected ? 'selected-' : '') . gmdate('Y-m-d') . '.csv"');
         echo $csv; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
         exit;
     }
 
-    private function export_wp_users_to_csv(): string {
-        $fields = ['id', 'user_login', 'user_email', 'first_name', 'last_name', 'user_registered'];
+    private function export_wp_users_to_csv(array $include = []): string {
+        $fields = ['name', 'email', 'phone'];
 
         $output = fopen('php://temp', 'r+');
         fputcsv($output, $fields);
 
-        foreach (get_users() as $wp_user) {
+        $query = $include ? ['include' => $include, 'number' => -1] : ['number' => -1];
+        foreach (get_users($query) as $wp_user) {
             fputcsv($output, [
-                $wp_user->ID,
-                $wp_user->user_login,
+                $wp_user->display_name,
                 $wp_user->user_email,
-                get_user_meta($wp_user->ID, 'first_name', true),
-                get_user_meta($wp_user->ID, 'last_name', true),
-                $wp_user->user_registered,
+                get_user_meta($wp_user->ID, 'billing_phone', true) ?: get_user_meta($wp_user->ID, 'phone', true),
             ]);
         }
 
@@ -301,6 +310,30 @@ class UsersdataAjax {
         $csv = stream_get_contents($output);
         fclose($output);
 
+        return $csv;
+    }
+
+    private function rows_to_csv(array $rows, string $source): string {
+        $output = fopen('php://temp', 'r+');
+        fputcsv($output, ['name', 'email', 'phone']);
+        foreach ($rows as $row) {
+            if ($source === 'plugin') {
+                $name = trim(($row->user_first_name ?? '') . ' ' . ($row->user_last_name ?? ''));
+                if ($name === '') {
+                    $name = $row->user_login ?? '';
+                }
+                $phone = $row->user_phone ?? '';
+                $email = $row->user_email ?? '';
+            } else {
+                $name = $row->display_name ?? '';
+                $phone = '';
+                $email = $row->user_email ?? '';
+            }
+            fputcsv($output, [$name, $email, $phone]);
+        }
+        rewind($output);
+        $csv = stream_get_contents($output);
+        fclose($output);
         return $csv;
     }
 

@@ -22,7 +22,7 @@ class FormTemplates {
      * @return array<string,array{name:string,description:string,icon:string,swatch:string,accent:string,border_color:string,custom_css:string}>
      */
     public static function get_all(): array {
-        return [
+        $templates = [
             'aurora_glass'    => self::aurora_glass(),
             'violet_glass'    => self::violet_glass(),
             'sunset_gradient' => self::sunset_gradient(),
@@ -30,6 +30,71 @@ class FormTemplates {
             'minimal_mono'    => self::minimal_mono(),
             'ocean_breeze'    => self::ocean_breeze(),
         ];
+
+        // Keep entered text readable across every built-in design, including
+        // the glass and neon templates that use translucent input fills.
+        $readable_fields_css = <<<'CSS'
+
+/* Readable form controls for every built-in template */
+.my-login-wrap input:not([type=checkbox]):not([type=radio]),
+.my-login-wrap select,
+.my-login-wrap textarea {
+  color: #111111 !important;
+  -webkit-text-fill-color: #111111 !important;
+  background-color: #FFFFFF !important;
+}
+.my-login-wrap select {
+  display: block;
+  width: 100% !important;
+  min-height: 48px;
+  padding: 13px 42px 13px 16px !important;
+  border: 1px solid var(--mlf-template-control-border, #DCE8D6) !important;
+  border-radius: var(--mlf-template-control-radius, 12px) !important;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, var(--mlf-template-accent, #1FBB00) 50%), linear-gradient(135deg, var(--mlf-template-accent, #1FBB00) 50%, transparent 50%);
+  background-position: calc(100% - 19px) 50%, calc(100% - 13px) 50%;
+  background-size: 6px 6px;
+  background-repeat: no-repeat;
+  cursor: pointer;
+  transition: border-color .2s, box-shadow .2s;
+}
+.my-login-wrap select:focus {
+  outline: none;
+  border-color: var(--mlf-template-accent, #1FBB00) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--mlf-template-accent, #1FBB00) 20%, transparent);
+}
+.my-login-wrap select option {
+  color: #111111;
+  background-color: #FFFFFF;
+}
+.my-login-wrap input::placeholder,
+.my-login-wrap textarea::placeholder {
+  color: #555555 !important;
+  opacity: 1;
+}
+.my-login-wrap input:-webkit-autofill,
+.my-login-wrap input:-webkit-autofill:hover,
+.my-login-wrap input:-webkit-autofill:focus,
+.my-login-wrap input:-webkit-autofill:active,
+.my-login-wrap input:autofill {
+  -webkit-text-fill-color: #111111 !important;
+  caret-color: #111111 !important;
+  -webkit-box-shadow: 0 0 0 1000px #FFFFFF inset !important;
+  box-shadow: 0 0 0 1000px #FFFFFF inset !important;
+  background-color: #FFFFFF !important;
+}
+CSS;
+
+        foreach ($templates as &$template) {
+            $radius = isset($template['control_radius']) ? (int) $template['control_radius'] : 12;
+            $accent = $template['accent'] ?? '#1FBB00';
+            $border = $template['border_color'] ?? '#DCE8D6';
+            $template['custom_css'] .= "\n.my-login-wrap { --mlf-template-accent: {$accent}; --mlf-template-control-border: {$border}; --mlf-template-control-radius: {$radius}px; }\n" . $readable_fields_css;
+        }
+        unset($template);
+
+        return $templates;
     }
 
     public static function get(string $key): ?array {
@@ -44,6 +109,7 @@ class FormTemplates {
             'icon'         => '🌌',
             'swatch'       => 'linear-gradient(135deg,#EAFBEA 0%,#E3F8E8 45%,#D7F3E0 100%)',
             'accent'       => '#1FBB00',
+            'control_radius' => 14,
             'border_color' => '#CFF0CB',
             'preview'      => [
                 'title'       => '#173A0E',
@@ -64,7 +130,6 @@ class FormTemplates {
   -webkit-backdrop-filter:blur(22px) saturate(180%);backdrop-filter:blur(22px) saturate(180%);
   border:1px solid rgba(255,255,255,.7);
   box-shadow:0 1px 0 rgba(255,255,255,.9) inset,0 30px 60px -20px rgba(10,40,10,.35),0 0 80px -30px rgba(31,187,0,.45);
-  font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
 }
 .my-login-wrap::before{content:"";position:absolute;top:-90px;left:-70px;width:220px;height:220px;border-radius:50%;background:radial-gradient(circle,rgba(31,187,0,.32),transparent 70%);pointer-events:none;}
 .my-login-wrap::after{content:"";position:absolute;bottom:-80px;right:-60px;width:220px;height:220px;border-radius:50%;background:radial-gradient(circle,rgba(57,231,95,.32),transparent 70%);pointer-events:none;}
@@ -141,6 +206,7 @@ CSS,
             'icon'         => '🔮',
             'swatch'       => 'linear-gradient(135deg,#EEF2FF 0%,#E0E7FF 40%,#CFFAFE 100%)',
             'accent'       => '#6D5EF7',
+            'control_radius' => 14,
             'border_color' => '#D9D3FB',
             'preview'      => [
                 'title'        => '#1E1B4B',
@@ -157,7 +223,6 @@ CSS,
   -webkit-backdrop-filter:blur(22px) saturate(180%);backdrop-filter:blur(22px) saturate(180%);
   border:1px solid rgba(255,255,255,.7);
   box-shadow:0 1px 0 rgba(255,255,255,.9) inset,0 30px 60px -20px rgba(76,70,117,.35),0 0 80px -30px rgba(109,94,247,.45);
-  font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
 }
 .my-login-wrap::before{content:"";position:absolute;top:-90px;left:-70px;width:220px;height:220px;border-radius:50%;background:radial-gradient(circle,rgba(109,94,247,.35),transparent 70%);pointer-events:none;}
 .my-login-wrap::after{content:"";position:absolute;bottom:-80px;right:-60px;width:220px;height:220px;border-radius:50%;background:radial-gradient(circle,rgba(34,211,238,.35),transparent 70%);pointer-events:none;}
@@ -234,6 +299,7 @@ CSS,
             'icon'         => '🌅',
             'swatch'       => 'linear-gradient(135deg,#FF5F6D 0%,#FFA34D 100%)',
             'accent'       => '#FF6B4A',
+            'control_radius' => 999,
             'border_color' => '#FFD3B0',
             'preview'      => [
                 'title'        => 'rgba(255,255,255,.95)',
@@ -249,7 +315,6 @@ CSS,
   background:linear-gradient(160deg,#FF5F6D 0%,#FF8A5C 50%,#FFB347 100%);
   border:1px solid rgba(255,255,255,.25);
   box-shadow:0 1px 0 rgba(255,255,255,.25) inset,0 30px 60px -18px rgba(120,30,10,.45),0 0 60px -20px rgba(255,140,80,.5);
-  font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
 }
 .my-login-wrap::after{content:"";position:absolute;bottom:-60px;left:-60px;width:220px;height:220px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.22),transparent 70%);pointer-events:none;}
 .my-login-wrap>*{position:relative;z-index:1;}
@@ -325,6 +390,7 @@ CSS,
             'icon'         => '⚡',
             'swatch'       => 'linear-gradient(135deg,#0A0A12 0%,#151425 60%,#1E1230 100%)',
             'accent'       => '#00E5FF',
+            'control_radius' => 12,
             'border_color' => '#2A2A3D',
             'preview'      => [
                 'title'        => '#EAF6FF',
@@ -340,7 +406,6 @@ CSS,
   background:linear-gradient(165deg,#0D0D18 0%,#14131F 45%,#0A0A12 100%);
   border:1px solid rgba(0,229,255,.25);
   box-shadow:0 1px 0 rgba(255,255,255,.05) inset,0 30px 60px -18px rgba(0,0,0,.85),0 0 70px -25px rgba(255,46,196,.35),0 0 50px -25px rgba(0,229,255,.4);
-  font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
 }
 .my-login-wrap::before{content:"";position:absolute;top:-1px;left:10%;right:10%;height:1px;background:linear-gradient(90deg,transparent,#00E5FF,#FF2EC4,transparent);opacity:.7;pointer-events:none;}
 .my-login-wrap::after{content:"";position:absolute;bottom:-70px;right:-50px;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(255,46,196,.28),transparent 70%);pointer-events:none;}
@@ -417,6 +482,7 @@ CSS,
             'icon'         => '◻️',
             'swatch'       => 'linear-gradient(135deg,#FFFFFF 0%,#F2F2F2 100%)',
             'accent'       => '#111111',
+            'control_radius' => 8,
             'border_color' => '#E5E5E5',
             'preview'      => [
                 'title'        => '#111111',
@@ -431,7 +497,6 @@ CSS,
   padding:0 0 30px !important;box-sizing:border-box;position:relative;overflow:hidden;border-radius:16px;
   background:#FFFFFF;border:1px solid #E5E5E5;
   box-shadow:0 1px 2px rgba(0,0,0,.04),0 20px 44px -24px rgba(0,0,0,.18);
-  font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
 }
 .my-login-wrap .my-login-main-container,.my-login-wrap form,.my-login-wrap fieldset{background:transparent !important;border:0 !important;box-shadow:none !important;padding:0 !important;margin:0 !important;border-radius:0 !important;max-width:none !important;width:auto !important;}
 .my-login-greeting{padding:40px 34px 22px;text-align:center;}
@@ -503,6 +568,7 @@ CSS,
             'icon'         => '🌊',
             'swatch'       => 'linear-gradient(135deg,#0EA5A5 0%,#0284C7 100%)',
             'accent'       => '#0EA5A5',
+            'control_radius' => 13,
             'border_color' => '#BFEFF0',
             'preview'      => [
                 'title'        => 'rgba(255,255,255,.95)',
@@ -518,7 +584,6 @@ CSS,
   background:linear-gradient(160deg,#0EA5A5 0%,#0EA5C7 50%,#0284C7 100%);
   border:1px solid rgba(255,255,255,.28);
   box-shadow:0 1px 0 rgba(255,255,255,.25) inset,0 30px 60px -18px rgba(2,40,55,.5),0 0 60px -20px rgba(14,165,165,.5);
-  font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
 }
 .my-login-wrap::after{content:"";position:absolute;bottom:-70px;right:-50px;width:230px;height:230px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.2),transparent 70%);pointer-events:none;}
 .my-login-wrap::before{content:"";position:absolute;top:-60px;left:-40px;width:170px;height:170px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.16),transparent 70%);pointer-events:none;}

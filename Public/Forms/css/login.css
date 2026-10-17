@@ -1,14 +1,118 @@
-.my-login-main-container{margin:0 auto;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;box-sizing:border-box;box-shadow:0 10px 40px rgba(4,18,0,.08),0 2px 8px rgba(4,18,0,.06)}.my-login-form-field{margin-bottom:16px}.my-login-form-submit{margin-top:16px}.my-login-label{display:block;font-size:13px;font-weight:600;color:#2A2A2A;margin-bottom:5px}.my-login-req{color:#8A0000;margin-left:2px}.my-login-main-container input[type=text],.my-login-main-container input[type=email],.my-login-main-container input[type=password],.my-login-main-container input[type=tel],.my-login-main-container input[type=number],.my-login-main-container textarea,.my-login-main-container select{display:block;width:100%;padding:10px 14px;font-size:14px;color:#2A2A2A;background:#fff;border:1.5px solid #DCE8D6;border-radius:8px;box-sizing:border-box;transition:border-color .15s,box-shadow .15s}.my-login-main-container input:focus,.my-login-main-container textarea:focus,.my-login-main-container select:focus{outline:none;border-color:#1FBB00;box-shadow:0 0 0 3px rgba(31,187,0,.15)}.my-login-sub-div{border-radius:10px;margin:10px 0;padding:12px;border:1px solid #E3F0DE}.my-login-submit-btn{display:block;width:100%;padding:12px;font-size:15px;font-weight:600;color:#fff;border:none;border-radius:8px;cursor:pointer;transition:transform .15s ease,box-shadow .15s ease,filter .15s ease}.my-login-submit-btn:hover{transform:translateY(-1px);filter:brightness(.94)}.my-login-submit-btn:active{transform:translateY(0) scale(.99);filter:brightness(.9)}.my-login-submit-btn:disabled{opacity:.5;cursor:not-allowed}.my-login-caps-hint{display:none;font-size:12px;color:#B35B00;margin-top:4px}.my-login-caps-hint.is-visible{display:block}.my-login-field-match input{border-color:#0F5900!important}.my-login-field-mismatch input{border-color:#8A0000!important}.my-login-fade-in{opacity:0;transform:translateY(8px);transition:opacity .4s ease,transform .4s ease}.my-login-fade-in.is-visible{opacity:1;transform:translateY(0)}.my-login-extra-links{text-align:center;margin-top:22px;padding-top:16px;border-top:1px solid rgba(0,0,0,.08);font-size:13px;color:#6B8064;display:flex;flex-direction:column;align-items:center;gap:10px}.my-login-extra-links .my-login-extra-link{display:inline-flex;align-items:center;gap:6px}.my-login-extra-links .my-login-extra-link i{font-size:.95em;opacity:.75}.my-login-greeting{margin-bottom:18px;text-align:center}.my-login-greeting-title{margin:0 0 4px;font-size:22px;font-weight:700;color:#1A2E05}.my-login-greeting-subtitle{margin:0;font-size:13px;color:#6B8064}.my-login-wrap-1 input:not([type=checkbox]):not([type=radio]),.my-login-wrap-1 select,.my-login-wrap-1 textarea{width:100%;padding:9px 12px;border:1px solid #DCE8D6;border-radius:5px;box-sizing:border-box;font-size:14px;margin-top:3px;transition:border-color .15s,box-shadow .15s;}.my-login-wrap-1 input:focus,.my-login-wrap-1 select:focus,.my-login-wrap-1 textarea:focus{outline:none;border-color:#1FBB00;box-shadow:0 0 0 3px #1FBB0026;}.my-login-wrap-1 .my-login-main-container{background:#ffffff;padding:22px;border-radius:10px;width:100%;margin-bottom:16px;}.my-login-wrap-1 .my-login-form-field{margin-bottom:14px;}.my-login-wrap-1 .my-login-label{display:block;font-weight:600;font-size:13px;margin-bottom:4px;color:#2A2A2A;}.my-login-wrap-1 .my-login-req{color:#8A0000;margin-left:2px;}.my-login-wrap-1 .my-login-submit-btn{background:linear-gradient(135deg,#1FBB00 0%,#0F5900 100%);color:#FFFFFF;padding:12px 28px;border:none;border-radius:6px;cursor:pointer;font-size:15px;font-weight:600;width:100%;margin-top:8px;box-shadow:0 4px 14px #1FBB0059;transition:transform .15s ease,box-shadow .15s ease,filter .15s ease;}.my-login-wrap-1 .my-login-submit-btn:hover{transform:translateY(-1px);box-shadow:0 6px 18px #1FBB0073;filter:brightness(1.04);}.my-login-wrap-1 .my-login-submit-btn:active{transform:translateY(0) scale(.99);filter:brightness(.96);}.my-login-wrap-1 .my-login-sub-div{padding:14px;border-radius:8px;margin:10px 0;background:#F3FBF0;border:1px solid #E3F0DE;}.my-login-wrap-1 .my-login-social-section{text-align:center;padding:14px 0;margin-top:10px;border-top:1px solid #E3F0DE;}.my-login-wrap-1 .my-login-social-divider{font-size:12px;color:#6B8064;margin-bottom:10px;text-transform:uppercase;letter-spacing:.05em;}.my-login-wrap-1 .my-login-social-buttons{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;}.my-login-wrap-1 .my-login-social-btn{background:linear-gradient(135deg,#051A00 0%,#093400 100%);padding:9px 18px;border:none;border-radius:6px;color:#fff;cursor:pointer;font-size:13px;transition:opacity .2s,transform .15s ease;}.my-login-wrap-1 .my-login-social-btn:hover{opacity:.85;transform:translateY(-1px);}.my-login-msg{padding:10px 14px;border-radius:6px;margin-bottom:12px;display:none;font-size:14px;}.my-login-msg.error{background:#8A00000d;color:#8A0000;border:1px solid #8A000040;}.my-login-msg.success{background:#0F59000d;color:#0F5900;border:1px solid #0F590040;}
-
-/* Add your own CSS here — it's layered on top of the generated styles
-   above, so it can override anything. Example:
-
-.my-login-submit-btn {
-    text-transform: uppercase;
-    letter-spacing: .05em;
+.my-login-main-container{margin:0 auto;box-sizing:border-box;box-shadow:0 10px 40px rgba(4,18,0,.08),0 2px 8px rgba(4,18,0,.06)}.my-login-form-field{margin-bottom:16px}.my-login-form-submit{margin-top:16px}.my-login-label{display:block;font-size:13px;font-weight:600;color:#2A2A2A;margin-bottom:5px}.my-login-req{color:#8A0000;margin-left:2px}.my-login-main-container input[type=text],.my-login-main-container input[type=email],.my-login-main-container input[type=password],.my-login-main-container input[type=tel],.my-login-main-container input[type=number],.my-login-main-container textarea,.my-login-main-container select{display:block;width:100%;padding:10px 14px;font-size:14px;color:#2A2A2A;background:#fff;border:1.5px solid #DCE8D6;border-radius:8px;box-sizing:border-box;transition:border-color .15s,box-shadow .15s}.my-login-main-container input:focus,.my-login-main-container textarea:focus,.my-login-main-container select:focus{outline:none;border-color:#1FBB00;box-shadow:0 0 0 3px rgba(31,187,0,.15)}.my-login-sub-div{border-radius:10px;margin:10px 0;padding:12px;border:1px solid #E3F0DE}.my-login-submit-btn{display:block;width:100%;padding:12px;font-size:15px;font-weight:600;color:#fff;border:none;border-radius:8px;cursor:pointer;transition:transform .15s ease,box-shadow .15s ease,filter .15s ease}.my-login-submit-btn:hover{transform:translateY(-1px);filter:brightness(.94)}.my-login-submit-btn:active{transform:translateY(0) scale(.99);filter:brightness(.9)}.my-login-submit-btn:disabled{opacity:.5;cursor:not-allowed}.my-login-caps-hint{display:none;font-size:12px;color:#B35B00;margin-top:4px}.my-login-caps-hint.is-visible{display:block}.my-login-field-match input{border-color:#0F5900!important}.my-login-field-mismatch input{border-color:#8A0000!important}.my-login-fade-in{opacity:0;transform:translateY(8px);transition:opacity .4s ease,transform .4s ease}.my-login-fade-in.is-visible{opacity:1;transform:translateY(0)}.my-login-extra-links{text-align:center;margin-top:22px;padding-top:16px;border-top:1px solid rgba(0,0,0,.08);font-size:13px;color:#6B8064;display:flex;flex-direction:column;align-items:center;gap:10px}.my-login-extra-links .my-login-extra-link{display:inline-flex;align-items:center;gap:6px}.my-login-extra-links .my-login-extra-link i{font-size:.95em;opacity:.75}.my-login-greeting{margin-bottom:18px;text-align:center}.my-login-greeting-title{margin:0 0 4px;font-size:22px;font-weight:700;color:#1A2E05}.my-login-greeting-subtitle{margin:0;font-size:13px;color:#6B8064}.my-login-wrap-1 input:not([type=checkbox]):not([type=radio]),.my-login-wrap-1 select,.my-login-wrap-1 textarea{width:100%;padding:9px 12px;border:1px solid #E5E5E5;border-radius:5px;box-sizing:border-box;font-size:14px;margin-top:3px;transition:border-color .15s,box-shadow .15s;}.my-login-wrap-1 input:focus,.my-login-wrap-1 select:focus,.my-login-wrap-1 textarea:focus{outline:none;border-color:#111111;box-shadow:0 0 0 3px #11111126;}.my-login-wrap-1 .my-login-main-container{background:#ffffff;padding:22px;border-radius:10px;width:100%;margin-bottom:16px;}.my-login-wrap-1 .my-login-form-field{margin-bottom:14px;}.my-login-wrap-1 .my-login-label{display:block;font-weight:600;font-size:13px;margin-bottom:4px;color:#2A2A2A;}.my-login-wrap-1 .my-login-req{color:#8A0000;margin-left:2px;}.my-login-wrap-1 .my-login-submit-btn{background:linear-gradient(135deg,#111111 0%,#0F5900 100%);color:#FFFFFF;padding:12px 28px;border:none;border-radius:6px;cursor:pointer;font-size:15px;font-weight:600;width:100%;margin-top:8px;box-shadow:0 4px 14px #11111159;transition:transform .15s ease,box-shadow .15s ease,filter .15s ease;}.my-login-wrap-1 .my-login-submit-btn:hover{transform:translateY(-1px);box-shadow:0 6px 18px #11111173;filter:brightness(1.04);}.my-login-wrap-1 .my-login-submit-btn:active{transform:translateY(0) scale(.99);filter:brightness(.96);}.my-login-wrap-1 .my-login-sub-div{padding:14px;border-radius:8px;margin:10px 0;background:#F3FBF0;border:1px solid #E3F0DE;}.my-login-wrap-1 .my-login-social-section{text-align:center;padding:14px 0;margin-top:10px;border-top:1px solid #E3F0DE;}.my-login-wrap-1 .my-login-social-divider{font-size:12px;color:#6B8064;margin-bottom:10px;text-transform:uppercase;letter-spacing:.05em;}.my-login-wrap-1 .my-login-social-buttons{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;}.my-login-wrap-1 .my-login-social-btn{background:linear-gradient(135deg,#051A00 0%,#093400 100%);padding:9px 18px;border:none;border-radius:6px;color:#fff;cursor:pointer;font-size:13px;transition:opacity .2s,transform .15s ease;}.my-login-wrap-1 .my-login-social-btn:hover{opacity:.85;transform:translateY(-1px);}.my-login-msg{padding:10px 14px;border-radius:6px;margin-bottom:12px;display:none;font-size:14px;}.my-login-msg.error{background:#8A00000d;color:#8A0000;border:1px solid #8A000040;}.my-login-msg.success{background:#0F59000d;color:#0F5900;border:1px solid #0F590040;}
+/* ===== Minimal Mono ===== */
+.my-login-wrap,.my-login-wrap-1,.my-login-wrap-2,.my-login-wrap-3,.my-login-wrap-4,.my-login-wrap-5,.my-login-wrap-6,#my-login-wrap-1{
+  width:100% !important;max-width:400px !important;min-width:280px !important;margin:48px auto !important;
+  padding:0 0 30px !important;box-sizing:border-box;position:relative;overflow:hidden;border-radius:16px;
+  background:#FFFFFF;border:1px solid #E5E5E5;
+  box-shadow:0 1px 2px rgba(0,0,0,.04),0 20px 44px -24px rgba(0,0,0,.18);
 }
-
-.my-login-label {
-    font-style: italic;
+.my-login-wrap .my-login-main-container,.my-login-wrap form,.my-login-wrap fieldset{background:transparent !important;border:0 !important;box-shadow:none !important;padding:0 !important;margin:0 !important;border-radius:0 !important;max-width:none !important;width:auto !important;}
+.my-login-greeting{padding:40px 34px 22px;text-align:center;}
+.my-login-greeting-title{margin:0 0 8px !important;font-size:26px;font-weight:700;letter-spacing:-.3px;color:#111111 !important;}
+.my-login-greeting-subtitle{margin:0 !important;font-size:13.5px;color:#767676 !important;}
+.my-login-wrap .my-login-main-container,.my-login-wrap .my-login-otp-form,.my-login-wrap .my-login-extra-links,.my-login-wrap .my-login-msg{padding-left:34px !important;padding-right:34px !important;}
+.my-login-wrap .my-login-main-container{padding-top:8px !important;}
+.my-login-form-field{margin-bottom:18px !important;}
+.my-login-wrap .my-login-label{display:block;margin-bottom:7px;font-size:12.5px;font-weight:600;letter-spacing:.02em;text-transform:uppercase;color:#3A3A3A !important;}
+.my-login-req{color:#C62828 !important;margin-left:3px;}
+.my-login-wrap input:not([type=checkbox]):not([type=radio]){
+  width:100% !important;box-sizing:border-box;padding:13px 14px !important;font-size:15px;line-height:1.4;
+  color:#111111 !important;background:#FFFFFF !important;border:1.5px solid #E5E5E5 !important;
+  border-radius:8px !important;outline:none;box-shadow:none !important;
+  transition:border-color .15s,box-shadow .15s;
 }
-*/
+.my-login-wrap input::placeholder{color:#B3B3B3 !important;opacity:1;}
+.my-login-wrap input:focus{background:#FFFFFF !important;border-color:#111111 !important;box-shadow:0 0 0 3px rgba(17,17,17,.08) !important;}
+.my-login-wrap input:-webkit-autofill,.my-login-wrap input:-webkit-autofill:hover,.my-login-wrap input:-webkit-autofill:focus,.my-login-wrap input:-webkit-autofill:active{
+  -webkit-text-fill-color:#111111;-webkit-box-shadow:0 0 0 1000px #FFFFFF inset;box-shadow:0 0 0 1000px #FFFFFF inset;caret-color:#111111;transition:background-color 5000s ease-in-out 0s;
+}
+.my-login-password-wrap{position:relative;}
+.my-login-password-wrap input{padding-right:44px !important;}
+.my-login-wrap .my-login-password-toggle{position:absolute;top:50%;right:8px;transform:translateY(-50%);width:30px;height:30px;display:flex;align-items:center;justify-content:center;border:0 !important;border-radius:6px;background:transparent !important;color:#B3B3B3 !important;cursor:pointer;box-shadow:none !important;transition:background .15s,color .15s;}
+.my-login-wrap .my-login-password-toggle i{color:inherit !important;}
+.my-login-wrap .my-login-password-toggle:hover{background:#F2F2F2 !important;color:#111111 !important;}
+.my-login-caps-hint{display:none;margin-top:6px;font-size:12px;color:#B35B00;}
+.my-login-caps-hint.is-visible{display:block;}
+.my-login-options-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:2px 0 24px;font-size:13px;}
+.my-login-remember{display:flex;align-items:center;gap:8px;color:#3A3A3A !important;cursor:pointer;font-weight:500;margin:0 !important;}
+.my-login-remember input{accent-color:#111111;width:15px !important;height:15px !important;margin:0 !important;cursor:pointer;}
+.my-login-options-row a{color:#111111 !important;text-decoration:underline;font-weight:500;}
+.my-login-options-row a:hover{color:#555555 !important;}
+.my-login-form-submit{margin-top:4px !important;}
+.my-login-wrap .my-login-submit-btn,.my-login-wrap button[type=submit]{
+  position:relative;width:100% !important;padding:14px 20px !important;font-size:14.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  color:#fff !important;border:0 !important;border-radius:8px !important;cursor:pointer;overflow:hidden;
+  background:#111111 !important;box-shadow:none !important;transition:transform .12s,background .15s;
+}
+.my-login-wrap .my-login-submit-btn:hover{background:#2B2B2B !important;}
+.my-login-wrap .my-login-submit-btn:active{transform:scale(.99);}
+.my-login-wrap .my-login-submit-btn:disabled{opacity:.4;cursor:not-allowed;}
+.my-login-msg:empty{display:none;}
+.my-login-wrap .my-login-msg{margin:22px 0 0 !important;padding:11px 14px !important;border-radius:8px;font-size:13px;background:#FBEAEA;border:1px solid #F0C6C6;color:#B3261E;}
+.my-login-wrap .my-login-msg.success{background:#EDF7ED;border-color:#C8E6C9;color:#1E7A2E;}
+.my-login-otp-form{display:none;}
+.my-login-otp-form.is-visible{display:block;padding-top:20px !important;}
+.my-login-otp-form input[name=token]{text-align:center;font-size:24px !important;font-weight:700;letter-spacing:9px;padding:13px 10px !important;}
+.my-login-wrap .my-login-otp-resend{display:block;width:100%;margin-top:14px;padding:10px;font-size:13px;font-weight:600;color:#111111 !important;background:#F5F5F5 !important;border:1px solid #E5E5E5 !important;border-radius:8px !important;cursor:pointer;box-shadow:none !important;transition:background .15s;}
+.my-login-wrap .my-login-otp-resend:hover{background:#EDEDED !important;}
+.my-login-wrap .my-login-extra-links{margin-top:26px !important;padding-top:20px !important;border-top:1px solid #E5E5E5;text-align:center;font-size:13px;color:#767676 !important;}
+.my-login-wrap .my-login-extra-links a{color:#111111 !important;text-decoration:underline;font-weight:600;}
+.my-login-wrap .my-login-extra-links a:hover{color:#555555 !important;}
+.my-login-wrap .my-login-extra-links i{opacity:.7;}
+@media (max-width:480px){
+  .my-login-wrap{margin:24px 16px !important;border-radius:14px;}
+  .my-login-greeting{padding:32px 24px 18px;}
+  .my-login-greeting-title{font-size:22px;}
+  .my-login-wrap .my-login-main-container,.my-login-wrap .my-login-otp-form,.my-login-wrap .my-login-extra-links,.my-login-wrap .my-login-msg{padding-left:24px !important;padding-right:24px !important;}
+}
+.my-login-wrap { --mlf-template-accent: #111111; --mlf-template-control-border: #E5E5E5; --mlf-template-control-radius: 8px; }
+
+/* Readable form controls for every built-in template */
+.my-login-wrap input:not([type=checkbox]):not([type=radio]),
+.my-login-wrap select,
+.my-login-wrap textarea {
+  color: #111111 !important;
+  -webkit-text-fill-color: #111111 !important;
+  background-color: #FFFFFF !important;
+}
+.my-login-wrap select {
+  display: block;
+  width: 100% !important;
+  min-height: 48px;
+  padding: 13px 42px 13px 16px !important;
+  border: 1px solid var(--mlf-template-control-border, #DCE8D6) !important;
+  border-radius: var(--mlf-template-control-radius, 12px) !important;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, var(--mlf-template-accent, #1FBB00) 50%), linear-gradient(135deg, var(--mlf-template-accent, #1FBB00) 50%, transparent 50%);
+  background-position: calc(100% - 19px) 50%, calc(100% - 13px) 50%;
+  background-size: 6px 6px;
+  background-repeat: no-repeat;
+  cursor: pointer;
+  transition: border-color .2s, box-shadow .2s;
+}
+.my-login-wrap select:focus {
+  outline: none;
+  border-color: var(--mlf-template-accent, #1FBB00) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--mlf-template-accent, #1FBB00) 20%, transparent);
+}
+.my-login-wrap select option {
+  color: #111111;
+  background-color: #FFFFFF;
+}
+.my-login-wrap input::placeholder,
+.my-login-wrap textarea::placeholder {
+  color: #555555 !important;
+  opacity: 1;
+}
+.my-login-wrap input:-webkit-autofill,
+.my-login-wrap input:-webkit-autofill:hover,
+.my-login-wrap input:-webkit-autofill:focus,
+.my-login-wrap input:-webkit-autofill:active,
+.my-login-wrap input:autofill {
+  -webkit-text-fill-color: #111111 !important;
+  caret-color: #111111 !important;
+  -webkit-box-shadow: 0 0 0 1000px #FFFFFF inset !important;
+  box-shadow: 0 0 0 1000px #FFFFFF inset !important;
+  background-color: #FFFFFF !important;
+}

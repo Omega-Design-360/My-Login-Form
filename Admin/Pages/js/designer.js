@@ -1,6 +1,10 @@
 (function ($) {
     'use strict';
 
+    const escapeHtml = value => String(value == null ? '' : value).replace(/[&<>\"']/g, char => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
+    }[char]));
+
     // ============================================================
     // TEMPLATES
     // ============================================================
@@ -49,11 +53,11 @@
                 </div>
             </div>`,
 
-        field: (id, fieldType, label, htmlType, placeholder, showLabels, required) => {
+        field: (id, fieldType, label, htmlType, placeholder, showLabels, required, options) => {
             const reqMark = required ? '<span class="my-login-req" style="color:#8A0000">*</span>' : '';
             const labelHtml = (showLabels && htmlType !== 'checkbox' && htmlType !== 'radio')
                 ? `<label class="field-label-preview my-login-label">${label}${reqMark}</label>` : '';
-            const inp = T.inputHtml(htmlType, placeholder, required, label);
+            const inp = T.inputHtml(htmlType, placeholder, required, label, options);
             return `<div class="form-field my-login-form-field element-item" data-id="${id}" data-type="field"
                          data-field-type="${fieldType}" data-html-type="${htmlType}">
                         <div class="element-controls">
@@ -78,7 +82,7 @@
                     </div>`;
         },
 
-        inputHtml: (type, ph, req, label) => {
+        inputHtml: (type, ph, req, label, options) => {
             const r = req ? ' required' : '';
             const uid = 'f_' + Math.random().toString(36).slice(2, 7);
             const map = {
@@ -89,7 +93,7 @@
                 tel:      `<input type="tel" placeholder="${ph||''}" ${r} style="pointer-events:none">`,
                 date:     `<input type="date" ${r} style="pointer-events:none">`,
                 textarea: `<textarea placeholder="${ph||''}" rows="3" ${r} style="pointer-events:none"></textarea>`,
-                select:   `<select ${r} style="pointer-events:none"><option>Select...</option><option>Option 1</option></select>`,
+                select:   `<select ${r} style="pointer-events:none"><option value="">Select...</option>${(options && options.length ? options : ['Option 1']).map(option => `<option value="${escapeHtml(option)}">${escapeHtml(option)}</option>`).join('')}</select>`,
                 checkbox: `<label style="pointer-events:none"><input type="checkbox" id="${uid}" ${r}> ${label||'Checkbox'}</label>`,
                 radio:    `<label style="pointer-events:none"><input type="radio" id="${uid}" ${r}> ${label||'Radio'}</label>`,
             };
@@ -324,7 +328,7 @@
                 } else if (item.type === 'field') {
                     $zone.append(T.field(
                         item.id, item.fieldType, item.label, item.htmlType,
-                        item.placeholder, this.settings.show_labels, item.required
+                        item.placeholder, this.settings.show_labels, item.required, item.options
                     ));
                 } else if (item.type === 'greeting') {
                     $zone.append(T.greeting(item.id, item.title, item.subtitle));
@@ -486,16 +490,31 @@
         addField(parentId, zoneType, opts) {
             const id = this.uid('fld');
             const placeholder = opts.placeholder || ('Enter ' + opts.label.toLowerCase());
+            let fieldType = opts.fieldType;
+            if (opts.htmlType === 'select') {
+                const existingNames = new Set();
+                const collectNames = items => (items || []).forEach(existing => {
+                    if (existing.type === 'field' && existing.fieldType) existingNames.add(existing.fieldType);
+                    collectNames(existing.items);
+                });
+                Object.values(this.containers).forEach(container => collectNames(container.items));
+                let suffix = 1;
+                while (existingNames.has(fieldType)) {
+                    suffix++;
+                    fieldType = `${opts.fieldType}_${suffix}`;
+                }
+            }
             const item = {
                 id, type: 'field',
-                fieldType: opts.fieldType, label: opts.label,
-                htmlType: opts.htmlType, placeholder, required: false, styles: {}
+                fieldType, label: opts.label,
+                htmlType: opts.htmlType, placeholder, required: false, styles: {},
+                ...(opts.htmlType === 'select' ? { options: ['Option 1', 'Option 2'] } : {})
             };
             this.insertIntoData(parentId, item);
             const $zone = this.getDropZone(parentId, zoneType);
             $zone.find('.drop-hint').remove();
-            $zone.append(T.field(id, opts.fieldType, opts.label, opts.htmlType,
-                placeholder, this.settings.show_labels, false));
+            $zone.append(T.field(id, fieldType, opts.label, opts.htmlType,
+                placeholder, this.settings.show_labels, false, item.options));
             this.updateDropHint($zone);
             this.autoSave();
         }
@@ -785,6 +804,11 @@
                         <label>Focus Border Color</label>
                         <input type="color" id="ctrl_focus_color" value="${s.focus_color || '#6366f1'}">
                     </div>
+                    ${item.htmlType === 'select' ? `<div class="setting-field">
+                        <label for="ctrl_options">Dropdown Choices</label>
+                        <textarea class="widefat" id="ctrl_options" rows="6" placeholder="One choice per line">${(item.options || []).map(escapeHtml).join('\n')}</textarea>
+                        <p class="description">Enter one choice per line. Each dropdown keeps its own choices.</p>
+                    </div>` : ''}
                 </div>`;
             }
 
@@ -846,7 +870,7 @@
         bindPanelControls(id, type, item) {
             const self = this;
 
-            $('#layoutContent, #customizationContent').off('.panel').on('input.panel change.panel', 'input, select', function() {
+            $('#layoutContent, #customizationContent').off('.panel').on('input.panel change.panel', 'input, select, textarea', function() {
                 const ctrlId  = this.id;                          // e.g. "ctrl_label"
                 const prop    = ctrlId.replace(/^ctrl_/, '');     // e.g. "label"
                 const isRange = this.type === 'range';
@@ -876,6 +900,9 @@
                     this.refreshFieldDOM(id, item);
                 } else if (prop === 'required') {
                     item.required = !!value;
+                    this.refreshFieldDOM(id, item);
+                } else if (prop === 'options') {
+                    item.options = String(value).split(/\r?\n/).map(option => option.trim()).filter(Boolean);
                     this.refreshFieldDOM(id, item);
                 } else if (prop === 'bgColor' || prop === 'background_color') {
                     item.styles = item.styles || {};
@@ -987,7 +1014,7 @@
             const reqMk = item.required ? '<span style="color:#e53e3e">*</span>' : '';
             const labelHtml = (this.settings.show_labels && item.htmlType !== 'checkbox' && item.htmlType !== 'radio')
                 ? `<label class="field-label-preview">${item.label}${reqMk}</label>` : '';
-            $preview.html(labelHtml + T.inputHtml(item.htmlType, item.placeholder, item.required, item.label));
+            $preview.html(labelHtml + T.inputHtml(item.htmlType, item.placeholder, item.required, item.label, item.options));
             // Reapply custom styles
             const s = item.styles || {};
             if (s.background_color) $el.find('input,textarea,select').css('background', s.background_color);
@@ -1216,7 +1243,8 @@
                 inner = lbl + `<textarea id="${uid}" name="${f.fieldType}" placeholder="${f.placeholder||''}" rows="4"${req}${inputStyle ? ` style="${inputStyle}"` : ''}></textarea>`;
             } else if (f.htmlType === 'select') {
                 const lbl = show ? `<label for="${uid}" class="my-login-label"${labelStyle ? ` style="${labelStyle}"` : ''}>${f.label}${reqMk}</label>` : '';
-                inner = lbl + `<select id="${uid}" name="${f.fieldType}"${req}${inputStyle ? ` style="${inputStyle}"` : ''}><option value="">Select…</option></select>`;
+                const choices = (Array.isArray(f.options) ? f.options : []).map(option => `<option value="${escapeHtml(option)}">${escapeHtml(option)}</option>`).join('');
+                inner = lbl + `<select id="${uid}" name="${f.fieldType}"${req}${inputStyle ? ` style="${inputStyle}"` : ''}><option value="">Select…</option>${choices}</select>`;
             } else {
                 const lbl = show ? `<label for="${uid}" class="my-login-label"${labelStyle ? ` style="${labelStyle}"` : ''}>${f.label}${reqMk}</label>` : '';
                 inner = lbl + `<input type="${f.htmlType}" id="${uid}" name="${f.fieldType}" placeholder="${f.placeholder||''}"${req}${inputStyle ? ` style="${inputStyle}"` : ''}>`;

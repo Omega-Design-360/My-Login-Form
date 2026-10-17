@@ -115,49 +115,21 @@ class License {
         if (get_option('my_login_form_license_status', 'inactive') !== 'active') {
             return false;
         }
-        // A version bump since the admin last confirmed this key holds
-        // premium features off (same gate as everything else — see Gate.php)
-        // until they explicitly re-confirm on the License card.
-        return !$this->needs_reconfirmation();
+        // A plugin release alone does not invalidate a license. The scheduled
+        // server validation below remains responsible for detecting expired,
+        // revoked, or deactivated licenses.
+        return true;
     }
 
     /**
-     * Whether the site has an active-per-the-server license, but the admin
-     * hasn't yet re-confirmed it since the plugin was updated to its
-     * current version. Checked independently of is_active() (which folds
-     * this in) so the License card and admin notice can tell "needs
-     * reconfirmation" apart from "never licensed at all".
+     * Kept for backwards compatibility with the license card and notices.
+     * Plugin version updates no longer require license re-confirmation;
+     * license status is maintained by the existing server validation.
      *
      * @return bool
      */
     public function needs_reconfirmation(): bool {
-        if ($this->get_api_url() === '') {
-            return false;
-        }
-
-        $key   = get_option('my_login_form_license_key', '');
-        $email = get_option('my_login_form_license_email', '');
-        if (!$key || !$email) {
-            return false;
-        }
-        if (get_option('my_login_form_license_status', 'inactive') !== 'active') {
-            return false;
-        }
-
-        $confirmed = get_option('my_login_form_license_confirmed_version', '');
-        $current   = defined('MY_LOGIN_FORM_VERSION') ? MY_LOGIN_FORM_VERSION : '';
-
-        if ($confirmed === '') {
-            // No confirmation on record — either this site activated before
-            // this feature existed, or activate() hasn't run yet for some
-            // other reason. Self-heal to "confirmed at the current version"
-            // rather than retroactively locking out an already-active
-            // customer who did nothing wrong.
-            update_option('my_login_form_license_confirmed_version', $current, false);
-            return false;
-        }
-
-        return $confirmed !== $current;
+        return false;
     }
 
     /**

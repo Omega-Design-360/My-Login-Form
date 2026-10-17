@@ -63,6 +63,70 @@ class FormsDatabase {
         $this->maybe_update_forms_table();
         $this->create_default_forms_if_not_exist();
         $this->maybe_add_default_greetings();
+        $this->maybe_restore_generated_css_after_update();
+    }
+
+    /**
+     * Plugin updates replace files inside the plugin directory. Rebuild each
+     * form's generated CSS from its database settings and container tree so a
+     * package update cannot leave the shipped starter CSS in place of the
+     * site's saved template and field customization.
+     */
+    private function maybe_restore_generated_css_after_update() {
+        $version = defined('MY_LOGIN_FORM_VERSION') ? MY_LOGIN_FORM_VERSION : '';
+        if ($version === '' || get_option('my_login_form_generated_css_version', '') === $version) {
+            return;
+        }
+        if (!$this->table_exists() || !class_exists('MyLoginForm\\Ajax\\DesignerAjax')) {
+            return;
+        }
+
+        $forms = $this->wpdb->get_results(
+            "SELECT id, form_key, css_file, settings, form_containers FROM {$this->forms_table}"
+        );
+        if (!is_array($forms)) {
+            return;
+        }
+
+        $css_dir = MY_LOGIN_FORM_DIR . 'Public/Forms/css/';
+        if (!file_exists($css_dir) && !wp_mkdir_p($css_dir)) {
+            return;
+        }
+
+        $all_written = true;
+        $designer = \MyLoginForm\Ajax\DesignerAjax::get_instance();
+        foreach ($forms as $form) {
+            $form_id = (int) $form->id;
+            $form_key = sanitize_key($form->form_key);
+            $filename = sanitize_file_name($form->css_file ?: ($form_key . '.css'));
+            if ($form_id < 1 || $form_key === '' || $filename === '') {
+                continue;
+            }
+
+            $settings = json_decode($form->settings, true);
+            $containers = json_decode($form->form_containers, true);
+            if (!is_array($settings)) $settings = array();
+            if (!is_array($containers)) $containers = array();
+
+            $custom_css = isset($settings['custom_css']) && is_string($settings['custom_css'])
+                ? $settings['custom_css']
+                : '';
+            $css = $designer->build_form_css($form_id, $settings, $custom_css, $containers);
+            if (file_put_contents($css_dir . $filename, $css, LOCK_EX) === false) {
+                $all_written = false;
+            } elseif (empty($form->css_file)) {
+                $this->wpdb->update(
+                    $this->forms_table,
+                    array('css_file' => $filename),
+                    array('id' => $form_id)
+                );
+            }
+        }
+
+        // Keep the migration retryable if the plugin directory was not writable.
+        if ($all_written) {
+            update_option('my_login_form_generated_css_version', $version, false);
+        }
     }
 
     /**
@@ -226,7 +290,7 @@ class FormsDatabase {
         // Kept in sync with DesignerAjax::get_default_form_css() — this copy only
         // runs the very first time the forms table is seeded (or reseeded after
         // being dropped), the other runs on every create/save from the Designer.
-        return '.my-login-main-container{margin:0 auto;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;box-sizing:border-box;box-shadow:0 10px 40px rgba(4,18,0,.08),0 2px 8px rgba(4,18,0,.06)}'
+        return '.my-login-main-container{margin:0 auto;box-sizing:border-box;box-shadow:0 10px 40px rgba(4,18,0,.08),0 2px 8px rgba(4,18,0,.06)}'
              . '.my-login-form-field{margin-bottom:16px}'
              . '.my-login-label{display:block;font-size:13px;font-weight:600;color:#2A2A2A;margin-bottom:5px}'
              . '.my-login-req{color:#8A0000;margin-left:2px}'

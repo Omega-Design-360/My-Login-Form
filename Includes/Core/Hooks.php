@@ -482,6 +482,17 @@ public function enqueue_admin_assets($hook): void {
         $plugin_url = MY_LOGIN_FORM_URL;
         $plugin_dir = MY_LOGIN_FORM_DIR;
 
+        $form_controls_path = $plugin_dir . 'Public/Assets/js/form-controls.js';
+        if ( file_exists( $form_controls_path ) ) {
+            wp_enqueue_script(
+                'my-login-form-controls',
+                $plugin_url . 'Public/Assets/js/form-controls.js',
+                array(),
+                filemtime( $form_controls_path ),
+                true
+            );
+        }
+
         // Font Awesome for social icons — lands in <head>.
         wp_enqueue_style(
             'my-login-form-font-awesome',
