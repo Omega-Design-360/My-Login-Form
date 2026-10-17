@@ -187,6 +187,13 @@ class Settings {
         foreach ($this->options as $key => $default) {
             $option_name = 'my_login_form_' . $key;
 
+            // These values are managed on the Mailing page now. Keep their
+            // saved values when the separate general Settings form is saved.
+            if (in_array($key, ['email_verification', 'welcome_email', 'admin_notifications', 'resend_from_email', 'resend_from_name'], true)
+                && !isset($_POST[$key])) {
+                continue;
+            }
+
             // The settings form always submits these two fields blank (the
             // template never echoes the real secret back — see
             // render_settings()) unless the admin actually typed a new

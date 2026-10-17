@@ -4,7 +4,7 @@
  *
  * Intercepts wp_mail() site-wide via the 'pre_wp_mail' filter (WP 5.7+)
  * and sends through the Resend API instead, when a Resend API key is
- * configured in Settings → Email Settings. On any failure (network error,
+ * configured on the Mailing page. On any failure (network error,
  * non-2xx response, or no API key set) this returns null so WordPress
  * falls through to its normal mail path — Resend is additive, never a
  * hard dependency.

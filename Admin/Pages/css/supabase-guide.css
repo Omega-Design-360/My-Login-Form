@@ -1,0 +1,140 @@
+.mlf-supabase-guide {
+    box-sizing: border-box;
+    max-width: 1080px;
+    margin: 18px 0 22px;
+    padding: 24px;
+    color: var(--mlf-text);
+    background: var(--mlf-card-bg);
+    border: 1px solid var(--mlf-card-border);
+    border-radius: var(--mlf-card-radius);
+    box-shadow: var(--mlf-card-shadow);
+    font-family: var(--mlf-font-family);
+}
+
+.mlf-supabase-guide-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.mlf-supabase-guide-icon {
+    display: grid;
+    width: 46px;
+    height: 46px;
+    flex: 0 0 46px;
+    place-items: center;
+    color: var(--mlf-primary);
+    background: var(--mlf-primary-tint);
+    border-radius: 14px;
+    font-size: 23px;
+}
+
+.mlf-supabase-guide-kicker {
+    margin: 0 0 5px;
+    color: var(--mlf-primary);
+    font-size: var(--mlf-fs-xs);
+    font-weight: var(--mlf-fw-bold);
+    letter-spacing: .1em;
+}
+
+.mlf-supabase-guide-header h2 {
+    margin: 0;
+    color: var(--mlf-heading);
+    font-size: var(--mlf-fs-xl);
+    font-weight: var(--mlf-fw-bold);
+    line-height: var(--mlf-lh-tight);
+}
+
+.mlf-supabase-guide-header p:last-child {
+    margin: 6px 0 0;
+    color: var(--mlf-text-muted);
+    font-size: var(--mlf-fs-sm);
+}
+
+.mlf-supabase-guide-steps {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: none;
+}
+
+.mlf-supabase-guide-steps > li {
+    display: grid;
+    grid-template-columns: 38px minmax(0, 1fr);
+    gap: 12px;
+    min-width: 0;
+    padding: 16px;
+    background: var(--mlf-surface);
+    border: 1px solid var(--mlf-border);
+    border-radius: var(--mlf-radius-md, 12px);
+}
+
+.mlf-supabase-guide-number {
+    display: grid;
+    width: 36px;
+    height: 36px;
+    place-items: center;
+    color: var(--mlf-primary);
+    background: var(--mlf-primary-tint);
+    border-radius: 11px;
+    font-size: var(--mlf-fs-sm);
+    font-weight: var(--mlf-fw-bold);
+}
+
+.mlf-supabase-guide-steps h3 {
+    margin: 2px 0 6px;
+    color: var(--mlf-heading);
+    font-size: var(--mlf-fs-md);
+    font-weight: var(--mlf-fw-semibold);
+}
+
+.mlf-supabase-guide-steps p {
+    margin: 0;
+    color: var(--mlf-text-sub);
+    font-size: var(--mlf-fs-sm);
+    line-height: var(--mlf-lh-loose);
+}
+
+.mlf-supabase-guide-steps a {
+    display: inline-block;
+    margin-top: 9px;
+    color: var(--mlf-link);
+    font-size: var(--mlf-fs-sm);
+    font-weight: var(--mlf-fw-semibold);
+    text-decoration: none;
+}
+
+.mlf-supabase-guide-steps a:hover { color: var(--mlf-link-hover); text-decoration: underline; }
+
+.mlf-supabase-guide-note {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 14px 0 0;
+    padding: 11px 13px;
+    color: var(--mlf-text-sub);
+    background: var(--mlf-gradient-surface-tint);
+    border-left: 3px solid var(--mlf-accent);
+    border-radius: var(--mlf-radius-sm);
+    font-size: var(--mlf-fs-sm);
+    line-height: var(--mlf-lh-normal);
+}
+
+.mlf-supabase-guide-note .dashicons { flex: 0 0 auto; color: var(--mlf-accent); }
+
+@media (max-width: 782px) {
+    .mlf-supabase-guide { padding: 18px; }
+    .mlf-supabase-guide-steps { grid-template-columns: 1fr; }
+}
+
+.mlf-mailing-sql-setup { margin: 20px 0; overflow: hidden; color: var(--mlf-text); background: var(--mlf-surface); border: 1px solid var(--mlf-border); border-radius: var(--mlf-radius-md, 10px); box-shadow: var(--mlf-shadow); }
+.mlf-mailing-sql-setup > summary { padding: 16px 19px; color: var(--mlf-heading); font-weight: var(--mlf-fw-semibold); cursor: pointer; }
+.mlf-mailing-sql-content { padding: 0 19px 19px; }
+.mlf-mailing-sql-content > p { color: var(--mlf-text-muted); }
+.mlf-mailing-sql-actions { display: flex; justify-content: flex-end; margin: 10px 0 6px; }
+.mlf-mailing-sql-content textarea { box-sizing: border-box; width: 100%; max-width: 100%; padding: 13px; color: var(--mlf-text); background: var(--mlf-bg); border: 1px solid var(--mlf-border); border-radius: var(--mlf-radius-sm); font: 12px/1.55 ui-monospace, SFMono-Regular, Consolas, monospace; resize: vertical; }
+.mlf-mailing-sql-missing { color: var(--mlf-danger); }

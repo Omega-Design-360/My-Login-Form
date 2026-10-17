@@ -482,69 +482,6 @@ if (isset($_GET['settings-updated']) && $_GET['settings-updated'] === 'true') {
                     </div>
                 </div>
 
-                <!-- Email Settings (full width) -->
-                <div class="settings-card">
-                    <div class="card-header">
-                        <h2><i class="fas fa-envelope"></i> <?php _e('Email Settings', 'my-login-form'); ?></h2>
-                    </div>
-                    <div class="card-body">
-                        <div class="form-field">
-                            <label class="checkbox-label">
-                                <input type="checkbox" name="email_verification" value="1"
-                                       <?php checked($settings['email_verification'], 1); ?>>
-                                <span><?php _e('Require Email Verification', 'my-login-form'); ?></span>
-                            </label>
-                            <p class="description"><?php _e('Requires a 6-digit email code before login (needs Supabase)', 'my-login-form'); ?></p>
-                        </div>
-
-                        <div class="form-field">
-                            <label class="checkbox-label">
-                                <input type="checkbox" name="welcome_email" value="1"
-                                       <?php checked($settings['welcome_email'], 1); ?>>
-                                <span><?php _e('Send Welcome Email', 'my-login-form'); ?></span>
-                            </label>
-                            <p class="description"><?php _e('Emails new users after registration', 'my-login-form'); ?></p>
-                        </div>
-
-                        <div class="form-field">
-                            <label class="checkbox-label">
-                                <input type="checkbox" name="admin_notifications" value="1"
-                                       <?php checked($settings['admin_notifications'], 1); ?>>
-                                <span><?php _e('Admin Notifications', 'my-login-form'); ?></span>
-                            </label>
-                            <p class="description"><?php _e('Notifies admin on new registrations', 'my-login-form'); ?></p>
-                        </div>
-
-                        <div class="mlf-divider"></div>
-
-                        <p class="mlf-section-sub"><i class="fas fa-paper-plane" style="margin-right:6px;"></i><?php _e('Resend (Mail Delivery)', 'my-login-form'); ?></p>
-                        <p class="description" style="margin-top:-6px;"><?php _e('Optional — routes site emails through Resend', 'my-login-form'); ?></p>
-
-                        <div class="form-field">
-                            <label for="resend_api_key"><?php _e('Resend API Key', 'my-login-form'); ?></label>
-                            <input type="password" name="resend_api_key" id="resend_api_key" class="regular-text"
-                                   value=""
-                                   placeholder="<?php echo !empty($secret_hints['resend_api_key']) ? esc_attr(sprintf(__('Saved: %s — leave blank to keep', 'my-login-form'), $secret_hints['resend_api_key'])) : 're_xxxxxxxxxxxxxxxxxxxxxxxx'; ?>"
-                                   autocomplete="off">
-                        </div>
-
-                        <div class="form-field">
-                            <label for="resend_from_email"><?php _e('From Email', 'my-login-form'); ?></label>
-                            <input type="email" name="resend_from_email" id="resend_from_email" class="regular-text"
-                                   value="<?php echo esc_attr($settings['resend_from_email']); ?>"
-                                   placeholder="noreply@yourdomain.com">
-                            <p class="description"><?php _e('Must be a Resend-verified domain', 'my-login-form'); ?></p>
-                        </div>
-
-                        <div class="form-field">
-                            <label for="resend_from_name"><?php _e('From Name', 'my-login-form'); ?></label>
-                            <input type="text" name="resend_from_name" id="resend_from_name" class="regular-text"
-                                   value="<?php echo esc_attr($settings['resend_from_name']); ?>"
-                                   placeholder="<?php echo esc_attr(get_bloginfo('name')); ?>">
-                        </div>
-                    </div>
-                </div>
-                
                 <!-- Advanced Settings -->
                 <div class="settings-card">
                     <div class="card-header">

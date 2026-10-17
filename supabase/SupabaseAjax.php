@@ -126,6 +126,11 @@ class SupabaseAjax {
             wp_send_json_error(['message' => __('URL and Anon Key are required.', 'my-login-form')]);
         }
 
+        $previous_supabase_url = (string) get_option('my_login_supabase_url', '');
+        if (untrailingslashit($previous_supabase_url) !== untrailingslashit($url)) {
+            delete_option('my_login_form_supabase_user_sync_complete');
+        }
+
         update_option('my_login_supabase_enabled',     1);
         update_option('my_login_supabase_url',          $url);
         // autoload=false — the service role key in particular must never sit
@@ -151,6 +156,7 @@ class SupabaseAjax {
         delete_option('my_login_supabase_url');
         delete_option('my_login_supabase_anon_key');
         delete_option('my_login_supabase_service_key');
+        delete_option('my_login_form_supabase_user_sync_complete');
 
         wp_send_json_success();
     }

@@ -110,8 +110,8 @@ $current_page = $current_page ?? 1;
             <button type="button" onclick="exportCSV()" class="button">
                 <i class="fas fa-download"></i> <?php _e('Export All Users CSV', 'my-login-form'); ?>
             </button>
-            <button onclick="syncWithSupabase()" class="button">
-                <i class="fas fa-sync-alt"></i> <?php _e('Sync with Supabase', 'my-login-form'); ?>
+            <button type="button" onclick="syncWithSupabase(this)" class="button sync-supabase-button">
+                <i class="fas fa-sync-alt"></i> <?php _e('Sync WordPress Users to Supabase', 'my-login-form'); ?>
             </button>
             <button onclick="createWordPressUsers()" class="button">
                 <i class="fas fa-user-plus"></i> <?php _e('Create WP Users', 'my-login-form'); ?>

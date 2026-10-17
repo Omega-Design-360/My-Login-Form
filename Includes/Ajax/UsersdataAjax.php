@@ -7,7 +7,6 @@
 namespace MyLoginForm\Ajax;
 
 use MyLoginForm\Database\UsersDatabase;
-use MyLoginForm\Database\SupabaseDatabase;
 
 defined('ABSPATH') || exit;
 
@@ -343,42 +342,111 @@ class UsersdataAjax {
     public function sync_supabase(): void {
         $this->guard();
 
-        if (!get_option('my_login_supabase_enabled')) {
-            wp_send_json_error(__('Supabase integration is not enabled.', 'my-login-form'));
+        $supabase_url = trim((string) get_option('my_login_supabase_url', ''));
+        $service_key  = trim((string) get_option('my_login_supabase_service_key', ''));
+        if (!get_option('my_login_supabase_enabled') || $supabase_url === '') {
+            wp_send_json_error(['message' => __('Supabase is not enabled or its project URL is missing.', 'my-login-form')]);
+        }
+        if ($service_key === '') {
+            wp_send_json_error(['message' => __('Add the Supabase service role key in Mailing or Social Login Setup. It is required for secure WordPress user syncing.', 'my-login-form')]);
         }
 
-        if (!class_exists(SupabaseDatabase::class)) {
-            wp_send_json_error(__('Supabase integration is unavailable.', 'my-login-form'));
+        $offset_raw = $_POST['offset'] ?? 0;
+        $offset = is_scalar($offset_raw) ? absint($offset_raw) : 0;
+        if ($offset === 0) {
+            delete_option('my_login_form_supabase_user_sync_complete');
         }
-
-        $users_db     = UsersDatabase::get_instance();
-        $supabase_db  = SupabaseDatabase::get_instance();
-        $pending      = $users_db->get_users(['limit' => 100]);
-
+        $batch_size = 100;
+        $users = get_users([
+            'number'  => $batch_size,
+            'offset'  => $offset,
+            'orderby' => 'ID',
+            'order'   => 'ASC',
+            'fields'  => 'all',
+        ]);
+        $total_users = (int) (count_users()['total_users'] ?? 0);
         $synced = 0;
         $failed = 0;
+        $first_error = '';
+        $base_url = trailingslashit(esc_url_raw($supabase_url));
+        $host = wp_parse_url($base_url, PHP_URL_HOST);
+        $sslverify = !in_array($host, ['localhost', '127.0.0.1', '::1'], true);
+        $payloads = [];
 
-        foreach ($pending as $user) {
-            if (!empty($user->supabase_user_id)) {
-                continue;
-            }
+        foreach ($users as $user) {
+            $phone = get_user_meta($user->ID, 'billing_phone', true) ?: get_user_meta($user->ID, 'phone', true);
+            $payload = [
+                'wp_user_id'      => (int) $user->ID,
+                'email'           => $user->user_email,
+                'display_name'    => $user->display_name,
+                'first_name'      => get_user_meta($user->ID, 'first_name', true),
+                'last_name'       => get_user_meta($user->ID, 'last_name', true),
+                'username'        => $user->user_login,
+                'phone'           => $phone,
+                'country'         => get_user_meta($user->ID, 'billing_country', true),
+                'city'            => get_user_meta($user->ID, 'billing_city', true),
+                'address'         => get_user_meta($user->ID, 'billing_address_1', true),
+                'social_provider' => get_user_meta($user->ID, 'mlf_social_provider', true),
+                'profile_picture' => get_avatar_url($user->ID),
+                'email_verified'  => get_user_meta($user->ID, 'mlf_email_verified', true) !== '0',
+                'updated_at'      => gmdate('Y-m-d\TH:i:s\Z'),
+            ];
 
-            $result = $supabase_db->sync_user_to_supabase($user->id, (array) $user);
+            $payloads[] = $payload;
+        }
 
-            if (!empty($result['success'])) {
-                $synced++;
+        if ($payloads) {
+            $response = wp_remote_post($base_url . 'rest/v1/my_login_users?on_conflict=wp_user_id', [
+                'headers' => [
+                    'apikey'        => $service_key,
+                    'Authorization' => 'Bearer ' . $service_key,
+                    'Content-Type'  => 'application/json',
+                    'Prefer'        => 'resolution=merge-duplicates,return=minimal',
+                ],
+                'body'      => wp_json_encode($payloads),
+                'timeout'   => 15,
+                'sslverify' => $sslverify,
+            ]);
+
+            if (is_wp_error($response)) {
+                $first_error = sanitize_text_field($response->get_error_message());
             } else {
-                $failed++;
+                $status = (int) wp_remote_retrieve_response_code($response);
+                if ($status >= 200 && $status < 300) {
+                    $synced = count($users);
+                    foreach ($users as $user) {
+                        update_user_meta($user->ID, '_my_login_form_supabase_synced_at', current_time('mysql', true));
+                        delete_user_meta($user->ID, '_my_login_form_supabase_sync_error');
+                    }
+                } else {
+                    $response_body = json_decode((string) wp_remote_retrieve_body($response), true);
+                    $first_error = is_array($response_body) && !empty($response_body['message'])
+                        ? sanitize_text_field($response_body['message'])
+                        : sprintf(__('Supabase returned HTTP %d.', 'my-login-form'), $status);
+                }
             }
+
+            if ($first_error !== '') {
+                $failed = count($users);
+                foreach ($users as $user) {
+                    update_user_meta($user->ID, '_my_login_form_supabase_sync_error', $first_error);
+                }
+            }
+        }
+
+        $done = ($offset + count($users)) >= $total_users;
+        if ($done && $synced > 0 && $failed === 0) {
+            update_option('my_login_form_supabase_user_sync_complete', 1, false);
         }
 
         wp_send_json_success([
-            'message' => sprintf(
-                /* translators: 1: number synced, 2: number failed */
-                __('%1$d user(s) synced, %2$d failed.', 'my-login-form'),
-                $synced,
-                $failed
-            ),
+            'processed'   => count($users),
+            'synced'      => $synced,
+            'failed'      => $failed,
+            'total'       => $total_users,
+            'next_offset' => $offset + count($users),
+            'done'        => $done,
+            'error'       => $first_error,
         ]);
     }
 

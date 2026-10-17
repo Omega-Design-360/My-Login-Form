@@ -1,0 +1,392 @@
+.mlf-mailing-page {
+    max-width: 1180px;
+    color: var(--mlf-text);
+    font-family: var(--mlf-font-family);
+}
+
+.mlf-mailing-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    margin: 20px 0 22px;
+    padding: 26px 30px;
+    color: var(--mlf-white);
+    background: var(--mlf-gradient-primary);
+    border-radius: var(--mlf-radius-lg);
+    box-shadow: var(--mlf-shadow);
+}
+
+.mlf-mailing-heading h1 {
+    margin: 0;
+    color: var(--mlf-white);
+    font-size: var(--mlf-fs-2xl);
+    font-weight: var(--mlf-fw-bold);
+    line-height: var(--mlf-lh-tight);
+}
+
+.mlf-mailing-heading .mlf-mailing-intro {
+    margin: 8px 0 0;
+    color: rgba(255,255,255,.86);
+    font-size: var(--mlf-fs-md);
+}
+
+.mlf-mailing-eyebrow {
+    margin: 0 0 7px;
+    color: var(--mlf-text-muted);
+    font-size: var(--mlf-fs-xs);
+    font-weight: var(--mlf-fw-bold);
+    letter-spacing: .1em;
+}
+
+.mlf-mailing-heading .mlf-mailing-eyebrow { color: rgba(255,255,255,.75); }
+
+.mlf-mailing-heading-icon {
+    display: grid;
+    width: 58px;
+    height: 58px;
+    flex: 0 0 58px;
+    place-items: center;
+    color: var(--mlf-white);
+    background: rgba(255,255,255,.14);
+    border: 1px solid rgba(255,255,255,.24);
+    border-radius: 18px;
+}
+
+.mlf-mailing-heading-icon .dashicons { width: 29px; height: 29px; font-size: 29px; }
+
+.mlf-mailing-page .notice {
+    max-width: none;
+    margin: 0 0 18px;
+    border-radius: var(--mlf-radius-sm);
+}
+
+.mlf-mailing-instructions,
+.mlf-mailing-status,
+.mlf-mailing-compose,
+.mlf-mailing-email-preferences {
+    box-sizing: border-box;
+    max-width: 900px;
+    margin: 0 0 20px;
+    padding: 22px 24px;
+    color: var(--mlf-text);
+    background: var(--mlf-card-bg);
+    border: 1px solid var(--mlf-card-border);
+    border-radius: var(--mlf-card-radius);
+    box-shadow: var(--mlf-card-shadow);
+}
+
+.mlf-mailing-instructions {
+    display: grid;
+    grid-template-columns: 42px minmax(0, 1fr);
+    gap: 16px;
+    background: var(--mlf-gradient-surface-tint);
+    border-left: 4px solid var(--mlf-primary);
+}
+
+.mlf-mailing-instructions-icon {
+    display: grid;
+    width: 40px;
+    height: 40px;
+    place-items: center;
+    color: var(--mlf-primary-dark);
+    background: var(--mlf-primary-tint);
+    border-radius: 12px;
+}
+
+.mlf-mailing-instructions-icon .dashicons { font-size: 21px; }
+
+.mlf-mailing-instructions h2,
+.mlf-mailing-section-heading h2,
+.mlf-mailing-compose-heading h2 {
+    margin: 0;
+    color: var(--mlf-heading);
+    font-size: var(--mlf-fs-lg);
+    font-weight: var(--mlf-fw-bold);
+}
+
+.mlf-mailing-instructions ol {
+    display: grid;
+    gap: 8px;
+    margin: 14px 0 10px;
+    padding-left: 21px;
+    color: var(--mlf-text-sub);
+    line-height: var(--mlf-lh-loose);
+}
+
+.mlf-mailing-page a { color: var(--mlf-link); font-weight: var(--mlf-fw-semibold); }
+.mlf-mailing-page a:hover { color: var(--mlf-link-hover); }
+
+.mlf-mailing-privacy {
+    margin: 12px 0 0;
+    padding: 10px 12px;
+    color: var(--mlf-text-sub);
+    background: var(--mlf-bg);
+    border: 1px solid var(--mlf-border);
+    border-radius: var(--mlf-radius-sm);
+    font-size: var(--mlf-fs-sm);
+    line-height: var(--mlf-lh-loose);
+}
+
+.mlf-mailing-section-heading,
+.mlf-mailing-compose-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 18px;
+}
+
+.mlf-mailing-section-heading .mlf-mailing-eyebrow,
+.mlf-mailing-compose-heading .mlf-mailing-eyebrow { margin-bottom: 5px; }
+
+.mlf-mailing-ready-label,
+.mlf-mailing-wait-label {
+    padding: 7px 11px;
+    border-radius: var(--mlf-radius-full);
+    font-size: var(--mlf-fs-sm);
+    font-weight: var(--mlf-fw-semibold);
+    white-space: nowrap;
+}
+
+.mlf-mailing-ready-label { color: var(--mlf-success); background: var(--mlf-success-tint); }
+.mlf-mailing-wait-label { color: var(--mlf-warning-text); background: var(--mlf-warning-tint); }
+
+.mlf-mailing-status-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+    align-items: start;
+}
+
+.mlf-mailing-config-card {
+    min-width: 0;
+    overflow: hidden;
+    background: var(--mlf-bg);
+    border: 1px solid var(--mlf-border);
+    border-radius: var(--mlf-radius-sm);
+}
+
+.mlf-mailing-status-card {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 12px;
+    padding: 15px;
+    background: var(--mlf-surface);
+    border: 0;
+    border-bottom: 1px solid var(--mlf-border);
+    border-radius: 0;
+}
+
+.mlf-mailing-status-mark {
+    display: grid;
+    width: 34px;
+    height: 34px;
+    flex: 0 0 34px;
+    place-items: center;
+    color: var(--mlf-text-muted);
+    background: var(--mlf-bg);
+    border: 1px solid var(--mlf-border);
+    border-radius: 11px;
+    font-size: var(--mlf-fs-md);
+    font-weight: var(--mlf-fw-bold);
+}
+
+.mlf-mailing-status-card.is-ready .mlf-mailing-status-mark {
+    color: var(--mlf-success);
+    background: var(--mlf-success-tint);
+    border-color: transparent;
+}
+
+.mlf-mailing-status-card > div { min-width: 0; flex: 1; }
+.mlf-mailing-status-card h3 { margin: 0; color: var(--mlf-heading); font-size: var(--mlf-fs-md); }
+.mlf-mailing-status-card p { margin: 4px 0 0; color: var(--mlf-text-muted); font-size: var(--mlf-fs-sm); }
+.mlf-mailing-status-card > a { display: inline-flex; align-items: center; gap: 2px; text-decoration: none; white-space: nowrap; }
+
+.mlf-mailing-config-form { padding: 16px; }
+.mlf-mailing-config-form .mlf-mailing-field { margin-bottom: 14px; }
+.mlf-mailing-config-form .mlf-mailing-field input { min-height: 40px; font-size: var(--mlf-fs-base); }
+.mlf-mailing-config-form .mlf-mailing-field > p { line-height: var(--mlf-lh-normal); }
+.mlf-mailing-enable { display: flex; align-items: center; gap: 8px; margin: 0 0 14px; color: var(--mlf-text); font-size: var(--mlf-fs-base); font-weight: var(--mlf-fw-medium); }
+.mlf-mailing-enable input { margin: 0; accent-color: var(--mlf-primary); }
+.mlf-mailing-config-form .mlf-mailing-config-save { min-height: 38px; padding: 0 14px; color: var(--mlf-btn-primary-text); background: var(--mlf-btn-primary-bg); border: 1px solid var(--mlf-btn-primary-bg); border-radius: var(--mlf-btn-radius); font-weight: var(--mlf-fw-semibold); }
+.mlf-mailing-config-form .mlf-mailing-config-save:hover { color: var(--mlf-btn-primary-text); background: var(--mlf-btn-primary-bg-hover); border-color: var(--mlf-btn-primary-bg-hover); }
+.mlf-mailing-supabase-test-status { margin: 0 0 10px; font-size: var(--mlf-fs-sm); }
+.mlf-mailing-supabase-test-status.is-testing { color: var(--mlf-text-muted); }
+.mlf-mailing-supabase-test-status.is-success { color: var(--mlf-success); }
+.mlf-mailing-supabase-test-status.is-error { color: var(--mlf-danger); }
+
+.mlf-mailing-compose-heading {
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--mlf-border);
+}
+
+.mlf-mailing-compose-heading > .dashicons {
+    color: var(--mlf-primary);
+    font-size: 23px;
+}
+
+.mlf-mailing-field { margin: 0 0 18px; }
+.mlf-mailing-field label { display: block; margin-bottom: 7px; color: var(--mlf-text); font-size: var(--mlf-fs-base); font-weight: var(--mlf-fw-semibold); }
+
+.mlf-mailing-field input,
+.mlf-mailing-field textarea,
+.mlf-mailing-field select {
+    box-sizing: border-box;
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    padding: 11px 13px;
+    color: var(--mlf-text);
+    background: var(--mlf-bg);
+    border: 1px solid var(--mlf-border);
+    border-radius: var(--mlf-radius-sm);
+    box-shadow: none;
+    font-family: var(--mlf-font-family);
+    font-size: var(--mlf-fs-md);
+    line-height: var(--mlf-lh-loose);
+    transition: border-color var(--mlf-transition-fast), box-shadow var(--mlf-transition-fast);
+}
+
+.mlf-mailing-field input { min-height: 44px; }
+.mlf-mailing-field textarea { min-height: 112px; resize: vertical; }
+.mlf-mailing-field input:focus,
+.mlf-mailing-field textarea:focus,
+.mlf-mailing-field select:focus { border-color: var(--mlf-primary); outline: none; box-shadow: 0 0 0 3px var(--mlf-primary-tint); }
+.mlf-mailing-field input::placeholder,
+.mlf-mailing-field textarea::placeholder { color: var(--mlf-text-muted); opacity: .8; }
+.mlf-mailing-field > p { margin: 6px 0 0; color: var(--mlf-text-muted); font-size: var(--mlf-fs-sm); }
+.mlf-mailing-field input[type="file"] { min-height: auto; padding: 9px; }
+.mlf-mailing-custom-limit { margin-top: 12px; }
+.mlf-mailing-custom-limit input { margin-top: 7px; }
+.mlf-mailing-field [hidden] { display: none !important; }
+.mlf-mailing-field select { min-height: 44px; }
+.mlf-mailing-field .mlf-mailing-local-label { margin: 12px 0 6px; font-size: var(--mlf-fs-sm); }
+.mlf-mailing-sender-address { display: flex; align-items: center; gap: 8px; }
+.mlf-mailing-sender-address input { flex: 1; min-width: 0; }
+.mlf-mailing-sender-address > span { padding: 9px 11px; color: var(--mlf-text-muted); background: var(--mlf-surface); border: 1px solid var(--mlf-border); border-radius: var(--mlf-radius-sm); font-size: var(--mlf-fs-sm); white-space: nowrap; }
+
+.mlf-mailing-compose-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding-top: 14px;
+    border-top: 1px solid var(--mlf-border);
+}
+
+.mlf-mailing-compose-footer > span { color: var(--mlf-text-muted); font-size: var(--mlf-fs-sm); }
+.mlf-mailing-compose-footer .mlf-mailing-send { min-height: 40px; padding: 0 18px; border-radius: var(--mlf-btn-radius); font-weight: var(--mlf-fw-semibold); }
+.mlf-mailing-page > .description { max-width: 900px; color: var(--mlf-text-muted); }
+
+
+@media (max-width: 782px) {
+    .mlf-mailing-heading { padding: 21px; }
+    .mlf-mailing-instructions,
+    .mlf-mailing-status,
+    .mlf-mailing-compose { padding: 18px; }
+}
+
+@media (max-width: 600px) {
+    .mlf-mailing-heading-icon { display: none; }
+    .mlf-mailing-status-grid { grid-template-columns: 1fr; }
+    .mlf-mailing-instructions { grid-template-columns: 1fr; }
+    .mlf-mailing-compose-footer { align-items: flex-start; flex-direction: column; }
+    .mlf-mailing-ready-label,
+    .mlf-mailing-wait-label { padding: 6px 8px; font-size: 11px; }
+}
+
+/* Shared page frame: keep guides, configuration and compose sections aligned. */
+.mlf-mailing-page {
+    box-sizing: border-box;
+    width: min(100% - 32px, 1400px);
+    max-width: 1400px;
+    margin: 22px auto 40px;
+}
+
+.mlf-mailing-heading {
+    min-height: 100px;
+    padding: 24px 30px;
+    border: 1px solid rgba(255,255,255,.14);
+    box-shadow: var(--mlf-shadow-lg);
+}
+
+.mlf-mailing-instructions,
+.mlf-mailing-status,
+.mlf-mailing-compose,
+.mlf-mailing-email-preferences {
+    width: 100%;
+    max-width: none;
+    margin-bottom: 20px;
+    padding: 24px;
+    border-radius: var(--mlf-radius-lg, 16px);
+}
+
+.mlf-mailing-page > .mlf-supabase-guide {
+    width: 100%;
+    max-width: none;
+    margin: 18px 0 20px;
+}
+
+.mlf-mailing-page > .mlf-mailing-sql-setup { margin: 0 0 20px; }
+
+.mlf-mailing-status-grid { gap: 18px; }
+.mlf-mailing-config-card { border-radius: var(--mlf-radius-md, 12px); }
+.mlf-mailing-provider-setup .mlf-mailing-config-card { width: 100%; }
+.mlf-mailing-status-card { padding: 17px 18px; }
+.mlf-mailing-config-form { padding: 20px; }
+.mlf-mailing-config-form .mlf-mailing-field { margin-bottom: 16px; }
+.mlf-mailing-config-actions { display: flex; align-items: center; gap: 10px; flex-wrap: nowrap; }
+.mlf-mailing-config-actions > .button,
+.mlf-mailing-config-actions > .submit { flex: 1 1 0; margin: 0; }
+.mlf-mailing-config-actions > .button,
+.mlf-mailing-config-actions .mlf-mailing-config-save { box-sizing: border-box; display: inline-flex; min-height: 40px; align-items: center; justify-content: center; white-space: nowrap; }
+.mlf-mailing-config-actions .mlf-mailing-config-save { width: 100%; }
+
+.mlf-mailing-field input,
+.mlf-mailing-field textarea,
+.mlf-mailing-field select {
+    min-height: 46px;
+    border-radius: 9px;
+}
+
+.mlf-mailing-field input:-webkit-autofill,
+.mlf-mailing-field input:-webkit-autofill:hover,
+.mlf-mailing-field input:-webkit-autofill:focus {
+    -webkit-text-fill-color: var(--mlf-text) !important;
+    box-shadow: 0 0 0 1000px var(--mlf-bg) inset;
+}
+
+.mlf-mailing-compose-heading { margin-bottom: 22px; }
+.mlf-mailing-compose-footer .mlf-mailing-send { min-height: 44px; padding: 0 20px; }
+
+.mlf-mailing-email-options { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-bottom: 18px; }
+.mlf-mailing-email-option { display: flex; align-items: flex-start; gap: 11px; min-width: 0; padding: 15px; background: var(--mlf-surface); border: 1px solid var(--mlf-border); border-radius: var(--mlf-radius-sm); cursor: pointer; }
+.mlf-mailing-email-option input { flex: 0 0 auto; margin: 3px 0 0; accent-color: var(--mlf-primary); }
+.mlf-mailing-email-option span { display: grid; gap: 5px; min-width: 0; }
+.mlf-mailing-email-option strong { color: var(--mlf-heading); font-size: var(--mlf-fs-base); }
+.mlf-mailing-email-option small { color: var(--mlf-text-muted); font-size: var(--mlf-fs-sm); line-height: var(--mlf-lh-normal); }
+.mlf-mailing-email-preferences .mlf-mailing-config-save { min-height: 40px; padding: 0 16px; border-radius: var(--mlf-btn-radius); }
+
+@media (max-width: 782px) {
+    .mlf-mailing-page { width: calc(100% - 24px); margin-top: 12px; }
+    .mlf-mailing-heading { align-items: flex-start; }
+    .mlf-mailing-instructions,
+    .mlf-mailing-status,
+    .mlf-mailing-compose,
+    .mlf-mailing-email-preferences { padding: 18px; }
+}
+
+@media (max-width: 600px) {
+    .mlf-mailing-heading { gap: 12px; }
+    .mlf-mailing-status-grid { gap: 12px; }
+    .mlf-mailing-email-options { grid-template-columns: 1fr; }
+    .mlf-mailing-section-heading,
+    .mlf-mailing-compose-heading { align-items: flex-start; }
+    .mlf-mailing-ready-label,
+    .mlf-mailing-wait-label { margin-top: 2px; }
+    .mlf-mailing-config-actions { gap: 7px; }
+    .mlf-mailing-config-actions > .button,
+    .mlf-mailing-config-actions .mlf-mailing-config-save { padding-right: 8px; padding-left: 8px; font-size: 12px; }
+}

@@ -277,6 +277,7 @@ public function enqueue_admin_assets($hook): void {
         'my-login-form-dashboard'        => 'dashboard',
         'my-login-form-designer'         => 'designer',
         'my-login-form-users-data'       => 'users-data',
+        'my-login-form-mailing'          => 'mailing',
         'my-login-form-supabase'         => 'supabase',
         'my-login-form-social-supabase'  => 'supabase',
         'my-login-form-settings'         => 'settings',
@@ -366,6 +367,28 @@ public function enqueue_admin_assets($hook): void {
     } else if (defined('MY_LOGIN_FORM_DEBUG') && MY_LOGIN_FORM_DEBUG) {
         error_log('CSS file not found for page ' . $page_id . ': ' . $css_file);
     }
+
+    if (in_array($page_id, ['mailing', 'supabase'], true)) {
+        $supabase_guide_css = MY_LOGIN_FORM_DIR . 'Admin/Pages/css/supabase-guide.css';
+        if (file_exists($supabase_guide_css)) {
+            wp_enqueue_style(
+                'my-login-form-supabase-guide',
+                MY_LOGIN_FORM_URL . 'Admin/Pages/css/supabase-guide.css',
+                ['my-login-form-admin-vars'],
+                filemtime($supabase_guide_css)
+            );
+        }
+        $supabase_sql_js = MY_LOGIN_FORM_DIR . 'Admin/Pages/js/supabase-sql.js';
+        if (file_exists($supabase_sql_js)) {
+            wp_enqueue_script(
+                'my-login-form-supabase-sql',
+                MY_LOGIN_FORM_URL . 'Admin/Pages/js/supabase-sql.js',
+                [],
+                filemtime($supabase_sql_js),
+                true
+            );
+        }
+    }
     
     // Enqueue JS if file exists
     if (file_exists($js_file)) {
@@ -383,6 +406,13 @@ public function enqueue_admin_assets($hook): void {
             wp_localize_script('my-login-form-' . $page_id, 'myLoginFormUsersData', [
                 'ajaxUrl' => admin_url('admin-ajax.php'),
                 'nonce'   => wp_create_nonce('my_login_form_dashboard_nonce'),
+            ]);
+        }
+
+        if ($page_id === 'mailing') {
+            wp_localize_script('my-login-form-' . $page_id, 'myLoginFormMailing', [
+                'ajaxUrl'          => admin_url('admin-ajax.php'),
+                'supabaseTestNonce' => wp_create_nonce('my_login_supabase_test'),
             ]);
         }
 

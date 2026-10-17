@@ -19,6 +19,9 @@ $supabase_url = get_option('my_login_supabase_url', '');
 $supabase_anon_key = get_option('my_login_supabase_anon_key', '');
 $supabase_service_key = get_option('my_login_supabase_service_key', '');
 $supabase_connected = $supabase_enabled && $supabase_url && $supabase_anon_key;
+$users_sql_file = MY_LOGIN_FORM_DIR . 'supabase/sql/04_users.sql';
+$supabase_users_sql = is_readable($users_sql_file) ? (string) file_get_contents($users_sql_file) : '';
+$supabase_users_sync_complete = (bool) get_option('my_login_form_supabase_user_sync_complete', 0);
 
 /**
  * Short, non-reversible hint for a secret — enough for an admin to recognize
@@ -75,6 +78,7 @@ $social_platforms = [
 ];
 
 $active_tab = isset($_GET['tab']) ? sanitize_text_field($_GET['tab']) : 'setup';
+
 
 // ============================================================================
 // OTP LOG TAB — data prep (Includes/Database/OtpDatabase.php)
@@ -162,79 +166,10 @@ if ($active_tab === 'otp-log') {
         </div>
     </div>
     
-    <!-- Step-by-Step Setup Wizard -->
-    <?php if (!$supabase_connected): ?>
-    <div class="setup-wizard my-login-friendly-wizard">
-        <div class="wizard-header">
-            <div style="font-size:42px;line-height:1;margin-bottom:10px;">🔌</div>
-            <h2><?php _e('Connect to Supabase — Complete Setup Guide', 'my-login-form'); ?></h2>
-            <p><?php _e('Follow these steps exactly — no technical experience needed!', 'my-login-form'); ?></p>
-        </div>
-        <div class="wizard-steps my-login-steps-row">
-
-            <div class="wizard-step my-login-step active">
-                <div class="my-login-step-num">1</div>
-                <h3>🌐 <?php _e('Create a Free Supabase Account', 'my-login-form'); ?></h3>
-                <p><?php _e('Visit supabase.com and click "Start your project". Sign up with your GitHub account or email — it\'s completely free.', 'my-login-form'); ?></p>
-                <a href="https://supabase.com/dashboard/sign-up" target="_blank" class="my-login-step-cta"><?php _e('Sign Up Free →', 'my-login-form'); ?></a>
-            </div>
-
-            <div class="my-login-step-sep">›</div>
-
-            <div class="wizard-step my-login-step">
-                <div class="my-login-step-num">2</div>
-                <h3>📁 <?php _e('Create a New Project', 'my-login-form'); ?></h3>
-                <p>
-                    <?php _e('After logging in:', 'my-login-form'); ?><br>
-                    <strong>1.</strong> <?php _e('Click the green "New Project" button', 'my-login-form'); ?><br>
-                    <strong>2.</strong> <?php _e('Enter a project name (e.g. "my-website")', 'my-login-form'); ?><br>
-                    <strong>3.</strong> <?php _e('Set a strong database password (save it somewhere safe)', 'my-login-form'); ?><br>
-                    <strong>4.</strong> <?php _e('Choose a region closest to your visitors', 'my-login-form'); ?><br>
-                    <strong>5.</strong> <?php _e('Click "Create new project" and wait ~1 minute', 'my-login-form'); ?>
-                </p>
-            </div>
-
-            <div class="my-login-step-sep">›</div>
-
-            <div class="wizard-step my-login-step">
-                <div class="my-login-step-num">3</div>
-                <h3>🔑 <?php _e('Get Your API Keys', 'my-login-form'); ?></h3>
-                <p>
-                    <?php _e('Once your project is ready:', 'my-login-form'); ?><br>
-                    <strong>1.</strong> <?php _e('Click the ⚙️ <strong>Settings</strong> icon in the left sidebar', 'my-login-form'); ?><br>
-                    <strong>2.</strong> <?php _e('Click <strong>API</strong> in the Settings menu', 'my-login-form'); ?><br>
-                    <strong>3.</strong> <?php _e('Under "Project URL" — copy the URL (starts with https://)', 'my-login-form'); ?><br>
-                    <strong>4.</strong> <?php _e('Under "Project API keys" — copy the <strong>anon / public</strong> key (long text starting with eyJ...)', 'my-login-form'); ?>
-                </p>
-                <a href="https://supabase.com/dashboard" target="_blank" class="my-login-step-cta-outline"><?php _e('Open Supabase →', 'my-login-form'); ?></a>
-            </div>
-
-            <div class="my-login-step-sep">›</div>
-
-            <div class="wizard-step my-login-step">
-                <div class="my-login-step-num">4</div>
-                <h3>📋 <?php _e('Paste Keys & Connect', 'my-login-form'); ?></h3>
-                <p>
-                    <?php _e('In the "Connection Setup" box below:', 'my-login-form'); ?><br>
-                    <strong>1.</strong> <?php _e('Paste your <strong>Project URL</strong> in the first field', 'my-login-form'); ?><br>
-                    <strong>2.</strong> <?php _e('Paste your <strong>anon / public key</strong> in the second field', 'my-login-form'); ?><br>
-                    <strong>3.</strong> <?php _e('Click <strong>Test Connection</strong> — you should see a green success message', 'my-login-form'); ?><br>
-                    <strong>4.</strong> <?php _e('Click <strong>Save &amp; Connect</strong> — done!', 'my-login-form'); ?>
-                </p>
-                <a href="#supabase-connection-form" class="my-login-step-cta">↓ <?php _e('Go to Setup Form', 'my-login-form'); ?></a>
-            </div>
-
-        </div>
-
-        <!-- Extra help box -->
-        <div style="margin-top:18px;padding:14px 18px;background:rgba(255,255,255,.07);border-radius:8px;font-size:13px;color:rgba(234,246,228,0.7);line-height:1.7;">
-            <strong style="color:#EAF6E4;">💡 <?php _e('Tips', 'my-login-form'); ?>:</strong>
-            <?php _e('The free plan is enough for most sites. If "Test Connection" fails, check for extra spaces in the URL or key.', 'my-login-form'); ?>
-        </div>
-    </div>
+    <?php if ($active_tab === 'setup' && !$supabase_connected): ?>
+        <?php include MY_LOGIN_FORM_DIR . 'Admin/Pages/partials/supabase-setup-guide.php'; ?>
     <?php endif; ?>
-    
-    <!-- Tab Navigation -->
+        <!-- Tab Navigation -->
     <div class="integration-tabs">
         <a href="?page=my-login-form-social-supabase&tab=setup" class="tab-link <?php echo $active_tab === 'setup' ? 'active' : ''; ?>">
             <i class="fas fa-plug"></i> <?php _e('Connect Setup', 'my-login-form'); ?>
@@ -332,137 +267,32 @@ if ($active_tab === 'otp-log') {
                         </button>
                     </div>
                     
-                    <!-- Connection Help -->
-                    <div class="connection-help">
-                        <h4><i class="fas fa-question-circle"></i> <?php _e('Where to find your credentials?', 'my-login-form'); ?></h4>
-                        <div class="help-steps">
-                            <div class="help-step">
-                                <span class="step-icon">1</span>
-                                <div>
-                                    <strong><?php _e('Login to Supabase', 'my-login-form'); ?></strong>
-                                    <p><?php _e('Go to <a href="https://app.supabase.com" target="_blank">app.supabase.com</a> and login', 'my-login-form'); ?></p>
-                                </div>
-                            </div>
-                            <div class="help-step">
-                                <span class="step-icon">2</span>
-                                <div>
-                                    <strong><?php _e('Select Your Project', 'my-login-form'); ?></strong>
-                                    <p><?php _e('Choose the project you want to connect', 'my-login-form'); ?></p>
-                                </div>
-                            </div>
-                            <div class="help-step">
-                                <span class="step-icon">3</span>
-                                <div>
-                                    <strong><?php _e('Go to Settings > API', 'my-login-form'); ?></strong>
-                                    <p><?php _e('Navigate to Project Settings > API', 'my-login-form'); ?></p>
-                                </div>
-                            </div>
-                            <div class="help-step">
-                                <span class="step-icon">4</span>
-                                <div>
-                                    <strong><?php _e('Copy Credentials', 'my-login-form'); ?></strong>
-                                    <p><?php _e('Copy "Project URL" and "anon public" key', 'my-login-form'); ?></p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>
         
         <!-- ── Database Setup Instructions ── -->
+        <?php if (!$supabase_users_sync_complete): ?>
+            <?php include MY_LOGIN_FORM_DIR . 'Admin/Pages/partials/supabase-users-sql.php'; ?>
+        <?php endif; ?>
+
         <div class="enterprise-card" style="margin-top:20px;">
             <div class="card-header">
-                <div class="header-icon" style="background:var(--mlf-gradient-surface);">
-                    <i class="fas fa-database"></i>
-                </div>
+                <div class="header-icon"><i class="fas fa-share-alt"></i></div>
                 <div class="header-text">
-                    <h2><?php _e('Supabase Database Setup', 'my-login-form'); ?></h2>
-                    <p><?php _e('Run this SQL once to create the required table', 'my-login-form'); ?></p>
+                    <h2><?php esc_html_e('Optional: Set up Social OAuth providers', 'my-login-form'); ?></h2>
+                    <p><?php esc_html_e('Configure Google, GitHub, Facebook, or another provider when you want social login.', 'my-login-form'); ?></p>
                 </div>
             </div>
             <div class="card-body">
-
-                <!-- Step 1: Create table -->
-                <div class="mlf-db-step">
-                    <div class="mlf-db-step-num">1</div>
-                    <div class="mlf-db-step-body">
-                        <h4><?php _e('Open the Supabase SQL Editor', 'my-login-form'); ?></h4>
-                        <p><?php _e('In your Supabase project dashboard, click <strong>SQL Editor</strong> in the left sidebar, then click <strong>+ New Query</strong>.', 'my-login-form'); ?></p>
-                    </div>
-                </div>
-
-                <div class="mlf-db-step">
-                    <div class="mlf-db-step-num">2</div>
-                    <div class="mlf-db-step-body">
-                        <h4><?php _e('Paste &amp; run the table creation SQL', 'my-login-form'); ?></h4>
-                        <p><?php _e('Copy the SQL below, paste it into the editor, and click <strong>Run</strong>.', 'my-login-form'); ?></p>
-                        <div class="mlf-code-block">
-                            <pre id="mlf-sql-snippet">-- Users table synced from WordPress
-CREATE TABLE IF NOT EXISTS public.my_login_users (
-  id              bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-  wp_user_id      bigint UNIQUE NOT NULL,
-  email           text UNIQUE NOT NULL,
-  username        text,
-  display_name    text,
-  first_name      text,
-  last_name       text,
-  updated_at      timestamptz DEFAULT now()
-);
-
--- Enable Row Level Security
-ALTER TABLE public.my_login_users ENABLE ROW LEVEL SECURITY;
-
--- Allow the anon key to read rows (adjust to taste)
-CREATE POLICY "Allow anon read"
-  ON public.my_login_users FOR SELECT
-  USING (true);
-
--- Allow the service role to insert / update
-CREATE POLICY "Allow service insert"
-  ON public.my_login_users FOR INSERT
-  WITH CHECK (true);
-
-CREATE POLICY "Allow service update"
-  ON public.my_login_users FOR UPDATE
-  USING (true);</pre>
-                            <button class="mlf-copy-sql" onclick="mlfCopySQL()">
-                                <i class="fas fa-copy"></i> <?php _e('Copy SQL', 'my-login-form'); ?>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="mlf-db-step">
-                    <div class="mlf-db-step-num">3</div>
-                    <div class="mlf-db-step-body">
-                        <h4><?php _e('(Optional) Enable Social OAuth Providers', 'my-login-form'); ?></h4>
-                        <p><?php _e('If you want Google / GitHub / Facebook login, enable them in Supabase:', 'my-login-form'); ?></p>
-                        <ol style="font-size:13px;color:var(--mlf-text);line-height:1.9;margin:8px 0 0 18px;">
-                            <li><?php _e('In the left sidebar click <strong>Authentication</strong> → <strong>Providers</strong>', 'my-login-form'); ?></li>
-                            <li><?php _e('Find the provider you want (Google, GitHub, Facebook…)', 'my-login-form'); ?></li>
-                            <li><?php _e('Toggle <strong>Enable provider</strong> on', 'my-login-form'); ?></li>
-                            <li><?php _e('Enter your OAuth <strong>Client ID</strong> and <strong>Client Secret</strong> from that provider\'s developer console', 'my-login-form'); ?></li>
-                            <li><?php _e('Copy the <strong>Callback URL</strong> shown and paste it into the provider\'s OAuth settings', 'my-login-form'); ?></li>
-                            <li><?php _e('Click <strong>Save</strong> in Supabase', 'my-login-form'); ?></li>
-                        </ol>
-                        <p style="margin-top:10px;font-size:12px;color:var(--mlf-text-muted);">
-                            <?php _e('Then enable the same providers in this plugin\'s <strong>Social Media</strong> tab so they appear in your form designer palette.', 'my-login-form'); ?>
-                        </p>
-                    </div>
-                </div>
-
-                <div class="mlf-db-step">
-                    <div class="mlf-db-step-num">4</div>
-                    <div class="mlf-db-step-body">
-                        <h4><?php _e('Verify &amp; connect', 'my-login-form'); ?></h4>
-                        <p><?php _e('Go back to the <strong>Connection Setup</strong> box above, paste your Project URL and anon key, click <strong>Test Connection</strong>, then <strong>Save &amp; Connect</strong>. Done!', 'my-login-form'); ?></p>
-                    </div>
-                </div>
-
-            </div><!-- /.card-body -->
-        </div><!-- /.enterprise-card (db setup) -->
-
+                <ol style="font-size:13px;color:var(--mlf-text);line-height:1.9;margin:0 0 0 18px;">
+                    <li><?php esc_html_e('In Supabase, open Authentication → Providers and enable the provider you want.', 'my-login-form'); ?></li>
+                    <li><?php esc_html_e('Enter the OAuth Client ID and Client Secret from that provider’s developer console.', 'my-login-form'); ?></li>
+                    <li><?php esc_html_e('Copy the callback URL shown by Supabase into the provider’s OAuth settings, then save.', 'my-login-form'); ?></li>
+                    <li><?php esc_html_e('Enable the same provider in this plugin’s Social Media tab.', 'my-login-form'); ?></li>
+                </ol>
+            </div>
+        </div>
         <!-- Connection Success Preview -->
         <div id="connection-success-preview" style="display: none;">
             <div class="enterprise-card success-card">
@@ -491,7 +321,7 @@ CREATE POLICY "Allow service update"
         <?php if ($active_tab === 'supabase'): ?>
             <?php if (!$supabase_connected): ?>
                 <div class="notice notice-warning">
-                    <p><i class="fas fa-exclamation-triangle"></i> <?php _e('Supabase is not connected. Please go to the <a href="?page=my-login-form-social-supabase&tab=setup">Setup tab</a> to complete the connection.', 'my-login-form'); ?></p>
+                    <p><i class="fas fa-exclamation-triangle"></i> <?php _e('Supabase is not connected. Please go to the <a href="?page=my-login-form-social-supabase&amp;tab=setup">Connect Setup tab</a> to complete the connection.', 'my-login-form'); ?></p>
                 </div>
             <?php else: ?>
             <div class="enterprise-card">
@@ -906,7 +736,7 @@ CREATE POLICY "Allow service update"
    own color (.header-text p, .description, .help-step p, etc.) has equal
    selector specificity and appears later in this file, so it still wins. */
 .my-login-integration-hub p {
-    color: #2A2A2A;
+    color: var(--mlf-text);
 }
 
 .my-login-integration-hub {
@@ -1723,6 +1553,98 @@ input:checked + .toggle-slider-mini:before {
 .mlf-otp-log-pagination a.active {
     background: var(--mlf-primary); color: #fff; border-color: var(--mlf-primary);
 }
+
+/* Setup page polish */
+.my-login-integration-hub {
+    box-sizing: border-box;
+    width: min(100% - 32px, 1400px);
+    margin: 22px auto 40px;
+}
+.my-login-integration-hub .integration-header {
+    gap: 24px;
+    min-height: 100px;
+    padding: 24px 30px;
+    border: 1px solid rgba(255,255,255,.14);
+    box-shadow: var(--mlf-shadow-lg);
+}
+.my-login-integration-hub .header-left h1 { font-size: 27px; line-height: 1.2; }
+.my-login-integration-hub .connection-status-card { max-width: 360px; }
+.my-login-integration-hub .integration-tabs {
+    position: sticky;
+    top: 32px;
+    z-index: 20;
+    align-items: center;
+    gap: 5px;
+    padding: 7px;
+    border-radius: 14px;
+}
+.my-login-integration-hub .tab-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 42px;
+    padding: 9px 15px;
+    white-space: nowrap;
+}
+.my-login-integration-hub .tab-link i { margin: 0; }
+.my-login-integration-hub .enterprise-card {
+    border-radius: 16px;
+    margin-bottom: 20px;
+}
+.my-login-integration-hub .card-header {
+    align-items: center;
+    gap: 16px;
+    padding: 22px 24px;
+}
+.my-login-integration-hub .header-icon { flex: 0 0 50px; }
+.my-login-integration-hub .card-body { padding: 24px; }
+.my-login-integration-hub > .mlf-supabase-guide { max-width: none; }
+.my-login-integration-hub .form-group { margin-bottom: 20px; }
+.my-login-integration-hub .form-group label { margin-bottom: 7px; }
+.my-login-integration-hub .large-input {
+    box-sizing: border-box;
+    display: block;
+    width: 100%;
+    min-height: 44px;
+    padding: 10px 13px;
+    color: var(--mlf-text) !important;
+    background-color: var(--mlf-bg) !important;
+    border: 1px solid var(--mlf-border) !important;
+    border-radius: 9px;
+    box-shadow: none;
+    font: inherit;
+}
+.my-login-integration-hub .large-input:focus {
+    border-color: var(--mlf-primary) !important;
+    outline: none;
+    box-shadow: 0 0 0 3px var(--mlf-primary-tint);
+}
+.my-login-integration-hub .large-input:-webkit-autofill,
+.my-login-integration-hub .large-input:-webkit-autofill:hover,
+.my-login-integration-hub .large-input:-webkit-autofill:focus {
+    -webkit-text-fill-color: var(--mlf-text) !important;
+    box-shadow: 0 0 0 1000px var(--mlf-bg) inset, 0 0 0 3px var(--mlf-primary-tint);
+}
+.my-login-integration-hub .description { line-height: 1.55; }
+.my-login-integration-hub .connection-test-status { border: 1px solid var(--mlf-border); }
+.my-login-integration-hub .action-buttons-group { margin: 20px 0 0; }
+.my-login-integration-hub .action-buttons-group { flex-direction: row; flex-wrap: nowrap; }
+.my-login-integration-hub .action-buttons-group .button { min-height: 42px; border-radius: 9px; white-space: nowrap; }
+.my-login-integration-hub .mlf-mailing-sql-setup,
+.my-login-integration-hub .mlf-supabase-sql-setup { margin: 20px 0; }
+@media (max-width: 782px) {
+    .my-login-integration-hub { width: calc(100% - 24px); margin-top: 12px; }
+    .my-login-integration-hub .integration-header { align-items: flex-start; flex-direction: column; padding: 20px; }
+    .my-login-integration-hub .connection-status-card { max-width: none; }
+    .my-login-integration-hub .integration-tabs { position: static; overflow-x: auto; flex-wrap: nowrap; }
+    .my-login-integration-hub .card-header,
+    .my-login-integration-hub .card-body { padding: 18px; }
+    .my-login-integration-hub .action-buttons-group { flex-direction: row; flex-wrap: wrap; }
+}
+@media (max-width: 480px) {
+    .my-login-integration-hub .action-buttons-group { gap: 8px; }
+    .my-login-integration-hub .action-buttons-group .button { flex: 1 1 0; min-width: 0; padding-right: 8px !important; padding-left: 8px !important; font-size: 12px !important; justify-content: center; }
+}
 </style>
 
 <script>
@@ -1924,14 +1846,6 @@ jQuery(document).ready(function($) {
     // Removed auto-test on keystroke — user must click "Test Connection" manually
 });
 
-function mlfCopySQL() {
-    var text = document.getElementById('mlf-sql-snippet').innerText;
-    navigator.clipboard.writeText(text).then(function() {
-        var btn = document.querySelector('.mlf-copy-sql');
-        btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
-        setTimeout(function(){ btn.innerHTML = '<i class="fas fa-copy"></i> Copy SQL'; }, 2500);
-    });
-}
 </script>
 
 <?php

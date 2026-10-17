@@ -18,7 +18,7 @@ function applyBulkAction() {
     // dedicated toolbar buttons) rather than the checkbox selection, since
     // that's what their AJAX endpoints support.
     if (action === 'sync') {
-        syncWithSupabase();
+        syncWithSupabase(document.querySelector('.sync-supabase-button'));
         return;
     }
 
@@ -109,36 +109,50 @@ function exportSelectedCSV() {
 }
 
 // Sync with Supabase
-function syncWithSupabase() {
-    if (!confirm('Sync all pending users with Supabase?')) return;
+function syncWithSupabase(button) {
+    button = button || document.querySelector('.sync-supabase-button');
+    if (!button || !confirm('Sync WordPress users with Supabase?')) return;
 
-    const button = event.target.closest('button');
     const originalText = button.innerHTML;
-    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Syncing...';
     button.disabled = true;
+    const totals = { processed: 0, synced: 0, failed: 0, error: '' };
 
-    fetch(myLoginFormUsersData.ajaxUrl + '?action=my_login_form_sync_supabase', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: new URLSearchParams({
-            nonce: myLoginFormUsersData.nonce
+    function syncBatch(offset) {
+        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Syncing ' + totals.processed + '...';
+        return fetch(myLoginFormUsersData.ajaxUrl + '?action=my_login_form_sync_supabase', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({
+                nonce: myLoginFormUsersData.nonce,
+                offset: String(offset)
+            })
         })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            alert(data.data.message);
+        .then(response => response.json())
+        .then(data => {
+            if (!data.success) {
+                const message = data.data && data.data.message ? data.data.message : data.data;
+                throw new Error(message || 'Supabase sync failed.');
+            }
+            const batch = data.data || {};
+            totals.processed += Number(batch.processed || 0);
+            totals.synced += Number(batch.synced || 0);
+            totals.failed += Number(batch.failed || 0);
+            totals.error = totals.error || batch.error || '';
+
+            if (!batch.done && Number(batch.processed || 0) > 0) {
+                return syncBatch(Number(batch.next_offset || 0));
+            }
+
+            let message = 'Sync finished: ' + totals.synced + ' user(s) synced, ' + totals.failed + ' failed.';
+            if (totals.error) message += '\nFirst error: ' + totals.error;
+            alert(message);
             location.reload();
-        } else {
-            alert('Error: ' + (data.data && data.data.message ? data.data.message : data.data));
-        }
-    })
-    .catch(error => {
-        alert('Network error: ' + error);
-    })
-    .finally(() => {
+        });
+    }
+
+    syncBatch(0).catch(error => {
+        alert('Sync stopped: ' + error.message);
+    }).finally(() => {
         button.innerHTML = originalText;
         button.disabled = false;
     });

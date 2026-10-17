@@ -10,11 +10,11 @@
  *
  * IMPORTANT - this plugin already has a SEPARATE Resend integration at
  * Includes/Emails/Emails.php, which sends via Resend's HTTP API and is
- * driven by the Settings page option 'my_login_form_resend_api_key'. That
+ * driven by the Mailing page option 'my_login_form_resend_api_key'. That
  * class hooks 'pre_wp_mail', and if it returns non-null (i.e. that option
  * is set to a real key), wp_mail() short-circuits BEFORE PHPMailer is ever
  * built - so 'phpmailer_init' below would never fire and this file would
- * silently do nothing. Leave the Settings page Resend API key field empty
+ * silently do nothing. Leave the Mailing page Resend API key field empty
  * if this SMTP-based file is the one you want actually sending mail.
  *
  * Setup:
