@@ -55,6 +55,41 @@ class AuthAjax {
         update_user_meta($user->ID, 'mlf_login_count', (int) get_user_meta($user->ID, 'mlf_login_count', true) + 1);
     }
 
+    /** Finish a passkey login using the same OTP and Supabase rules as password login. */
+    public function complete_passkey_login(\WP_User $user, string $requested_redirect = '', bool $remember = false): void {
+        if ($this->otp_required()) {
+            $sent = my_login_form_rate_limit('otp_resend', $user->user_email, 3, 10 * MINUTE_IN_SECONDS)
+                ? $this->send_supabase_email_otp($user->user_email)
+                : false;
+            $this->log_otp_event($user->user_email, 'login', $sent ? 'sent' : 'send_failed');
+            wp_send_json_error([
+                'message' => __('Enter the verification code we just emailed you to finish logging in.', 'my-login-form'),
+                'otp_required' => true,
+                'email' => $user->user_email,
+            ]);
+        }
+
+        $redirect = wp_validate_redirect(esc_url_raw($requested_redirect), '');
+        if (!$redirect) {
+            if (user_can($user, 'manage_options')) {
+                $redirect = admin_url();
+            } elseif (function_exists('wc_get_page_permalink') && wc_get_page_permalink('myaccount')) {
+                $redirect = wc_get_page_permalink('myaccount');
+            } else {
+                $redirect = home_url();
+            }
+        }
+
+        wp_set_current_user($user->ID);
+        wp_set_auth_cookie($user->ID, $remember, is_ssl());
+        do_action('wp_login', $user->user_login, $user);
+        $this->sync_to_supabase($user->ID);
+        wp_send_json_success([
+            'message' => __('Login successful! Redirecting…', 'my-login-form'),
+            'redirect' => $redirect,
+        ]);
+    }
+
     /**
      * Records an OTP event (sent/send_failed/verified/failed) in the audit
      * log table (Includes/Database/OtpDatabase.php). Never lets a logging

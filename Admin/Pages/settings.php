@@ -26,6 +26,7 @@ $default_settings = array(
     'recaptcha_site_key' => '',
     'recaptcha_secret_key' => '',
     'enable_2fa' => 0,
+    'enable_passkeys' => 0,
     'max_login_attempts' => 5,
     'lockout_time' => 900,
     'session_timeout' => 3600,
@@ -220,6 +221,21 @@ if (isset($_GET['settings-updated']) && $_GET['settings-updated'] === 'true') {
                                 <span class="mlf-slider"></span>
                             </label>
                         </div>
+
+                        <div class="mlf-divider"></div>
+
+                        <!-- Passkeys -->
+                        <div class="mlf-toggle-row">
+                            <div class="mlf-toggle-info">
+                                <span class="mlf-toggle-title"><?php _e('Passkey Login', 'my-login-form'); ?></span>
+                                <span class="mlf-toggle-desc"><?php _e('Let users sign in with a passkey from their device or password manager', 'my-login-form'); ?></span>
+                            </div>
+                            <label class="mlf-switch">
+                                <input type="checkbox" name="enable_passkeys" value="1" <?php checked($settings['enable_passkeys'], 1); ?>>
+                                <span class="mlf-slider"></span>
+                            </label>
+                        </div>
+                        <p class="description"><?php _e('Requires HTTPS (localhost is supported for development), PHP 8.1+, OpenSSL, and mbstring. Users can add/manage passkeys with the [my_login_passkeys] shortcode while signed in.', 'my-login-form'); ?></p>
 
                         <div class="mlf-divider"></div>
 

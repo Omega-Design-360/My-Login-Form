@@ -564,6 +564,10 @@ class FormsShortcodes {
                     </button>
                 </div>
             </form>
+
+            <?php if ($form->form_type === 'login'): ?>
+                <?php echo \MyLoginForm\Security\Passkeys::login_button_html((int) $form->id); ?>
+            <?php endif; ?>
             
             <!-- SOCIAL LOGIN SECTION - Moved outside form but still in container -->
             <?php if (!empty($social_providers)): ?>
@@ -729,6 +733,25 @@ class FormsShortcodes {
             'ajax_url' => admin_url( 'admin-ajax.php' ),
             'nonce'    => wp_create_nonce( 'my_login_form_nonce' ),
         ) );
+
+        if (\MyLoginForm\Security\Passkeys::enabled() && \MyLoginForm\Security\Passkeys::secure_context() && $form->form_type === 'login') {
+            wp_enqueue_script('mlf-passkeys', MY_LOGIN_FORM_URL . 'Public/Assets/js/passkeys.js', [], MY_LOGIN_FORM_VERSION, true);
+            wp_enqueue_style('mlf-passkeys', MY_LOGIN_FORM_URL . 'Public/Assets/css/passkeys.css', [], MY_LOGIN_FORM_VERSION);
+            wp_localize_script('mlf-passkeys', 'mlfPasskeys', [
+                'ajaxUrl' => admin_url('admin-ajax.php'),
+                'nonce' => wp_create_nonce('my_login_form_submit'),
+                'i18n' => [
+                    'unsupported' => __('This browser does not support passkeys.', 'my-login-form'),
+                    'identifier' => __('Enter your username or email first.', 'my-login-form'),
+                    'failed' => __('Passkey sign-in failed. Please try again or use your password.', 'my-login-form'),
+                    'login' => __('Signing in…', 'my-login-form'),
+                    'added' => __('Passkey added.', 'my-login-form'),
+                    'removed' => __('Passkey removed.', 'my-login-form'),
+                    'remove' => __('Remove', 'my-login-form'),
+                    'empty' => __('No passkeys have been added yet.', 'my-login-form'),
+                ],
+            ]);
+        }
     }
     
     /**
@@ -1174,6 +1197,9 @@ class FormsShortcodes {
                     </div>
                 <?php endforeach; ?>
             </form>
+            <?php if ($form->form_type === 'login'): ?>
+                <?php echo \MyLoginForm\Security\Passkeys::login_button_html((int) $form_id); ?>
+            <?php endif; ?>
             <?php endif; ?>
 
             <?php if ($otp_capable): ?>

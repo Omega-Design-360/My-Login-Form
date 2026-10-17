@@ -12,7 +12,7 @@ $mail_error = isset($_GET['mail_error']) && is_scalar($_GET['mail_error']) ? san
 $config_saved = isset($_GET['config_saved']) && is_scalar($_GET['config_saved']) ? sanitize_key(wp_unslash($_GET['config_saved'])) : '';
 $config_error = isset($_GET['config_error']) && is_scalar($_GET['config_error']) ? sanitize_key(wp_unslash($_GET['config_error'])) : '';
 ?>
-<div class="wrap mlf-mailing-page">
+<div class="wrap mlf-mailing-page <?php echo $mailing_ready ? 'is-mailing-ready' : ''; ?>">
     <header class="mlf-mailing-heading">
         <div>
             <p class="mlf-mailing-eyebrow"><?php esc_html_e('COMMUNICATIONS', 'my-login-form'); ?></p>

@@ -78,6 +78,7 @@ class Uninstaller {
             'my_login_form_last_login',
             'my_login_form_social_provider',
             'my_login_form_profile_picture',
+            '_mlf_passkeys',
         );
         
         foreach ($meta_keys as $meta_key) {

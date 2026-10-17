@@ -276,7 +276,7 @@ class Core {
     private function check_requirements() {
 
         // Check PHP version
-        if (version_compare(PHP_VERSION, '7.4', '<')) {
+        if (version_compare(PHP_VERSION, MY_LOGIN_FORM_MIN_PHP, '<')) {
             add_action('admin_notices', [$this, 'php_version_notice']);
             return false;
         }
@@ -326,7 +326,7 @@ class Core {
             <p>
                 <?php 
                 printf(
-                    esc_html__('My Login Form requires PHP version 7.4 or higher. Your current version is %s. Please upgrade.', 'my-login-form'),
+                    esc_html__('My Login Form requires PHP version 8.1 or higher. Your current version is %s. Please upgrade.', 'my-login-form'),
                     esc_html(PHP_VERSION)
                 ); 
                 ?>

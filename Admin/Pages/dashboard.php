@@ -135,7 +135,7 @@ $system_status = array(
     'php' => array(
         'name' => __('PHP', 'my-login-form'),
         'value' => phpversion(),
-        'status' => version_compare(phpversion(), '7.4', '>=') ? 'good' : 'warning'
+        'status' => version_compare(phpversion(), '8.1', '>=') ? 'good' : 'warning'
     ),
     'mysql' => array(
         'name' => __('MySQL', 'my-login-form'),

@@ -4,9 +4,9 @@
   * Plugin Name: My Login Form
   * Plugin URI: https://example.com/my-login-form
   * Description: Advanced login/registration with Firebase, social login, WooCommerce integration, and form builder.
-  * Version: 1.6.2
+  * Version: 1.6.3
   * Requires at least: 5.6
-  * Requires PHP: 7.4
+  * Requires PHP: 8.1
   * Author: Amjad Shahzad
   * License: GPL v2 or later
   * Text Domain: my-login-form
@@ -31,7 +31,7 @@
  define('MY_LOGIN_FORM_DEBUG', defined('WP_DEBUG') && WP_DEBUG);
 
  // Define Minimum Requirements
- define('MY_LOGIN_FORM_MIN_PHP', '7.4');
+ define('MY_LOGIN_FORM_MIN_PHP', '8.1');
  define('MY_LOGIN_FORM_MIN_WP', '5.6');
 
  // ============================================================================
@@ -101,6 +101,10 @@
  // runs.
  \MyLoginForm\Core\Core::register_autoloader();
  \MyLoginForm\Core\Core::register_plugin_hooks();
+
+ add_action('plugins_loaded', function () {
+     \MyLoginForm\Security\Passkeys::get_instance();
+ }, 12);
 
  // This plugin only ever reads WooCommerce's public status (class_exists
  // check) and, in the store-integration snippet, order status via the

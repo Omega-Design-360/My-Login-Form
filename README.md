@@ -4,9 +4,9 @@
 
 | | |
 |---|---|
-| **Version** | 1.0.0 |
+| **Version** | 1.6.3 |
 | **Requires WordPress** | 5.6+ |
-| **Requires PHP** | 7.4+ |
+| **Requires PHP** | 8.1+ |
 | **Tested up to** | WordPress 6.5 / WooCommerce 8.0 |
 | **License** | GPLv2 or later |
 | **Text Domain** | `my-login-form` |
@@ -56,6 +56,7 @@ This is a **commercial, license‑gated plugin** (see [Licensing](#licensing)): 
 - **Full visual styling** — per‑element layout (width, padding, margin, border‑radius, display mode) and appearance (colors, borders, shadows, hover states) for containers, fields, and the submit button — no CSS required, though a built‑in CSS/JS code editor (CodeMirror) is available per form for advanced customization.
 - **Social / OAuth login** — Google, Facebook, Twitter/X, GitHub, LinkedIn, Apple, and Microsoft, powered by your own Supabase project's Authentication providers.
 - **Email OTP verification (2FA‑style)** — 6‑digit email codes for registration, login, and password‑reset confirmation, delegated to Supabase Auth, with a full OTP audit log in the admin.
+- **Passkey login** — optional WebAuthn sign-in with device biometrics, screen lock, or password managers. Enable it in Settings, then add `[my_login_passkeys]` to an account page so signed-in users can register and remove their passkeys. Requires PHP 8.1+, OpenSSL, mbstring, and HTTPS (localhost works for development).
 - **WooCommerce integration** — redirects logged‑out visitors from the WooCommerce My Account page to your custom login form, replaces the WooCommerce checkout login prompt, auto‑fills WooCommerce billing meta on registration, optional auto‑login after registration, and optional customer data sync — declared compatible with HPOS and Cart/Checkout Blocks.
 - **User Data dashboard** — searchable/paginated user list (works against core WordPress users, or an imported/synced data set), CSV export, bulk Supabase sync, bulk WordPress‑account creation from imported records, per‑user detail and delete.
 - **Merge tags & conditional content** — drop `{first_name}`, `{email}`, etc. straight into page/post content (with a configurable guest fallback name), and wrap content in `[my_login_if_logged_in]` / `[my_login_if_logged_out]` blocks.

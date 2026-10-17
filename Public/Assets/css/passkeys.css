@@ -1,0 +1,47 @@
+.mlf-passkey-actions {
+    margin: 14px 0 0;
+    text-align: center;
+}
+.mlf-passkey-login,
+.mlf-passkey-add,
+.mlf-passkey-remove {
+    font: inherit;
+    cursor: pointer;
+    border: 1px solid #1fbb00;
+    border-radius: 8px;
+    padding: 10px 16px;
+    color: #12300b;
+    background: #fff;
+    transition: background-color .18s ease, color .18s ease, opacity .18s ease;
+}
+.mlf-passkey-login:hover,
+.mlf-passkey-add:hover,
+.mlf-passkey-remove:hover {
+    color: #fff;
+    background: #168d00;
+}
+.mlf-passkey-login:disabled,
+.mlf-passkey-add:disabled,
+.mlf-passkey-remove:disabled {
+    opacity: .6;
+    cursor: wait;
+}
+.mlf-passkey-manager {
+    max-width: 720px;
+    padding: 24px;
+    color: #24351f;
+    background: #fff;
+    border: 1px solid #dce8d6;
+    border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(17, 49, 8, .08);
+}
+.mlf-passkey-manager h3 { margin: 0 0 8px; }
+.mlf-passkey-manager .mlf-passkey-label { display: block; margin: 16px 0 6px; }
+.mlf-passkey-manager .mlf-passkey-name { width: min(100%, 420px); min-height: 42px; margin-right: 8px; }
+.mlf-passkey-manager .mlf-passkey-status { margin: 12px 0; }
+.mlf-passkey-list { margin: 14px 0 0; padding: 0; list-style: none; }
+.mlf-passkey-list li { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 0; border-top: 1px solid #e4ebdf; }
+.mlf-passkey-remove { padding: 6px 12px; }
+@media (max-width: 600px) {
+    .mlf-passkey-manager .mlf-passkey-name { display: block; width: 100%; margin: 0 0 10px; }
+}

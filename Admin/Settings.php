@@ -44,6 +44,7 @@ class Settings {
         'recaptcha_site_key' => '',
         'recaptcha_secret_key' => '',
         'enable_2fa' => 0,
+        'enable_passkeys' => 0,
         'session_timeout' => 3600,
         'max_login_attempts' => 5,
         'lockout_time' => 900,
@@ -299,6 +300,7 @@ class Settings {
                 
             case 'enable_recaptcha':
             case 'enable_2fa':
+            case 'enable_passkeys':
             case 'email_verification':
             case 'welcome_email':
             case 'admin_notifications':

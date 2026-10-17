@@ -3,8 +3,8 @@ Contributors: amjadshahzad
 Tags: login, registration, form builder, social login, supabase
 Requires at least: 5.6
 Tested up to: 6.5
-Stable tag: 1.0.0
-Requires PHP: 7.4
+Stable tag: 1.6.3
+Requires PHP: 8.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -25,11 +25,13 @@ My Login Form is a powerful, flexible login and registration plugin for WordPres
 * **Form Containers** — Organize fields into main containers and sub-divs, with full control over layout, colors, spacing, and borders.
 * **CSS/JS Editor** — Write custom CSS and JavaScript directly inside the form designer. Files are saved per-form.
 * **User Data Shortcodes** — Display logged-in user information (first name, last name, email, etc.) anywhere on your site.
+* **Passkeys** — Optional WebAuthn sign-in and user-managed passkeys (PHP 8.1+, OpenSSL, mbstring, HTTPS required; localhost is supported for development).
 
 = Available Shortcodes =
 
 **Form Shortcode:**
 `[my_login_form id="1"]`
+`[my_login_passkeys]` (place on an account page so signed-in users can add and remove passkeys)
 
 **Merge tags (no shortcode needed):**
 Type these directly into any paragraph or heading in the page/post editor — they're replaced with the logged-in visitor's data automatically. The name tags (`{name}`, `{first_name}`, `{last_name}`, `{display_name}`, `{username}`, `{nickname}`) fall back to a "Default Guest Name" (configurable in Settings, "Sunshine" out of the box) for logged-out visitors instead of going blank:

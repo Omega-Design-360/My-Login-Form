@@ -305,6 +305,16 @@
     margin: 22px auto 40px;
 }
 
+/* Once both integrations are ready, put the mailing workflow first. */
+.mlf-mailing-page.is-mailing-ready { display: flex; flex-direction: column; }
+.mlf-mailing-page.is-mailing-ready > .mlf-mailing-compose { order: 1; }
+.mlf-mailing-page.is-mailing-ready > .mlf-resend-guide,
+.mlf-mailing-page.is-mailing-ready > .mlf-supabase-guide,
+.mlf-mailing-page.is-mailing-ready > .mlf-mailing-provider-setup,
+.mlf-mailing-page.is-mailing-ready > .mlf-mailing-sql-setup,
+.mlf-mailing-page.is-mailing-ready > .mlf-mailing-instructions,
+.mlf-mailing-page.is-mailing-ready > .mlf-mailing-email-preferences { order: 2; }
+
 .mlf-mailing-heading {
     min-height: 100px;
     padding: 24px 30px;
