@@ -2,6 +2,10 @@
 
 **Advanced login, registration, and account management for WordPress** — a drag‑and‑drop form designer, social/OAuth login via Supabase, WooCommerce integration, email OTP verification, and a full user‑management dashboard, all in one plugin.
 
+Welcome to **My Login Form**! Build a polished sign-in and account experience for your WordPress site, with tools for designing forms, managing users, and connecting optional services.
+
+> **Commercial plugin:** An active license is required to access premium features and receive updates. [Purchase a My Login Form license](https://omegadesign.io/our-softwares/my-login-form/).
+
 | | |
 |---|---|
 | **Version** | 1.6.3 |
@@ -17,23 +21,24 @@
 ## Table of contents
 
 1. [Who is this plugin for?](#who-is-this-plugin-for)
-2. [Key features](#key-features)
-3. [Installation](#installation)
-4. [Getting started](#getting-started)
-5. [The Form Designer](#the-form-designer)
-6. [Shortcodes reference](#shortcodes-reference)
-7. [Admin dashboard pages](#admin-dashboard-pages)
-8. [Settings reference](#settings-reference)
-9. [Supabase integration (social login & OTP)](#supabase-integration-social-login--otp)
-10. [WooCommerce integration](#woocommerce-integration)
-11. [Email delivery (Resend)](#email-delivery-resend)
-12. [Licensing](#licensing)
-13. [Security notes](#security-notes)
-14. [Database tables created](#database-tables-created)
-15. [How the plugin is organized (for developers)](#how-the-plugin-is-organized-for-developers)
-16. [Known limitations / incomplete features](#known-limitations--incomplete-features)
-17. [FAQ](#faq)
-18. [Support](#support)
+2. [Benefits](#benefits)
+3. [Key features](#key-features)
+4. [Installation](#installation)
+5. [Getting started](#getting-started)
+6. [The Form Designer](#the-form-designer)
+7. [Shortcodes reference](#shortcodes-reference)
+8. [Admin dashboard pages](#admin-dashboard-pages)
+9. [Settings reference](#settings-reference)
+10. [Supabase integration (social login & OTP)](#supabase-integration-social-login--otp)
+11. [WooCommerce integration](#woocommerce-integration)
+12. [Email delivery (Resend)](#email-delivery-resend)
+13. [Licensing](#licensing)
+14. [Security notes](#security-notes)
+15. [Database tables created](#database-tables-created)
+16. [How the plugin is organized (for developers)](#how-the-plugin-is-organized-for-developers)
+17. [Known limitations / incomplete features](#known-limitations--incomplete-features)
+18. [FAQ](#faq)
+19. [Support](#support)
 
 ---
 
@@ -49,15 +54,31 @@ This is a **commercial, license‑gated plugin** (see [Licensing](#licensing)): 
 
 ---
 
+## Benefits
+
+- **Create a consistent account experience** with custom-branded login, registration, password recovery, and account forms.
+- **Build forms visually** and place them on your site with shortcodes, without editing theme templates.
+- **Bring account tools together** with user management, CSV export, optional social login, email verification, and WooCommerce support.
+- **Keep integrations optional** — core WordPress login and registration work without Supabase, WooCommerce, or an email provider.
+- **Protect common entry points** with rate limits, login lockouts, input validation, and configurable blocklists.
+
 ## Key features
+
+### Form building and account flows
 
 - **Drag‑and‑drop Form Designer** — build Login, Registration, Forgot Password, Reset Password, Welcome, Opt‑in, and fully custom forms visually. Compose forms from Main Containers, nestable Sub Containers, a Social login section, and a Greeting/text block.
 - **14 field types** — text, email, password, number, phone, URL, date, dropdown, checkbox, radio, textarea, file upload, hidden, captcha — plus name/username/confirm‑password conveniences, and (when WooCommerce is active) billing address fields.
 - **Full visual styling** — per‑element layout (width, padding, margin, border‑radius, display mode) and appearance (colors, borders, shadows, hover states) for containers, fields, and the submit button — no CSS required, though a built‑in CSS/JS code editor (CodeMirror) is available per form for advanced customization.
+
+### Login, verification, and integrations
+
 - **Social / OAuth login** — Google, Facebook, Twitter/X, GitHub, LinkedIn, Apple, and Microsoft, powered by your own Supabase project's Authentication providers.
 - **Email OTP verification (2FA‑style)** — 6‑digit email codes for registration, login, and password‑reset confirmation, delegated to Supabase Auth, with a full OTP audit log in the admin.
 - **Passkey login** — optional WebAuthn sign-in with device biometrics, screen lock, or password managers. Enable it in Settings, then add `[my_login_passkeys]` to an account page so signed-in users can register and remove their passkeys. Requires PHP 8.1+, OpenSSL, mbstring, and HTTPS (localhost works for development).
 - **WooCommerce integration** — redirects logged‑out visitors from the WooCommerce My Account page to your custom login form, replaces the WooCommerce checkout login prompt, auto‑fills WooCommerce billing meta on registration, optional auto‑login after registration, and optional customer data sync — declared compatible with HPOS and Cart/Checkout Blocks.
+
+### User management and reliability
+
 - **User Data dashboard** — searchable/paginated user list (works against core WordPress users, or an imported/synced data set), CSV export, bulk Supabase sync, bulk WordPress‑account creation from imported records, per‑user detail and delete.
 - **Merge tags & conditional content** — drop `{first_name}`, `{email}`, etc. straight into page/post content (with a configurable guest fallback name), and wrap content in `[my_login_if_logged_in]` / `[my_login_if_logged_out]` blocks.
 - **Resend‑powered transactional email** — optional integration with [Resend](https://resend.com) via HTTP API or SMTP relay, so password‑reset and account emails land reliably.
