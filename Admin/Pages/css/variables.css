@@ -158,7 +158,7 @@
     --mlf-card-padding: var(--mlf-space-5);
 }
 
-@media (prefers-color-scheme: dark) {
+/* @media (prefers-color-scheme: dark) {
     :root {
         --mlf-primary:       #1FBB00;
         --mlf-primary-dark:  #2FE000;
@@ -209,7 +209,7 @@
         --mlf-shadow:        0 2px 8px rgba(0, 0, 0, 0.45);
         --mlf-shadow-lg:     0 6px 22px rgba(0, 0, 0, 0.55);
     }
-}
+} */
 
 /* ── Shared button classes ──
    Ready-made brand buttons pages can reach for directly. Page

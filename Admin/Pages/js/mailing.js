@@ -9,6 +9,30 @@
             });
         }
 
+        var templateSelect = document.getElementById('mlf-mail-template');
+        if (templateSelect) {
+            var useTemplate = templateSelect.value !== '';
+            var recipientGrid = document.querySelector('.mlf-mailing-recipient-grid');
+            if (recipientGrid) recipientGrid.classList.toggle('is-template-mode', useTemplate);
+            document.querySelectorAll('[data-mlf-template-mode]').forEach(function (panel) {
+                var isTemplatePanel = panel.getAttribute('data-mlf-template-mode') === 'template';
+                panel.hidden = isTemplatePanel !== useTemplate;
+                panel.querySelectorAll('input, textarea, select').forEach(function (field) {
+                    if (field.id === 'mlf-mail-recipient-name') {
+                        field.required = false;
+                    } else if (field.id === 'mlf-mail-subject' || field.id === 'mlf-mail-message') {
+                        field.required = !useTemplate;
+                    }
+                });
+            });
+            var messageField = document.getElementById('mlf-mail-message');
+            var messageVariable = document.getElementById('mlf-mail-message-variable');
+            if (messageField) messageField.required = !useTemplate || !!(messageVariable && messageVariable.value.trim());
+            document.querySelectorAll('[data-mlf-message-hint]').forEach(function (hint) {
+                hint.hidden = hint.getAttribute('data-mlf-message-hint') !== (useTemplate ? 'template' : 'plain');
+            });
+        }
+
         var limitSelect = document.getElementById('mlf-mail-recipient-limit');
         var customPanel = document.querySelector('.mlf-mailing-custom-limit');
         var customInput = document.getElementById('mlf-mail-recipient-limit-custom');
@@ -20,12 +44,11 @@
     }
 
     document.addEventListener('change', function (event) {
-        if (event.target.id === 'mlf-mail-recipient-source' || event.target.id === 'mlf-mail-recipient-limit') {
+        if (event.target.id === 'mlf-mail-recipient-source' || event.target.id === 'mlf-mail-recipient-limit' || event.target.id === 'mlf-mail-template' || event.target.id === 'mlf-mail-message-variable') {
             updateRecipientControls();
         }
     });
     updateRecipientControls();
-
     document.addEventListener('change', function (event) {
         if (event.target.id !== 'mlf-mailing-list-file' || !event.target.files || !event.target.files[0]) return;
         var help = event.target.parentNode.querySelector('p');

@@ -348,15 +348,27 @@ class Menus {
         $resend_domain_result = $resend_key !== '' ? $this->get_resend_verified_domains($resend_key) : ['domains' => [], 'error' => ''];
         $resend_domains = $resend_domain_result['domains'];
         $resend_domains_error = $resend_domain_result['error'];
+        $resend_template_result = $resend_key !== '' ? $this->get_resend_templates($resend_key) : ['templates' => [], 'error' => ''];
+        $resend_templates = $resend_template_result['templates'];
+        $resend_templates_error = $resend_template_result['error'];
         $resend_sender_domain = is_email($resend_from) ? strtolower(substr(strrchr($resend_from, '@'), 1)) : '';
         $resend_guide_done = $resend_ready && in_array($resend_sender_domain, $resend_domains, true);
         $supabase_users_sync_complete = (bool) get_option('my_login_form_supabase_user_sync_complete', 0);
         $default_sender_local = is_email($resend_from) ? substr($resend_from, 0, strpos($resend_from, '@')) : '';
+        $resend_sender_addresses = get_option('my_login_form_resend_sender_addresses', []);
+        if (!is_array($resend_sender_addresses)) {
+            $resend_sender_addresses = [];
+        }
+        $resend_sender_addresses = array_values(array_unique(array_filter(array_map('sanitize_email', array_merge([$resend_from], $resend_sender_addresses)), 'is_email')));
+        $resend_sender_addresses_text = implode("\n", array_filter($resend_sender_addresses, static function ($address) use ($resend_from) {
+            return strtolower($address) !== strtolower($resend_from);
+        }));
         $supabase_url_value = (string) get_option('my_login_supabase_url', '');
         $supabase_anon_hint = $this->mask_mailing_secret((string) get_option('my_login_supabase_anon_key', ''));
         $supabase_service_hint = $this->mask_mailing_secret((string) get_option('my_login_supabase_service_key', ''));
         $resend_key_hint = $this->mask_mailing_secret($resend_key);
         $resend_from_name = (string) get_option('my_login_form_resend_from_name', '');
+        $resend_reply_to = sanitize_email((string) get_option('my_login_form_resend_reply_to', ''));
         $users_sql_file = MY_LOGIN_FORM_DIR . 'supabase/sql/04_users.sql';
         $supabase_users_sql = is_readable($users_sql_file) ? (string) file_get_contents($users_sql_file) : '';
 
@@ -411,18 +423,47 @@ class Menus {
             $api_key_raw = $_POST['resend_api_key'] ?? '';
             $from_email_raw = $_POST['resend_from_email'] ?? '';
             $from_name_raw = $_POST['resend_from_name'] ?? '';
+            $reply_to_raw = $_POST['resend_reply_to'] ?? '';
+            $sender_addresses_raw = $_POST['resend_sender_addresses'] ?? '';
             $api_key = is_string($api_key_raw) ? sanitize_text_field(wp_unslash($api_key_raw)) : '';
             $from_email = is_string($from_email_raw) ? sanitize_email(wp_unslash($from_email_raw)) : '';
             $from_name = is_string($from_name_raw) ? sanitize_text_field(wp_unslash($from_name_raw)) : '';
+            $reply_to_input = is_string($reply_to_raw) ? trim(sanitize_text_field(wp_unslash($reply_to_raw))) : '';
+            $reply_to = sanitize_email($reply_to_input);
+            $sender_addresses_text = is_string($sender_addresses_raw) ? wp_unslash($sender_addresses_raw) : '';
 
             if (!is_email($from_email)) {
                 $this->redirect_mailing(['config_error' => 'resend_email']);
+            }
+            if ($reply_to_input !== '' && !is_email($reply_to_input)) {
+                $this->redirect_mailing(['config_error' => 'resend_reply_to']);
+            }
+            $sender_addresses = [];
+            foreach (preg_split('/[\\r\\n,;]+/', $sender_addresses_text, -1, PREG_SPLIT_NO_EMPTY) as $candidate) {
+                $address = sanitize_email(trim($candidate));
+                if ($address !== '' && is_email($address)) {
+                    $sender_addresses[] = strtolower($address);
+                }
+            }
+            $effective_api_key = $api_key !== '' ? $api_key : trim((string) get_option('my_login_form_resend_api_key', ''));
+            if ($sender_addresses && $effective_api_key !== '') {
+                $verified_domains = $this->get_resend_verified_domains($effective_api_key)['domains'];
+                foreach ($sender_addresses as $address) {
+                    $domain = strtolower(substr(strrchr($address, '@'), 1));
+                    if (!in_array($domain, $verified_domains, true)) {
+                        $this->redirect_mailing(['config_error' => 'resend_sender']);
+                    }
+                }
             }
             if ($api_key !== '') {
                 update_option('my_login_form_resend_api_key', $api_key, false);
             }
             update_option('my_login_form_resend_from_email', $from_email);
             update_option('my_login_form_resend_from_name', $from_name);
+            update_option('my_login_form_resend_reply_to', $reply_to);
+            update_option('my_login_form_resend_sender_addresses', array_values(array_unique(array_filter($sender_addresses, static function ($address) use ($from_email) {
+                return strtolower($address) !== strtolower($from_email);
+            }))));
         } elseif ($type === 'email_preferences') {
             foreach (['email_verification', 'welcome_email', 'admin_notifications'] as $setting) {
                 update_option('my_login_form_' . $setting, isset($_POST[$setting]) ? 1 : 0);
@@ -485,6 +526,91 @@ class Menus {
         return $result;
     }
 
+    /** Fetch published Resend templates for the Mailing composer. */
+    private function get_resend_templates(string $api_key): array {
+        $cache_key = 'my_login_form_resend_templates_' . substr(hash('sha256', $api_key), 0, 20);
+        $cached = get_transient($cache_key);
+        if (is_array($cached) && isset($cached['templates'])) {
+            return $cached;
+        }
+
+        $templates = [];
+        $after = '';
+        do {
+            $url = add_query_arg(array_filter(['limit' => 100, 'after' => $after]), 'https://api.resend.com/templates');
+            $response = wp_remote_get($url, [
+                'headers' => ['Authorization' => 'Bearer ' . $api_key],
+                'timeout' => 12,
+            ]);
+            if (is_wp_error($response)) {
+                return ['templates' => [], 'error' => $response->get_error_message()];
+            }
+
+            $status = (int) wp_remote_retrieve_response_code($response);
+            $payload = json_decode((string) wp_remote_retrieve_body($response), true);
+            if ($status < 200 || $status >= 300 || !is_array($payload) || !isset($payload['data']) || !is_array($payload['data'])) {
+                $result = ['templates' => [], 'error' => __('Resend did not return a template list. Check the API key and refresh.', 'my-login-form')];
+                set_transient($cache_key, $result, 2 * MINUTE_IN_SECONDS);
+                return $result;
+            }
+
+            foreach ($payload['data'] as $template) {
+                if (!is_array($template) || ($template['status'] ?? '') !== 'published') {
+                    continue;
+                }
+                $id = sanitize_text_field((string) ($template['id'] ?? ''));
+                $name = sanitize_text_field((string) ($template['name'] ?? $template['alias'] ?? ''));
+                if ($id !== '' && $name !== '') {
+                    $templates[] = ['id' => $id, 'name' => $name];
+                }
+            }
+
+            $has_more = !empty($payload['has_more']);
+            $page_templates = $payload['data'];
+            $last_template = end($page_templates);
+            $next_after = is_array($last_template) ? (string) ($last_template['id'] ?? '') : '';
+            if ($has_more && ($next_after === '' || $next_after === $after)) {
+                break;
+            }
+            $after = $next_after;
+        } while ($has_more && $after !== '');
+
+        $result = ['templates' => $templates, 'error' => ''];
+        set_transient($cache_key, $result, 10 * MINUTE_IN_SECONDS);
+        return $result;
+    }
+
+    /** Fetch a published template's declared variables. */
+    private function get_resend_template_details(string $api_key, string $template_id): array {
+        $cache_key = 'my_login_form_resend_template_' . substr(hash('sha256', $api_key . '|' . $template_id), 0, 24);
+        $cached = get_transient($cache_key);
+        if (is_array($cached) && isset($cached['variables'])) {
+            return $cached;
+        }
+
+        $response = wp_remote_get('https://api.resend.com/templates/' . rawurlencode($template_id), [
+            'headers' => ['Authorization' => 'Bearer ' . $api_key],
+            'timeout' => 12,
+        ]);
+        if (is_wp_error($response)) {
+            return ['variables' => [], 'error' => $response->get_error_message()];
+        }
+
+        $payload = json_decode((string) wp_remote_retrieve_body($response), true);
+        if ((int) wp_remote_retrieve_response_code($response) < 200
+            || (int) wp_remote_retrieve_response_code($response) >= 300
+            || !is_array($payload)
+            || ($payload['status'] ?? '') !== 'published'
+            || !isset($payload['variables'])
+            || !is_array($payload['variables'])) {
+            return ['variables' => [], 'error' => __('The selected Resend template could not be loaded.', 'my-login-form')];
+        }
+
+        $result = ['variables' => $payload['variables'], 'error' => ''];
+        set_transient($cache_key, $result, 10 * MINUTE_IN_SECONDS);
+        return $result;
+    }
+
     /** Send one email per recipient through Resend. */
     public function handle_mailing_send(): void {
         if (!current_user_can('manage_options')) {
@@ -494,6 +620,46 @@ class Menus {
             wp_die(esc_html__('An active plugin license is required to send email.', 'my-login-form'));
         }
         check_admin_referer('my_login_form_send_mailing');
+
+        $attachment = null;
+        if (isset($_FILES['mailing_attachment']) && (int) ($_FILES['mailing_attachment']['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE) {
+            $upload = $_FILES['mailing_attachment'];
+            $upload_error = (int) ($upload['error'] ?? UPLOAD_ERR_NO_FILE);
+            if (in_array($upload_error, [UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE], true)) {
+                $this->redirect_mailing(['mail_error' => 'attachment_too_large']);
+            }
+            if ($upload_error !== UPLOAD_ERR_OK || empty($upload['tmp_name']) || !is_uploaded_file($upload['tmp_name'])) {
+                $this->redirect_mailing(['mail_error' => 'attachment_invalid']);
+            }
+            $attachment_size = (int) ($upload['size'] ?? 0);
+            if ($attachment_size < 1 || $attachment_size > 10 * 1024 * 1024) {
+                $this->redirect_mailing(['mail_error' => 'attachment_too_large']);
+            }
+            $attachment_content = file_get_contents($upload['tmp_name']);
+            if (!is_string($attachment_content) || strlen($attachment_content) !== $attachment_size) {
+                $this->redirect_mailing(['mail_error' => 'attachment_invalid']);
+            }
+            $attachment_name = sanitize_file_name(wp_basename((string) ($upload['name'] ?? 'attachment')));
+            if ($attachment_name === '') {
+                $this->redirect_mailing(['mail_error' => 'attachment_invalid']);
+            }
+            $attachment_type = 'application/octet-stream';
+            if (function_exists('finfo_open')) {
+                $finfo = finfo_open(FILEINFO_MIME_TYPE);
+                if ($finfo) {
+                    $detected_type = finfo_buffer($finfo, $attachment_content);
+                    finfo_close($finfo);
+                    if (is_string($detected_type) && strpos($detected_type, '/') !== false) {
+                        $attachment_type = $detected_type;
+                    }
+                }
+            }
+            $attachment = [
+                'filename' => $attachment_name,
+                'content' => base64_encode($attachment_content),
+                'content_type' => $attachment_type,
+            ];
+        }
 
         $supabase_ready = (bool) get_option('my_login_supabase_enabled', 0)
             && (bool) get_option('my_login_supabase_url', '')
@@ -506,11 +672,32 @@ class Menus {
 
         $source_raw = $_POST['recipient_source'] ?? 'manual';
         $source = is_string($source_raw) ? sanitize_key(wp_unslash($source_raw)) : 'manual';
+        $recipient_names = [];
         if ($source === 'manual') {
             $recipients_raw = $_POST['recipients'] ?? '';
-            $raw_recipients = is_string($recipients_raw) ? sanitize_textarea_field(wp_unslash($recipients_raw)) : '';
-            $candidates = preg_split('/[\s,;]+/', $raw_recipients, -1, PREG_SPLIT_NO_EMPTY);
-            $recipients = array_map('sanitize_email', $candidates);
+            $raw_recipients = is_string($recipients_raw) ? wp_unslash($recipients_raw) : '';
+            $recipients = [];
+            foreach (preg_split('/\R+/', $raw_recipients, -1, PREG_SPLIT_NO_EMPTY) as $line) {
+                $line = trim($line);
+                if (preg_match('/^(.+?)\s*<\s*([^<>]+)\s*>$/', $line, $match)) {
+                    $email = sanitize_email(trim($match[2]));
+                    $name = sanitize_text_field(trim($match[1]));
+                    if (is_email($email)) {
+                        $recipients[] = $email;
+                        if ($name !== '') {
+                            $recipient_names[$email] = $name;
+                        }
+                    } else {
+                        $recipients[] = $email;
+                    }
+                    continue;
+                }
+
+                $candidates = preg_split('/[\s,;]+/', $line, -1, PREG_SPLIT_NO_EMPTY);
+                foreach ($candidates as $candidate) {
+                    $recipients[] = sanitize_email($candidate);
+                }
+            }
             if ($recipients && count(array_filter($recipients, 'is_email')) !== count($recipients)) {
                 $this->redirect_mailing(['mail_error' => 'recipient_count']);
             }
@@ -525,7 +712,11 @@ class Menus {
         } elseif ($source === 'wp_users') {
             $recipients = [];
             foreach (get_users(['number' => -1, 'fields' => 'all']) as $wp_user) {
-                $recipients[] = sanitize_email($wp_user->user_email ?? '');
+                $email = sanitize_email($wp_user->user_email ?? '');
+                if (is_email($email)) {
+                    $recipients[] = $email;
+                    $recipient_names[$email] = sanitize_text_field($wp_user->display_name ?? '');
+                }
             }
             $recipients = array_values(array_filter($recipients, 'is_email'));
         } else {
@@ -552,54 +743,173 @@ class Menus {
             $this->redirect_mailing(['mail_error' => 'recipient_limit']);
         }
 
-        $from_email = sanitize_email((string) get_option('my_login_form_resend_from_email', ''));
-        $sender_domain_raw = $_POST['sender_domain'] ?? '';
-        $sender_domain = is_string($sender_domain_raw) ? strtolower(sanitize_text_field(wp_unslash($sender_domain_raw))) : '';
-        if ($sender_domain !== '') {
-            $sender_local_raw = $_POST['sender_local'] ?? '';
-            $sender_local = is_string($sender_local_raw) ? trim(sanitize_text_field(wp_unslash($sender_local_raw))) : '';
-            $domain_result = $this->get_resend_verified_domains($api_key);
-            if (!in_array($sender_domain, $domain_result['domains'], true) || $sender_local === '' || strpos($sender_local, '@') !== false) {
-                $this->redirect_mailing(['mail_error' => 'sender_invalid']);
-            }
-            $from_email = sanitize_email($sender_local . '@' . $sender_domain);
+        $default_from_email = sanitize_email((string) get_option('my_login_form_resend_from_email', ''));
+        $sender_addresses = get_option('my_login_form_resend_sender_addresses', []);
+        $sender_addresses = is_array($sender_addresses) ? array_map('sanitize_email', $sender_addresses) : [];
+        $sender_addresses = array_values(array_unique(array_filter(array_merge([$default_from_email], $sender_addresses), 'is_email')));
+        $sender_email_raw = $_POST['sender_email'] ?? $default_from_email;
+        $from_email = is_string($sender_email_raw) ? sanitize_email(wp_unslash($sender_email_raw)) : '';
+        if (!is_email($from_email) || !in_array(strtolower($from_email), array_map('strtolower', $sender_addresses), true)) {
+            $this->redirect_mailing(['mail_error' => 'sender_invalid']);
         }
-        if (!is_email($from_email)) {
+        $sender_domain = strtolower(substr(strrchr($from_email, '@'), 1));
+        $domain_result = $this->get_resend_verified_domains($api_key);
+        if (!in_array($sender_domain, $domain_result['domains'], true)) {
             $this->redirect_mailing(['mail_error' => 'sender_invalid']);
         }
 
+        $template_raw = $_POST['resend_template'] ?? '';
+        $template_id = is_string($template_raw) ? sanitize_text_field(wp_unslash($template_raw)) : '';
+        $template = null;
+        $subject = '';
+        $message = '';
         $subject_raw = $_POST['subject'] ?? '';
-        $message_raw = $_POST['message'] ?? '';
         $subject = is_string($subject_raw) ? sanitize_text_field(wp_unslash($subject_raw)) : '';
-        $message = is_string($message_raw) ? sanitize_textarea_field(wp_unslash($message_raw)) : '';
-        if ($subject === '' || $message === '') {
+        if ($subject === '') {
             $this->redirect_mailing(['mail_error' => 'missing_content']);
+        }
+        if ($template_id !== '') {
+            $available_templates = $this->get_resend_templates($api_key)['templates'];
+            foreach ($available_templates as $available_template) {
+                if (hash_equals((string) $available_template['id'], $template_id)) {
+                    $template = $available_template;
+                    break;
+                }
+            }
+            if (!$template) {
+                $this->redirect_mailing(['mail_error' => 'template_invalid']);
+            }
+
+            $variable_raw = $_POST['recipient_name_variable'] ?? 'name';
+            $variable_key = is_string($variable_raw) ? trim(sanitize_text_field(wp_unslash($variable_raw))) : 'name';
+            $message_variable_raw = $_POST['message_variable'] ?? '';
+            $message_variable_key = is_string($message_variable_raw) ? trim(sanitize_text_field(wp_unslash($message_variable_raw))) : '';
+            $name_raw = $_POST['recipient_name'] ?? '';
+            $name_text = is_string($name_raw) ? sanitize_textarea_field(wp_unslash($name_raw)) : '';
+            $recipient_name_values = array_values(array_filter(array_map('trim', preg_split('/\R+/', $name_text)), static function ($name) {
+                return $name !== '';
+            }));
+            if (!preg_match('/^[A-Za-z][A-Za-z0-9_]{0,49}$/', $variable_key)
+                || in_array(strtoupper($variable_key), ['FIRST_NAME', 'LAST_NAME', 'EMAIL', 'UNSUBSCRIBE_URL'], true)
+                || ($message_variable_key !== '' && (!preg_match('/^[A-Za-z][A-Za-z0-9_]{0,49}$/', $message_variable_key) || $message_variable_key === $variable_key))) {
+                $this->redirect_mailing(['mail_error' => 'template_variable']);
+            }
+
+            $template_detail_result = $this->get_resend_template_details($api_key, $template['id']);
+            if ($template_detail_result['error'] !== '') {
+                $this->redirect_mailing(['mail_error' => 'template_invalid']);
+            }
+            $declared_variables = [];
+            $fallback_variables = [];
+            foreach ($template_detail_result['variables'] as $template_variable) {
+                if (!is_array($template_variable) || empty($template_variable['key'])) {
+                    continue;
+                }
+                $key = (string) $template_variable['key'];
+                $declared_variables[] = $key;
+                if (isset($template_variable['fallback_value']) && (string) $template_variable['fallback_value'] !== '') {
+                    $fallback_variables[$key] = (string) $template_variable['fallback_value'];
+                }
+            }
+            if (!in_array($variable_key, $declared_variables, true)
+                || ($message_variable_key !== '' && !in_array($message_variable_key, $declared_variables, true))) {
+                $this->redirect_mailing(['mail_error' => 'template_variable']);
+            }
+
+            $message_raw = $_POST['message'] ?? '';
+            $template_message = is_string($message_raw) ? sanitize_textarea_field(wp_unslash($message_raw)) : '';
+            if ($message_variable_key !== '' && $template_message === '') {
+                $this->redirect_mailing(['mail_error' => 'missing_content']);
+            }
+            if ($recipient_name_values) {
+                if (count($recipient_name_values) !== count($recipients)) {
+                    $this->redirect_mailing(['mail_error' => 'template_variable']);
+                }
+                foreach ($recipients as $index => $recipient) {
+                    $recipient_names[$recipient] = $recipient_name_values[$index];
+                }
+            }
+            foreach ($recipients as $recipient) {
+                if (trim((string) ($recipient_names[$recipient] ?? '')) === '') {
+                    $this->redirect_mailing(['mail_error' => 'template_variable']);
+                }
+            }
+        } else {
+            $message_raw = $_POST['message'] ?? '';
+            $message = is_string($message_raw) ? sanitize_textarea_field(wp_unslash($message_raw)) : '';
+            if ($message === '') {
+                $this->redirect_mailing(['mail_error' => 'missing_content']);
+            }
         }
 
         $from_name = sanitize_text_field((string) get_option('my_login_form_resend_from_name', ''));
+        $reply_to = sanitize_email((string) get_option('my_login_form_resend_reply_to', ''));
         $from = $from_name !== '' ? sprintf('%s <%s>', $from_name, $from_email) : $from_email;
         $sent = 0;
+        $first_resend_error = '';
         foreach ($recipients as $recipient) {
+            $email_payload = [
+                'from' => $from,
+                'to' => [$recipient],
+            ];
+            if (is_email($reply_to)) {
+                $email_payload['reply_to'] = $reply_to;
+            }
+            if ($attachment !== null) {
+                $email_payload['attachments'] = [$attachment];
+            }
+            if ($template) {
+                $recipient_name = $recipient_names[$recipient];
+                $recipient_template_variables = $fallback_variables;
+                $recipient_template_variables[$variable_key] = $recipient_name;
+                if ($message_variable_key !== '') {
+                    $recipient_template_variables[$message_variable_key] = $template_message;
+                }
+                $email_payload['template'] = [
+                    'id' => $template['id'],
+                    'variables' => $recipient_template_variables,
+                ];
+                $email_payload['subject'] = $subject;
+            } else {
+                $email_payload['subject'] = $subject;
+                $email_payload['text'] = $message;
+            }
             $response = wp_remote_post('https://api.resend.com/emails', [
                 'headers' => [
                     'Authorization' => 'Bearer ' . $api_key,
                     'Content-Type'  => 'application/json',
                 ],
-                'body' => wp_json_encode([
-                    'from' => $from,
-                    'to' => [$recipient],
-                    'subject' => $subject,
-                    'text' => $message,
-                ]),
+                'body' => wp_json_encode($email_payload),
                 'timeout' => 15,
             ]);
 
-            if (!is_wp_error($response)) {
+            if (is_wp_error($response)) {
+                if ($first_resend_error === '') {
+                    $first_resend_error = $response->get_error_message();
+                }
+            } else {
                 $code = (int) wp_remote_retrieve_response_code($response);
                 if ($code >= 200 && $code < 300) {
                     $sent++;
+                } elseif ($first_resend_error === '') {
+                    $error_payload = json_decode((string) wp_remote_retrieve_body($response), true);
+                    if (is_array($error_payload)) {
+                        $first_resend_error = (string) ($error_payload['message'] ?? '');
+                        if ($first_resend_error === '' && isset($error_payload['error']) && is_array($error_payload['error'])) {
+                            $first_resend_error = (string) ($error_payload['error']['message'] ?? '');
+                        }
+                    }
+                    if ($first_resend_error === '') {
+                        $first_resend_error = sprintf(__('Resend returned HTTP %d.', 'my-login-form'), $code);
+                    }
                 }
             }
+        }
+
+        if ($first_resend_error !== '') {
+            set_transient('my_login_form_mail_error_' . get_current_user_id(), [
+                'message' => sanitize_text_field(substr($first_resend_error, 0, 500)),
+            ], 5 * MINUTE_IN_SECONDS);
         }
 
         $this->redirect_mailing([

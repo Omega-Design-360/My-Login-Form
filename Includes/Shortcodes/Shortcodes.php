@@ -22,6 +22,26 @@ class Shortcodes {
         // 'my_login_form' is registered by Shortcodes\FormsShortcodes, which reads
         // the form-designer schema; render_form() below is legacy and unused.
         add_shortcode('my_login_profile', array($this, 'render_profile'));
+
+        // If another frontend renderer bypasses shortcode parsing, never leak
+        // this plugin's internal tag to visitors as plain text. Runs late so
+        // normally processed shortcodes keep their rendered profile markup.
+        add_filter('the_content', array($this, 'remove_unrendered_profile_shortcode'), 999);
+    }
+
+    /**
+     * Remove only an unresolved profile shortcode from frontend page content.
+     * WordPress's normal shortcode processing and output are left untouched.
+     *
+     * @param string $content Page content after normal content filters.
+     * @return string
+     */
+    public function remove_unrendered_profile_shortcode($content) {
+        if (is_admin() || !is_string($content) || false === stripos($content, '[my_login_profile')) {
+            return $content;
+        }
+
+        return preg_replace('/\[my_login_profile\b[^\]]*\](?:\s*\[\/my_login_profile\])?/i', '', $content);
     }
     
     /**

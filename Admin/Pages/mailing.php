@@ -9,6 +9,15 @@ defined('ABSPATH') || exit;
 $mail_sent = isset($_GET['mail_sent']) && is_scalar($_GET['mail_sent']) ? absint(wp_unslash($_GET['mail_sent'])) : null;
 $mail_failed = isset($_GET['mail_failed']) && is_scalar($_GET['mail_failed']) ? absint(wp_unslash($_GET['mail_failed'])) : null;
 $mail_error = isset($_GET['mail_error']) && is_scalar($_GET['mail_error']) ? sanitize_key(wp_unslash($_GET['mail_error'])) : '';
+$mail_resend_error = '';
+if ($mail_failed) {
+    $mail_error_key = 'my_login_form_mail_error_' . get_current_user_id();
+    $mail_error_data = get_transient($mail_error_key);
+    if (is_array($mail_error_data) && isset($mail_error_data['message'])) {
+        $mail_resend_error = sanitize_text_field((string) $mail_error_data['message']);
+        delete_transient($mail_error_key);
+    }
+}
 $config_saved = isset($_GET['config_saved']) && is_scalar($_GET['config_saved']) ? sanitize_key(wp_unslash($_GET['config_saved'])) : '';
 $config_error = isset($_GET['config_error']) && is_scalar($_GET['config_error']) ? sanitize_key(wp_unslash($_GET['config_error'])) : '';
 ?>
@@ -32,6 +41,9 @@ $config_error = isset($_GET['config_error']) && is_scalar($_GET['config_error'])
             );
             ?>
         </p></div>
+        <?php if ($mail_resend_error !== '') : ?>
+            <div class="notice notice-error"><p><strong><?php esc_html_e('Resend response:', 'my-login-form'); ?></strong> <?php echo esc_html($mail_resend_error); ?></p></div>
+        <?php endif; ?>
     <?php elseif ($mail_error !== '') : ?>
         <div class="notice notice-error"><p>
             <?php
@@ -51,8 +63,16 @@ $config_error = isset($_GET['config_error']) && is_scalar($_GET['config_error'])
                 esc_html_e('The uploaded mailing list contains no email addresses.', 'my-login-form');
             } elseif ($mail_error === 'upload_failed') {
                 esc_html_e('The mailing list file could not be uploaded. Check your server upload size limit and try again.', 'my-login-form');
+            } elseif ($mail_error === 'attachment_invalid') {
+                esc_html_e('The attachment could not be read. Choose a valid file and try again.', 'my-login-form');
+            } elseif ($mail_error === 'attachment_too_large') {
+                esc_html_e('Attachments must be 10 MB or smaller.', 'my-login-form');
             } elseif ($mail_error === 'sender_invalid') {
                 esc_html_e('Choose a verified Resend sending domain and enter a valid mailbox name, or use the saved sender address.', 'my-login-form');
+            } elseif ($mail_error === 'template_invalid') {
+                esc_html_e('The selected Resend template is no longer available. Refresh the page and choose a published template.', 'my-login-form');
+            } elseif ($mail_error === 'template_variable') {
+                esc_html_e('Enter exactly one recipient name per email address, in the same order, and make sure the variable key matches the Resend template (for example name).', 'my-login-form');
             } else {
                 esc_html_e('Enter a subject and message before sending.', 'my-login-form');
             }
@@ -69,6 +89,10 @@ $config_error = isset($_GET['config_error']) && is_scalar($_GET['config_error'])
                 esc_html_e('To enable Supabase, provide a valid HTTP/HTTPS project URL and anon key.', 'my-login-form');
             } elseif ($config_error === 'resend_email') {
                 esc_html_e('Enter a valid sender email address.', 'my-login-form');
+            } elseif ($config_error === 'resend_reply_to') {
+                esc_html_e('Enter a valid reply-to email address or leave the field empty.', 'my-login-form');
+            } elseif ($config_error === 'resend_sender') {
+                esc_html_e('Each additional sender address must use a verified sending domain from your Resend account.', 'my-login-form');
             } else {
                 esc_html_e('The integration settings could not be saved.', 'my-login-form');
             }
@@ -111,8 +135,18 @@ $config_error = isset($_GET['config_error']) && is_scalar($_GET['config_error'])
                     <input id="mlf-resend-from" name="resend_from_email" type="email" value="<?php echo esc_attr($resend_from); ?>" placeholder="noreply@yourdomain.com" required>
                 </div>
                 <div class="mlf-mailing-field">
+                    <label for="mlf-resend-sender-addresses"><?php esc_html_e('Other sender addresses', 'my-login-form'); ?></label>
+                    <textarea id="mlf-resend-sender-addresses" name="resend_sender_addresses" rows="4" placeholder="support@yourdomain.com&#10;billing@yourdomain.com"><?php echo esc_textarea($resend_sender_addresses_text); ?></textarea>
+                    <p><?php esc_html_e('Enter one address per line. Each address must use a verified Resend sending domain. These addresses will appear in the Send from list.', 'my-login-form'); ?></p>
+                </div>
+                <div class="mlf-mailing-field">
                     <label for="mlf-resend-name"><?php esc_html_e('Sender name (optional)', 'my-login-form'); ?></label>
                     <input id="mlf-resend-name" name="resend_from_name" type="text" value="<?php echo esc_attr($resend_from_name); ?>" placeholder="<?php echo esc_attr(get_bloginfo('name')); ?>">
+                </div>
+                <div class="mlf-mailing-field">
+                    <label for="mlf-resend-reply-to"><?php esc_html_e('Reply-to address (optional)', 'my-login-form'); ?></label>
+                    <input id="mlf-resend-reply-to" name="resend_reply_to" type="email" value="<?php echo esc_attr($resend_reply_to); ?>" placeholder="replies@your-inbound-domain.com">
+                    <p><?php esc_html_e('Replies go to this address. To see them in Resend, enter an address configured under Resend Receiving Emails.', 'my-login-form'); ?> <a href="https://resend.com/features/inbound" target="_blank" rel="noopener noreferrer"><?php esc_html_e('Set up inbound email', 'my-login-form'); ?></a></p>
                 </div>
                 <?php submit_button(__('Save Resend settings', 'my-login-form'), 'secondary', 'submit', false, ['class' => 'mlf-mailing-config-save']); ?>
             </form>
@@ -243,7 +277,7 @@ $config_error = isset($_GET['config_error']) && is_scalar($_GET['config_error'])
                 <div><p class="mlf-mailing-eyebrow"><?php esc_html_e('NEW MESSAGE', 'my-login-form'); ?></p><h2><?php esc_html_e('Compose email', 'my-login-form'); ?></h2></div>
                 <span class="dashicons dashicons-edit" aria-hidden="true"></span>
             </div>
-            <div class="mlf-mailing-field">
+            <div class="mlf-mailing-field mlf-compose-source">
                 <label for="mlf-mail-recipient-source"><?php esc_html_e('Recipient source', 'my-login-form'); ?></label>
                 <select id="mlf-mail-recipient-source" name="recipient_source">
                     <option value="manual"><?php esc_html_e('Enter email addresses', 'my-login-form'); ?></option>
@@ -252,20 +286,50 @@ $config_error = isset($_GET['config_error']) && is_scalar($_GET['config_error'])
                 </select>
                 <p><?php esc_html_e('Choose one source for this send. Imported contacts stay separate from your website user accounts.', 'my-login-form'); ?></p>
             </div>
-            <div class="mlf-mailing-field" data-mlf-recipient-source="manual">
-                <label for="mlf-mail-recipients"><?php esc_html_e('Email addresses', 'my-login-form'); ?></label>
-                <textarea id="mlf-mail-recipients" name="recipients" rows="5" placeholder="name@example.com&#10;another@example.com"></textarea>
-                <p><?php esc_html_e('Separate addresses with commas or new lines. Each person receives a private copy.', 'my-login-form'); ?></p>
+            <div class="mlf-mailing-field mlf-compose-template">
+                <label for="mlf-mail-template"><?php esc_html_e('Resend template (optional)', 'my-login-form'); ?></label>
+                <select id="mlf-mail-template" name="resend_template">
+                    <option value=""><?php esc_html_e('Write a plain text email', 'my-login-form'); ?></option>
+                    <?php foreach ($resend_templates as $template) : ?>
+                        <option value="<?php echo esc_attr($template['id']); ?>"><?php echo esc_html($template['name']); ?></option>
+                    <?php endforeach; ?>
+                </select>
+                <?php if ($resend_templates_error !== '') : ?>
+                    <p><?php esc_html_e('Could not load templates from Resend. Check the API key or refresh the page.', 'my-login-form'); ?></p>
+                <?php elseif (!$resend_templates) : ?>
+                    <p><?php esc_html_e('No published Resend templates are available. Publish a template in Resend to use it here.', 'my-login-form'); ?></p>
+                <?php else : ?>
+                    <p><?php esc_html_e('Published templates are loaded from your Resend account. The template supplies the body; enter a subject below.', 'my-login-form'); ?></p>
+                <?php endif; ?>
             </div>
-            <div class="mlf-mailing-field" data-mlf-recipient-source="import" hidden>
+            <div class="mlf-mailing-recipient-grid mlf-compose-recipients">
+            <div class="mlf-mailing-field" data-mlf-recipient-source="manual">
+                <div class="mlf-recipient-field-intro">
+                    <p class="mlf-recipient-intro-title"><?php esc_html_e('Recipient email list', 'my-login-form'); ?></p>
+                    <p><?php esc_html_e('Enter one email per line. When using a template, each email matches the name on the same line.', 'my-login-form'); ?></p>
+                </div>
+                <label for="mlf-mail-recipients"><?php esc_html_e('Email addresses', 'my-login-form'); ?></label>
+                <textarea id="mlf-mail-recipients" name="recipients" rows="5" placeholder="jane@example.com&#10;john@example.com"></textarea>
+            </div>
+            <div class="mlf-mailing-field" data-mlf-template-mode="template" hidden>
+                <div class="mlf-recipient-field-intro">
+                    <label class="mlf-mailing-local-label" for="mlf-mail-recipient-name-variable"><?php esc_html_e('Name variable key in your Resend template', 'my-login-form'); ?></label>
+                    <input id="mlf-mail-recipient-name-variable" name="recipient_name_variable" type="text" value="name" maxlength="50" pattern="[A-Za-z][A-Za-z0-9_]*" placeholder="name">
+                    <p><?php esc_html_e('Enter one name per email address, in the same order: name line 1 matches email line 1, and so on.', 'my-login-form'); ?></p>
+                </div>
+                <label for="mlf-mail-recipient-name"><?php esc_html_e('Recipient name(s)', 'my-login-form'); ?></label>
+                <textarea id="mlf-mail-recipient-name" name="recipient_name" rows="5" placeholder="Jane Doe&#10;John Smith"></textarea>
+            </div>
+            </div>
+            <div class="mlf-mailing-field mlf-compose-source-detail" data-mlf-recipient-source="import" hidden>
                 <label for="mlf-mailing-list-file"><?php esc_html_e('Import mailing list', 'my-login-form'); ?></label>
                 <input id="mlf-mailing-list-file" name="mailing_list" type="file" accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
                 <p><?php esc_html_e('Upload a CSV or Excel XLSX file. Use a column named Email or Email Address; if there is no email header, valid email addresses are collected from the sheet.', 'my-login-form'); ?></p>
             </div>
-            <div class="mlf-mailing-field" data-mlf-recipient-source="wp_users" hidden>
+            <div class="mlf-mailing-field mlf-compose-source-detail" data-mlf-recipient-source="wp_users" hidden>
                 <p><?php printf(esc_html__('This will send to all %d WordPress user accounts with valid email addresses.', 'my-login-form'), (int) count_users()['total_users']); ?></p>
             </div>
-            <div class="mlf-mailing-field">
+            <div class="mlf-mailing-field mlf-compose-limit">
                 <label for="mlf-mail-recipient-limit"><?php esc_html_e('Maximum recipients for this send', 'my-login-form'); ?></label>
                 <select id="mlf-mail-recipient-limit" name="recipient_limit">
                     <option value="50">50</option>
@@ -281,34 +345,34 @@ $config_error = isset($_GET['config_error']) && is_scalar($_GET['config_error'])
                 </div>
                 <p><?php esc_html_e('The selected cap applies to this send. You can choose a preset or enter any positive number.', 'my-login-form'); ?></p>
             </div>
-            <div class="mlf-mailing-field">
+            <div class="mlf-mailing-field mlf-compose-subject">
                 <label for="mlf-mail-subject"><?php esc_html_e('Subject', 'my-login-form'); ?></label>
                 <input id="mlf-mail-subject" name="subject" type="text" maxlength="250" required placeholder="<?php esc_attr_e('Write a clear subject', 'my-login-form'); ?>">
             </div>
-            <div class="mlf-mailing-field">
-                <label for="mlf-mail-sender-domain"><?php esc_html_e('Send from', 'my-login-form'); ?></label>
-                <select id="mlf-mail-sender-domain" name="sender_domain">
-                    <option value=""><?php echo esc_html(sprintf(__('Default sender: %s', 'my-login-form'), $resend_from)); ?></option>
-                    <?php foreach ($resend_domains as $domain) : ?>
-                        <option value="<?php echo esc_attr($domain); ?>"><?php echo esc_html(sprintf(__('Use a sender on %s', 'my-login-form'), $domain)); ?></option>
+            <div class="mlf-mailing-field mlf-compose-sender">
+                <label for="mlf-mail-sender-email"><?php esc_html_e('Send from', 'my-login-form'); ?></label>
+                <select id="mlf-mail-sender-email" name="sender_email">
+                    <?php foreach ($resend_sender_addresses as $sender_address) : ?>
+                        <option value="<?php echo esc_attr($sender_address); ?>"><?php echo esc_html($sender_address); ?></option>
                     <?php endforeach; ?>
                 </select>
-                <?php if ($resend_domains) : ?>
-                    <label class="mlf-mailing-local-label" for="mlf-mail-sender-local"><?php esc_html_e('Mailbox name for the selected domain', 'my-login-form'); ?></label>
-                    <div class="mlf-mailing-sender-address"><input id="mlf-mail-sender-local" name="sender_local" type="text" value="<?php echo esc_attr($default_sender_local); ?>" placeholder="support"><span>@<?php esc_html_e('selected domain', 'my-login-form'); ?></span></div>
-                    <p><?php printf(esc_html__('Loaded %d verified sending domain(s) from Resend. This list refreshes automatically every 10 minutes.', 'my-login-form'), count($resend_domains)); ?></p>
-                <?php elseif ($resend_domains_error !== '') : ?>
-                    <p><?php esc_html_e('Could not load verified domains from Resend. You can still use the saved default sender address.', 'my-login-form'); ?></p>
-                <?php else : ?>
-                    <p><?php esc_html_e('No verified sending domains were found. You can still use the saved default sender address.', 'my-login-form'); ?></p>
-                <?php endif; ?>
+                <p><?php esc_html_e('Select one of the saved sender addresses. Add addresses in the Resend settings above; only addresses on verified domains can send.', 'my-login-form'); ?></p>
             </div>
-            <div class="mlf-mailing-field">
+            <div class="mlf-mailing-field mlf-compose-message">
+                <label class="mlf-mailing-local-label" for="mlf-mail-message-variable" data-mlf-template-mode="template" hidden><?php esc_html_e('Message variable key (optional)', 'my-login-form'); ?></label>
+                <input id="mlf-mail-message-variable" name="message_variable" type="text" maxlength="50" pattern="[A-Za-z][A-Za-z0-9_]*" placeholder="message" data-mlf-template-mode="template" hidden>
+                <p data-mlf-template-mode="template" hidden><?php esc_html_e('Set this only if your Resend template has a matching variable, such as message. The message below will be inserted there.', 'my-login-form'); ?></p>
                 <label for="mlf-mail-message"><?php esc_html_e('Message', 'my-login-form'); ?></label>
                 <textarea id="mlf-mail-message" name="message" rows="10" required placeholder="<?php esc_attr_e('Write your message here...', 'my-login-form'); ?>"></textarea>
-                <p><?php esc_html_e('Sent as plain text through your Resend account.', 'my-login-form'); ?></p>
+                <p data-mlf-message-hint="plain"><?php esc_html_e('Sent as plain text through your Resend account.', 'my-login-form'); ?></p>
+                <p data-mlf-message-hint="template" hidden><?php esc_html_e('The selected template supplies the body. This text is inserted only when you set a matching Message variable key above.', 'my-login-form'); ?></p>
+                <div class="mlf-mailing-field mlf-compose-attachment">
+                    <label for="mlf-mail-attachment"><?php esc_html_e('Attachment (optional)', 'my-login-form'); ?></label>
+                    <input id="mlf-mail-attachment" name="mailing_attachment" type="file">
+                    <p><?php esc_html_e('Attach one file to each email, whether you use a Resend template or plain text. Maximum size: 10 MB.', 'my-login-form'); ?></p>
+                </div>
             </div>
-            <div class="mlf-mailing-compose-footer">
+            <div class="mlf-mailing-compose-footer mlf-compose-footer">
                 <span><?php esc_html_e('Please verify your recipient list before sending.', 'my-login-form'); ?></span>
                 <?php submit_button(__('Send email', 'my-login-form'), 'primary', 'submit', false, ['class' => 'mlf-mailing-send']); ?>
             </div>

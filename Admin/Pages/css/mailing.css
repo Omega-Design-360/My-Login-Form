@@ -222,12 +222,27 @@
     border-bottom: 1px solid var(--mlf-border);
 }
 
+.mlf-mailing-compose { display: flex; flex-direction: column; }
+.mlf-mailing-compose-heading { order: 0; }
+.mlf-compose-source { order: 1; }
+.mlf-compose-template { order: 2; }
+.mlf-compose-recipients { order: 3; }
+.mlf-compose-source-detail { order: 4; }
+.mlf-compose-subject { order: 5; }
+.mlf-compose-message { order: 6; }
+.mlf-compose-sender { order: 7; }
+.mlf-compose-limit { order: 8; }
+.mlf-compose-footer { order: 9; }
+
 .mlf-mailing-compose-heading > .dashicons {
     color: var(--mlf-primary);
     font-size: 23px;
 }
 
 .mlf-mailing-field { margin: 0 0 18px; }
+.mlf-mailing-recipient-grid { display: grid; grid-template-columns: 1fr; gap: 0; align-items: start; }
+.mlf-mailing-recipient-grid.is-template-mode { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.mlf-mailing-recipient-grid > .mlf-mailing-field { min-width: 0; }
 .mlf-mailing-field label { display: block; margin-bottom: 7px; color: var(--mlf-text); font-size: var(--mlf-fs-base); font-weight: var(--mlf-fw-semibold); }
 
 .mlf-mailing-field input,
@@ -295,6 +310,98 @@
     .mlf-mailing-compose-footer { align-items: flex-start; flex-direction: column; }
     .mlf-mailing-ready-label,
     .mlf-mailing-wait-label { padding: 6px 8px; font-size: 11px; }
+}
+
+/* Mailing page polish: clearer grouping, calmer surfaces, and stronger controls. */
+.mlf-mailing-heading {
+    position: relative;
+    overflow: hidden;
+    background-image: var(--mlf-gradient-primary);
+}
+
+.mlf-mailing-heading::after {
+    position: absolute;
+    right: 8%;
+    bottom: -90px;
+    width: 230px;
+    height: 230px;
+    border: 1px solid rgba(255,255,255,.14);
+    border-radius: 50%;
+    content: "";
+    pointer-events: none;
+}
+
+.mlf-mailing-heading > div,
+.mlf-mailing-heading-icon { position: relative; z-index: 1; }
+
+.mlf-mailing-compose {
+    position: relative;
+    border-color: color-mix(in srgb, var(--mlf-primary) 18%, var(--mlf-card-border));
+    box-shadow: 0 12px 34px rgba(5, 26, 0, .08);
+}
+
+.mlf-mailing-compose-heading {
+    align-items: center;
+    margin: -2px 0 24px;
+    padding: 0 0 18px;
+    border-bottom-color: color-mix(in srgb, var(--mlf-primary) 18%, var(--mlf-border));
+}
+
+.mlf-mailing-compose-heading h2 { font-size: clamp(21px, 2vw, 25px); }
+.mlf-mailing-compose-heading .mlf-mailing-eyebrow { color: var(--mlf-primary-dark); letter-spacing: .12em; }
+.mlf-mailing-compose-heading > .dashicons { width: 42px; height: 42px; display: grid; place-items: center; background: var(--mlf-primary-tint); border-radius: 13px; }
+
+.mlf-mailing-field { margin-bottom: 20px; }
+.mlf-mailing-field label { margin-bottom: 8px; font-size: 13px; letter-spacing: .005em; }
+.mlf-mailing-field input,
+.mlf-mailing-field textarea,
+.mlf-mailing-field select {
+    background-color: var(--mlf-surface);
+    border-color: color-mix(in srgb, var(--mlf-text-muted) 22%, var(--mlf-border));
+}
+.mlf-mailing-field input:hover,
+.mlf-mailing-field textarea:hover,
+.mlf-mailing-field select:hover { border-color: color-mix(in srgb, var(--mlf-primary) 48%, var(--mlf-border)); }
+.mlf-mailing-field input:focus,
+.mlf-mailing-field textarea:focus,
+.mlf-mailing-field select:focus { background-color: var(--mlf-bg); }
+.mlf-mailing-field > p { max-width: 78ch; line-height: 1.55; }
+.mlf-mailing-field textarea { min-height: 124px; }
+.mlf-compose-message textarea { min-height: 220px; }
+.mlf-compose-recipients { padding: 16px; margin-bottom: 20px; background: var(--mlf-surface); border: 1px solid var(--mlf-border); border-radius: var(--mlf-radius-md, 12px); }
+.mlf-mailing-recipient-grid > .mlf-mailing-field { margin: 0; }
+.mlf-mailing-recipient-grid.is-template-mode { gap: 20px; }
+.mlf-mailing-recipient-grid textarea { min-height: 156px; }
+.mlf-mailing-compose-footer { margin-top: 2px; padding-top: 18px; }
+.mlf-mailing-compose-footer .mlf-mailing-send { min-height: 46px; padding: 0 24px; box-shadow: 0 5px 12px rgba(31, 187, 0, .18); transition: transform var(--mlf-transition-fast), box-shadow var(--mlf-transition-fast); }
+.mlf-mailing-compose-footer .mlf-mailing-send:hover { transform: translateY(-1px); box-shadow: 0 8px 18px rgba(31, 187, 0, .24); }
+
+.mlf-mailing-config-card { background: var(--mlf-surface); box-shadow: 0 4px 14px rgba(5, 26, 0, .035); }
+.mlf-mailing-status-card { background: linear-gradient(115deg, var(--mlf-surface), var(--mlf-bg)); }
+.mlf-mailing-config-form { background: var(--mlf-bg); }
+.mlf-mailing-email-option { min-height: 100%; box-sizing: border-box; transition: border-color var(--mlf-transition-fast), background-color var(--mlf-transition-fast), transform var(--mlf-transition-fast); }
+.mlf-mailing-email-option:hover { transform: translateY(-1px); border-color: color-mix(in srgb, var(--mlf-primary) 42%, var(--mlf-border)); background: var(--mlf-primary-tint); }
+.mlf-mailing-email-option input { width: 16px; height: 16px; }
+.mlf-mailing-instructions { border-left-width: 3px; }
+.mlf-mailing-privacy { background: var(--mlf-surface); }
+.mlf-recipient-field-intro { min-height: 126px; }
+.mlf-recipient-field-intro > p { margin-top: 6px; color: var(--mlf-text-muted); font-size: var(--mlf-fs-sm); line-height: 1.55; }
+.mlf-recipient-field-intro > .mlf-recipient-intro-title { margin: 12px 0 8px; color: var(--mlf-text); font-size: 13px; font-weight: var(--mlf-fw-semibold); }
+
+@media (max-width: 782px) {
+    .mlf-mailing-heading::after { right: -35px; }
+    .mlf-mailing-compose { padding: 20px; }
+}
+
+@media (max-width: 600px) {
+    .mlf-mailing-heading { min-height: 0; padding: 20px; }
+    .mlf-mailing-compose { padding: 16px; }
+    .mlf-mailing-compose-heading { margin-bottom: 20px; }
+    .mlf-compose-recipients { padding: 12px; }
+    .mlf-mailing-recipient-grid.is-template-mode { gap: 16px; }
+    .mlf-mailing-compose-footer { align-items: stretch; }
+    .mlf-mailing-compose-footer .mlf-mailing-send { width: 100%; justify-content: center; }
+    .mlf-mailing-email-options { gap: 9px; }
 }
 
 /* Shared page frame: keep guides, configuration and compose sections aligned. */
@@ -396,6 +503,7 @@
 }
 
 @media (max-width: 600px) {
+    .mlf-mailing-recipient-grid.is-template-mode { grid-template-columns: 1fr; gap: 0; }
     .mlf-mailing-heading { gap: 12px; }
     .mlf-mailing-status-grid { gap: 12px; }
     .mlf-mailing-email-options { grid-template-columns: 1fr; }
@@ -406,4 +514,60 @@
     .mlf-mailing-config-actions { gap: 7px; }
     .mlf-mailing-config-actions > .button,
     .mlf-mailing-config-actions .mlf-mailing-config-save { padding-right: 8px; padding-left: 8px; font-size: 12px; }
+}
+
+/* Final overrides keep the compose flow polished after the shared layout rules. */
+.mlf-mailing-heading { position: relative; overflow: hidden; background-image: var(--mlf-gradient-primary); }
+.mlf-mailing-heading::after { position: absolute; right: 8%; bottom: -90px; width: 230px; height: 230px; border: 1px solid rgba(255,255,255,.14); border-radius: 50%; content: ""; pointer-events: none; }
+.mlf-mailing-heading > div,
+.mlf-mailing-heading-icon { position: relative; z-index: 1; }
+.mlf-mailing-compose { position: relative; border-color: color-mix(in srgb, var(--mlf-primary) 18%, var(--mlf-card-border)); box-shadow: 0 12px 34px rgba(5,26,0,.08); }
+.mlf-mailing-compose-heading { align-items: center; margin: -2px 0 24px; padding: 0 0 18px; border-bottom-color: color-mix(in srgb, var(--mlf-primary) 18%, var(--mlf-border)); }
+.mlf-mailing-compose-heading h2 { font-size: clamp(21px, 2vw, 25px); }
+.mlf-mailing-compose-heading .mlf-mailing-eyebrow { color: var(--mlf-primary-dark); letter-spacing: .12em; }
+.mlf-mailing-compose-heading > .dashicons { display: grid; width: 42px; height: 42px; place-items: center; background: var(--mlf-primary-tint); border-radius: 13px; }
+.mlf-mailing-field { margin-bottom: 20px; }
+.mlf-mailing-field label { margin-bottom: 8px; font-size: 13px; }
+.mlf-mailing-field input,
+.mlf-mailing-field textarea,
+.mlf-mailing-field select { background-color: var(--mlf-surface); border-color: color-mix(in srgb, var(--mlf-text-muted) 22%, var(--mlf-border)); }
+.mlf-mailing-field input:hover,
+.mlf-mailing-field textarea:hover,
+.mlf-mailing-field select:hover { border-color: color-mix(in srgb, var(--mlf-primary) 48%, var(--mlf-border)); }
+.mlf-mailing-field input:focus,
+.mlf-mailing-field textarea:focus,
+.mlf-mailing-field select:focus { background-color: var(--mlf-bg); }
+.mlf-mailing-field > p { max-width: 78ch; line-height: 1.55; }
+.mlf-mailing-field textarea { min-height: 124px; }
+.mlf-compose-message textarea { min-height: 220px; }
+.mlf-compose-recipients { padding: 16px; margin-bottom: 20px; background: var(--mlf-surface); border: 1px solid var(--mlf-border); border-radius: var(--mlf-radius-md, 12px); }
+.mlf-mailing-recipient-grid > .mlf-mailing-field { margin: 0; }
+.mlf-mailing-recipient-grid.is-template-mode { gap: 20px; }
+.mlf-mailing-recipient-grid textarea { min-height: 156px; }
+.mlf-mailing-compose-footer { margin-top: 2px; padding-top: 18px; }
+.mlf-mailing-compose-footer .mlf-mailing-send { min-height: 46px; padding: 0 24px; box-shadow: 0 5px 12px rgba(31,187,0,.18); transition: transform var(--mlf-transition-fast), box-shadow var(--mlf-transition-fast); }
+.mlf-mailing-compose-footer .mlf-mailing-send:hover { transform: translateY(-1px); box-shadow: 0 8px 18px rgba(31,187,0,.24); }
+.mlf-mailing-config-card { background: var(--mlf-surface); box-shadow: 0 4px 14px rgba(5,26,0,.035); }
+.mlf-mailing-status-card { background: linear-gradient(115deg, var(--mlf-surface), var(--mlf-bg)); }
+.mlf-mailing-config-form { background: var(--mlf-bg); }
+.mlf-mailing-email-option { box-sizing: border-box; min-height: 100%; transition: border-color var(--mlf-transition-fast), background-color var(--mlf-transition-fast), transform var(--mlf-transition-fast); }
+.mlf-mailing-email-option:hover { transform: translateY(-1px); border-color: color-mix(in srgb, var(--mlf-primary) 42%, var(--mlf-border)); background: var(--mlf-primary-tint); }
+.mlf-mailing-email-option input { width: 16px; height: 16px; }
+.mlf-mailing-instructions { border-left-width: 3px; }
+.mlf-mailing-privacy { background: var(--mlf-surface); }
+
+@media (max-width: 782px) {
+    .mlf-mailing-heading::after { right: -35px; }
+    .mlf-mailing-compose { padding: 20px; }
+}
+@media (max-width: 600px) {
+    .mlf-mailing-heading { min-height: 0; padding: 20px; }
+    .mlf-mailing-compose { padding: 16px; }
+    .mlf-mailing-compose-heading { margin-bottom: 20px; }
+    .mlf-compose-recipients { padding: 12px; }
+    .mlf-mailing-recipient-grid.is-template-mode { grid-template-columns: 1fr; gap: 16px; }
+    .mlf-recipient-field-intro { min-height: 0; }
+    .mlf-mailing-compose-footer { align-items: stretch; }
+    .mlf-mailing-compose-footer .mlf-mailing-send { width: 100%; justify-content: center; }
+    .mlf-mailing-email-options { gap: 9px; }
 }
